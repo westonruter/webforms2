@@ -1,0 +1,46 @@
+input.invalid, textarea.invalid, select.invalid { background-color:#FFCCCC; }
+
+._wf2_errorMsg 
+{
+	position:absolute; display:inline; border:dotted 1px red; background-color:white; padding:.25em; 
+	padding-left:.5em;
+	/*padding-right:3em;*/
+	cursor:pointer;
+	background-color:#FFCCCC;
+	font-size:smaller;
+	
+}
+._wf2_errorMsg:hover 
+{
+	/*background-color:Black;
+	color:White;*/
+	opacity:.4;
+}
+
+._wf2_errorMsg ol 
+{
+	list-style-position:inside;
+	margin:0;
+	padding:0;
+}
+._wf2_errorMsg ol.single 
+{
+	list-style:none;
+}
+
+._wf2_errorMsg a.closeErrorMsg 
+{
+	display:none;
+	
+	position:absolute;
+	top:.25em;
+	right:.5em;
+	text-decoration:none;
+	color:gray;
+	font-size:13pt;
+}
+._wf2_errorMsg a.closeErrorMsg:hover 
+{
+	color:Red;
+	font-weight:bold;
+}

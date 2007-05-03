@@ -1,0 +1,114 @@
+
+<!DOCTYPE html PUBLIC "-//WHATWG//NONSGML HTML5//EN">
+<html>
+ <head>
+  <title>Test Page</title>
+  
+  
+  <script language="javascript" src="../../../Common/JavaScript/prototype.js"></script>
+  <script language="javascript" src="../wf2-validation.js"></script>
+  <script language="javascript" src="jsUnitCore.js"></script>
+  <link href="/wf2/wf2/wf2.css" rel="stylesheet">
+  <link href="demo.css" rel="stylesheet">
+  
+ </head>
+ <body>
+
+ <div id="platformWarning">If you were using Internet Explorer 6 on a Windows machine or Opera 9, this demo would actually work!</div>
+<script>
+var sig = "Mozilla/4.0 (compatible; MSIE 6.";
+var sig2 = "Opera/9.0";
+if (window.navigator) {
+	var ua = window.navigator.userAgent;
+	 if (ua.indexOf(sig) == 0 || ua.indexOf(sig2) == 0) {
+		var platformWarning = document.getElementById("platformWarning");
+	 	platformWarning.style.display='none';
+	 }
+}
+</script>
+
+<div class=sidemenu style="">
+<div class=''><a href='default.asp'>Intro</a></div><div class='current'><a href='validation.asp'>Validation</a></div><div class=''><a href='datetime.asp'>Date and time types</a></div><div class=''><a href='range.asp'>Range control</a></div><div class=''><a href='repetition.asp'>Repetition</a></div><div class=''><a href='output.asp'>Calculated fields</a></div><div class=''><a href='datalist.asp'>Datalist</a></div><div class=''><a href='autofocus.asp'>Autofocus</a></div><div class=''><a href='prefill.asp'>Prefilling forms</a></div><div class=''><a href='roundtrip.asp'>Roundtripping data</a></div><div class=''><a href='inputmode.asp'>Input mode</a></div>
+<!--a style="float:right;font-size:8pt" onclick="alert(document.documentElement.outerHTML)">Show DOM</a-->
+</div>
+
+<h1>Validation</h1>
+
+<p>WF2 introduces built-in validation on the client-side.</p>
+<p>In this example, the input field is declared "required", which means the form cannot be submitted if the field is empty. Instead an error message will be displayed to the user.</p>
+
+<div class="example">
+<form>
+  <input name="textfield" type="text" required>
+  <button type=submit>Submit me</button>
+</form>
+</div>
+
+<p>The code looks like this:
+<pre>
+&lt;form&gt;
+  &lt;input name="textfield" type="text" <strong>required</strong>&gt;
+  &lt;button type=submit>Submit me&lt;/button&gt;
+&lt;/form&gt;
+</pre>
+
+<p>This field requires a number between 18 and 99:
+
+<div class="example">
+<form>
+  Age: <input name="age" type="number" min="18" max="99" required  oninvalid="return true">
+  <button type=submit>Submit me</button>
+</form>
+</div>
+
+<p>The code looks like this:
+<pre>
+&lt;form&gt;
+  Age:  &lt;input name="age"  <strong>type="number" min="18" max="99"</strong> required&gt;
+  &lt;button type=submit>Submit me&lt;/button&gt;
+&lt;/form&gt;
+</pre>
+
+<p>Here is a sample form using an assortment of the new validation constraints:</p>
+
+<div class="example">
+<form>
+  <p><label>Your e-mail address:</label><input name="email" type="email"> (must be an email adress)</p>
+  <p><label>Your web page:</label><input name="url" type="uri"> (must be an URI)</p>
+  <p><label>Your age:</label><input name="age" type="number" min=18 max=90> (must be between 18 and 90)</p>
+  <p><label>Price:</label><input name="price" type="number" step="0.01"> (decimal, will be rounded to two decimals)</p>
+  <p><label>Phone number:</label><input name="phone" required type="text" pattern="\(\d\d\d\)-\d\d-\d" title="Should match: (000)-00-0"> </p>
+  <button type=submit>Submit me</button>
+</form>
+</div>
+
+<p>(There are also several date and time related controls, but they are described in a seperate section.)</p>
+
+
+<h2>Custom validation</h2>
+
+<p>Of course, the built-in types and constraints cannot cover every use case. Therefore it is possible to hook custom code into the validation system.
+
+<div class="example">
+<form>
+<script>
+function isSquareNumber(num) {
+	return (Math.sqrt(num)!=Math.round(Math.sqrt(num)))
+}
+</script>
+  Number: <input name="num" type="number" onchange="if(isSquareNumber(value)) setCustomValidity('Must be a square number'); else setCustomValidity()">
+  <button type=button onclick="this.parentNode.checkValidity()">Submit me</button>
+</form>
+</div>
+
+
+<p>The code for the control looks like this:
+<pre>
+&lt;input name="num" type="number" <strong>onchange="if(isSquareNumber(value)) setCustomValidity('Must be a square number'); else setCustomValidity()"</strong>>
+</pre>
+
+<p>The method <code>setCustomValidity</code> called with an error message, indicates that the control is not valid.
+The message will be display, if the user tries to submit the form. If <code>setCustomValidity</code> is called without an argument, the field is considered valid again</p>
+
+ </body>
+</html>

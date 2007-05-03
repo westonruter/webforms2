@@ -1,0 +1,44 @@
+body { 
+  	font-family: georgia; 
+  	font-size: 10pt; 
+  	margin: 2em; 
+  	margin-left: 4em; 
+  	}
+h1, h2 {
+	font-family: trebuchet ms;
+}
+  	
+form { 
+	margin: 0
+	} 
+.example { 
+	background: #e8e8e8; 
+	font-family: verdana; 
+	width: 400px; 
+	padding: 1em; 
+	margin: 1em;
+}
+p { 
+	width: 500px;
+}
+
+pre { 
+	margin-left: 2em; 
+}  
+pre, code { 
+	color: teal; 
+}
+  
+pre strong { 
+	background: yellow; 
+}
+ 
+ 
+ .sidemenu { float:right; width:200px; border: solid black 2px; padding: 1em;}
+ .sidemenu div { }
+ .sidemenu div.current a { background: blue; color: white; }
+ .sidemenu a { text-decoration: none; font-weight: bold; }
+ 
+ #platformWarning {
+ 	position:absolute;left:0;top:0;width:100%;background:yellow;border:solid 1px;font-family:verdana; font-size: 8pt;
+ }
