@@ -1,0 +1,38 @@
+#testSuiteNote {
+	border:dotted 1px gray;
+	padding:1em;
+	background-color:#EEE;
+	margin-bottom:1em;
+}
+#testSuiteNote h1 {
+	margin:0;
+	margin-bottom:1pt;
+	font-size:medium;
+}
+#testSuiteNote p.purpose 
+{
+	margin-top:0;
+	font-style:italic;
+}
+
+.testSuiteNavigation {
+	text-align:center;
+}
+.testSuiteNavigation a
+{
+	
+}
+.testSuiteNavigation a.prev,
+.testSuiteNavigation a.index
+{
+	margin-right:1ex;
+}
+.testSuiteNavigation a.next,
+.testSuiteNavigation a.index
+{
+	margin-left:1ex;
+}
+
+#testSuiteNote hr {
+	display:none;
+}
