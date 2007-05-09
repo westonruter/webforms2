@@ -13,8 +13,9 @@ input.invalid, textarea.invalid, select.invalid { background-color:#FFCCCC; }
 ._wf2_errorMsg:hover 
 {
 	/*background-color:Black;
-	color:White;*/
-	opacity:.4;
+	color:White;
+	opacity:.4;*/
+	z-index:100;
 }
 
 ._wf2_errorMsg ol 

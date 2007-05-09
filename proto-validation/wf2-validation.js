@@ -7,8 +7,9 @@ if(!window.ValidityState && document.implementation && document.implementation.h
 	var ValidityState = {
 		
 		
-		__initDocument : function(){
-			var i,j, form, forms = document.getElementsByTagName('form');
+		__initDescendents : function(context){
+			context = (context || document);
+			var i,j, form, forms = context.getElementsByTagName('form');
 			for(i = 0; form = forms[i]; i++){
 				if(form.checkValidity)
 					continue;
@@ -20,9 +21,9 @@ if(!window.ValidityState && document.implementation && document.implementation.h
 			}
 			
 			var tagNames = ["input","select","textarea","button"];
-			var controls = document.getElementsByTagName([i])
+			var controls = context.getElementsByTagName([i])
 			for(i = 0; i < tagNames.length; i++){
-				controls = document.getElementsByTagName(tagNames[i]); 
+				controls = context.getElementsByTagName(tagNames[i]); 
 				for(j = 0; control = controls[j]; j++){
 					ValidityState._applyValidityInterface(control);
 					ValidityState._updateValidityState.apply(control); //control._updateValidityState();
@@ -130,7 +131,7 @@ if(!window.ValidityState && document.implementation && document.implementation.h
 				var box = document.createElement('div');
 				box.className = "_wf2_errorMsg";
 				box.title = "Close this box.";
-				box.id = (this.id || this.name) + "_errorMsg";
+				box.id = (this.id || this.name) + "_errorMsg"; //QUESTION: does this work for MSIE?
 				box.onclick = function(){
 					this.parentNode.removeChild(this);
 				};
@@ -172,7 +173,8 @@ if(!window.ValidityState && document.implementation && document.implementation.h
 					ol.className = "single";
 					
 				box.appendChild(ol);
-				this.parentNode.insertBefore(box, this);
+				//this.parentNode.insertBefore(box, this); //Inserting error message next to element in question causes problems when the element has a positioned containing block
+				document.body.insertBefore(box, null); //insert at the end of the document
 				
 				var top = left = 0;
 				var obj = this;
@@ -461,20 +463,24 @@ if(!window.ValidityState && document.implementation && document.implementation.h
 	
 if(document.addEventListener){
 	//onDOMload for Gecko and Opera
-	document.addEventListener("DOMContentLoaded", ValidityState.__initDocument, false);
+	document.addEventListener("DOMContentLoaded", function(){
+		ValidityState.__initDescendents(document);
+	}, false);
 
 	//for other browsers which do not support DOMContentLoaded use the following as a fallback to be called hopefully before all other onload handlers
-	window.addEventListener("load", ValidityState.__initDocument, false);
+	window.addEventListener("load", function(){
+		ValidityState.__initDescendents(document);
+	}, false);
 }
 ////old event model used as a last-resort fallback
 //else if(window.onload){ //if(window.onload != RepetitionElement._init_document)
 //	var oldonload = window.onload;
 //	window.onload = function(){
-//		ValidityState.__initDocument();
+//		ValidityState.__initDescendents();
 //		oldonload();
 //	};
 //}
-//else window.onload = ValidityState.__initDocument;
+//else window.onload = ValidityState.__initDescendents;
 
 //onDOMload for Safari
 if (/WebKit/i.test(navigator.userAgent)) { // sniff
@@ -482,7 +488,7 @@ if (/WebKit/i.test(navigator.userAgent)) { // sniff
 		if (/loaded|complete/.test(document.readyState)) {
 			clearInterval(_timer);
 			delete _timer;
-			ValidityState.__initDocument(); // call the onload handler
+			ValidityState.__initDescendents(document); // call the onload handler
 		}
 	}, 10);
 }
@@ -490,7 +496,9 @@ if (/WebKit/i.test(navigator.userAgent)) { // sniff
 else if(/MSIE/i.test(navigator.userAgent) && !document.addEventListener && window.attachEvent){
 	//This following attached onload handler will attempt to be the first onload handler to be called and thus
 	//  initiate the repetition model as early as possible if the DOMContentLoaded substitute fails.
-	window.attachEvent("onload", ValidityState.__initDocument);
+	window.attachEvent("onload", function(){
+		ValidityState.__initDescendents(document);
+	});
 
 	//document.getElementsByTagName('*')[0].addBehavior(dirname + 'repetition-model.htc'); //use this if Behaviors are employed in 0.9
 	document.write("<script defer src='" + dirname + "wf2-validation-msie_init.js'><"+"/script>");
@@ -504,7 +512,7 @@ else if(/MSIE/i.test(navigator.userAgent) && !document.addEventListener && windo
 	//document.getElementsByTagName('head')[0].appendChild(script);
 	script.onreadystatechange = function(){
 		if(this.readyState == "complete"){
-			ValidityState.__initDocument(); // call the onload handler
+			ValidityState.__initDescendents(document); // call the onload handler
 			this.parentNode.removeChild(this);
 		}
 	};
