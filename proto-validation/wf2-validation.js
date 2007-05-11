@@ -1,12 +1,21 @@
 
 if(!window.ValidityState && document.implementation && document.implementation.hasFeature && !document.implementation.hasFeature("WebForms", "2.0")){
-	
-
+	var clearErrorMsgs = function(){
+		while(document.body.lastChild.className && document.body.lastChild.className.indexOf("wf2_errorMsg") != -1){
+			document.body.removeChild(document.body.lastChild);
+		}
+	}
+	if(document.addEventListener){
+		document.addEventListener("mousedown", clearErrorMsgs, false);
+		document.addEventListener("keydown", clearErrorMsgs, false);
+	}
+	else if(document.attachEvent){
+		document.attachEvent("onmousedown", clearErrorMsgs);
+		document.attachEvent("onkeydown", clearErrorMsgs);
+	}
 
 
 	var ValidityState = {
-		
-		
 		__initDescendents : function(context){
 			context = (context || document);
 			var i,j, form, forms = context.getElementsByTagName('form');
@@ -53,9 +62,15 @@ if(!window.ValidityState && document.implementation && document.implementation.h
 				this.validationMessage = "";
 				this.validity.customError = false;
 			}
-			with(this.validity){
-				valid = !(typeMismatch || rangeUnderflow || rangeOverflow || tooLong || patternMismatch || valueMissing || customError);
-			}
+			this.validity.valid = !(
+				   this.validity.typeMismatch 
+				|| this.validity.rangeUnderflow 
+				|| this.validity.rangeOverflow 
+				|| this.validity.tooLong 
+				|| this.validity.patternMismatch 
+				|| this.validity.valueMissing 
+				|| this.validity.customError
+			);
 		},
 		
 		_form_checkValidity : function(){
@@ -95,6 +110,7 @@ if(!window.ValidityState && document.implementation && document.implementation.h
 				else if(document.createEventObject)
 					evt = document.createEventObject();
 				evt.initEvent("invalid", true /*canBubble*/, true /*cancelable*/);
+				evt.srcElement = this;
 				if(this.dispatchEvent)
 					canceled = !this.dispatchEvent(evt);
 				else if(this.fireEvent){
@@ -110,6 +126,7 @@ if(!window.ValidityState && document.implementation && document.implementation.h
 					evt.type = "invalid";
 					evt.cancelBubble = false;
 				}
+				evt.srcElement = this;
 			}
 			
 			//Add support for event handler set with HTML attribute
@@ -123,27 +140,24 @@ if(!window.ValidityState && document.implementation && document.implementation.h
 			
 			//do default action
 			if(!canceled){
+
+	//NOTE: currently an element which has an intrinsit invalid state will persist in that state until
+	//      the new newsletter is loaded and the person blurs or changes the content of a text box
+	//      Furthermore, the following removal of the error messages should be held by the validation
+	//      implementation. The notices could be shown only when focus remains on an element.
+	//      Add focus and blur events to determine when a box is shown or deleted?
+			
 				if(!this.className.match(/\binvalid\b/))
 					this.className += " invalid"; //substitute for :invalid pseudo class
-					
 				
 				//show contextual help message
-				var box = document.createElement('div');
-				box.className = "_wf2_errorMsg";
-				box.title = "Close this box.";
-				box.id = (this.id || this.name) + "_errorMsg"; //QUESTION: does this work for MSIE?
-				box.onclick = function(){
+				var msg = document.createElement('div');
+				msg.className = "wf2_errorMsg";
+				msg.title = "Close";
+				msg.id = (this.id || this.name) + "_errorMsg"; //QUESTION: does this work for MSIE?
+				msg.onclick = function(){ //UNNECESSARY
 					this.parentNode.removeChild(this);
 				};
-				
-//				var a = document.createElement('a');
-//				a.href = "javascript:void(0)";
-//				a.className = "closeErrorMsg";
-//				a.onclick = function(){
-//					this.parentNode.parentNode.removeChild(this.parentNode);
-//				};
-//				a.innerHTML = "\u00D7";
-//				box.appendChild(a);
 				
 				function createLI(text){
 					var li = document.createElement('li');
@@ -172,9 +186,12 @@ if(!window.ValidityState && document.implementation && document.implementation.h
 				if(ol.childNodes.length == 1)
 					ol.className = "single";
 					
-				box.appendChild(ol);
-				//this.parentNode.insertBefore(box, this); //Inserting error message next to element in question causes problems when the element has a positioned containing block
-				document.body.insertBefore(box, null); //insert at the end of the document
+				msg.appendChild(ol);
+				//remove existing error message
+				if(document.getElementById(msg.id))
+					document.body.removeChild(document.getElementById(msg.id));
+				//this.parentNode.insertBefore(msg, this); //Inserting error message next to element in question causes problems when the element has a positioned containing block
+				document.body.insertBefore(msg, null); //insert at the end of the document
 				
 				var top = left = 0;
 				var obj = this;
@@ -186,11 +203,11 @@ if(!window.ValidityState && document.implementation && document.implementation.h
 						top += obj.offsetTop
 					}
 				}
-				
 				top += this.offsetHeight;
+				msg.style.top = top + "px";
+				msg.style.left = left + "px";
 				
-				box.style.top = top + "px";
-				box.style.left = left + "px";
+				//NOTE: delete this element after click or after timeout?
 			}
 			
 			return false;
@@ -338,9 +355,19 @@ if(!window.ValidityState && document.implementation && document.implementation.h
 			
 			//customError -- The control was marked invalid from script. See the definition of the setCustomValiditiy() method.
 			
-			with(this.validity){
-				valid = !(typeMismatch || rangeUnderflow || rangeOverflow || tooLong || patternMismatch || valueMissing || customError);
-			}
+			//with(this.validity){
+			//	valid = !(typeMismatch || rangeUnderflow || rangeOverflow || tooLong || patternMismatch || valueMissing || customError);
+			//}
+			this.validity.valid = !(
+				   this.validity.typeMismatch 
+				|| this.validity.rangeUnderflow 
+				|| this.validity.rangeOverflow 
+				|| this.validity.tooLong 
+				|| this.validity.patternMismatch 
+				|| this.validity.valueMissing 
+				|| this.validity.customError
+			);
+			
 			if(this.validity.valid){
 				this.className = this.className.replace(/\s*\binvalid\b\s*/g, " "); //substitute for :invalid pseudo class
 				var errMsg = document.getElementById((this.id || this.name) + "_errorMsg");

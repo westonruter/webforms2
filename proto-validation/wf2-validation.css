@@ -1,6 +1,6 @@
 input.invalid, textarea.invalid, select.invalid { background-color:#FFCCCC; }
 
-._wf2_errorMsg 
+.wf2_errorMsg 
 {
 	position:absolute; display:inline; border:dotted 1px red; background-color:white; padding:.25em; 
 	padding-left:.5em;
@@ -10,7 +10,7 @@ input.invalid, textarea.invalid, select.invalid { background-color:#FFCCCC; }
 	font-size:smaller;
 	
 }
-._wf2_errorMsg:hover 
+.wf2_errorMsg:hover 
 {
 	/*background-color:Black;
 	color:White;
@@ -18,18 +18,18 @@ input.invalid, textarea.invalid, select.invalid { background-color:#FFCCCC; }
 	z-index:100;
 }
 
-._wf2_errorMsg ol 
+.wf2_errorMsg ol 
 {
 	list-style-position:inside;
 	margin:0;
 	padding:0;
 }
-._wf2_errorMsg ol.single 
+.wf2_errorMsg ol.single 
 {
 	list-style:none;
 }
 
-._wf2_errorMsg a.closeErrorMsg 
+.wf2_errorMsg a.closeErrorMsg 
 {
 	display:none;
 	
@@ -40,7 +40,7 @@ input.invalid, textarea.invalid, select.invalid { background-color:#FFCCCC; }
 	color:gray;
 	font-size:13pt;
 }
-._wf2_errorMsg a.closeErrorMsg:hover 
+.wf2_errorMsg a.closeErrorMsg:hover 
 {
 	color:Red;
 	font-weight:bold;
