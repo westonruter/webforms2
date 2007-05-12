@@ -1,0 +1,115 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<title>Test 3</title>
+		<script type="text/javascript" src="../wf2-validation.js"></script>
+		<script type="text/javascript" src="prototype.js"></script>
+		<style>
+			*:invalid  {
+				border-color:green;
+			}
+
+			td,th {
+				padding-left:1ex;
+				padding-right:1ex;
+				font-size:9pt;
+			}
+			th {
+				text-align:left;
+			}
+			fieldset#eventLogBox {
+				
+			}
+			fieldset#eventLogBox div {
+				text-align:center;
+			}
+			fieldset#eventLogBox table{
+				width:100%;
+			}
+		</style>
+		<script type="text/javascript">
+
+		count = 0;
+		function handleEvent(e){
+			document.getElementById('doNote').style.display='none';
+		
+			count++;
+			var tbody = document.getElementById('eventLog');
+			var row = document.createElement('tr');
+			var cell;
+			
+			cell = document.createElement('th');
+			cell.appendChild(document.createTextNode(count));
+			row.appendChild(cell);
+			
+			cell = document.createElement('td');
+			cell.appendChild(document.createTextNode(e.type));
+			cell.className = 'type';
+			row.appendChild(cell);
+			
+			cell = document.createElement('td');
+			cell.appendChild(document.createTextNode(e.srcElement + "#" + (e.srcElement.id || e.srcElement.name)));
+			row.appendChild(cell);
+			
+			cell = document.createElement('td');
+			['typeMismatch',
+			'rangeUnderflow',
+			'rangeOverflow',
+			'stepMismatch',
+			'tooLong',
+			'patternMismatch',
+			'valueMissing',
+			'customError'].each(function(status){
+				if(e.srcElement.validity[status]){
+					//li.innerHTML += status + " ";
+					cell.appendChild(document.createTextNode(status));
+					if(status == 'customError')
+						cell.appendChild(document.createTextNode("(" + e.validationMessage + ")"));
+					cell.appendChild(document.createTextNode(","));
+				}
+			});
+			row.appendChild(cell);
+			
+			
+			tbody.insertBefore(row, tbody.firstChild);
+		}
+		
+		
+		if(document.addEventListener){
+			document.addEventListener("invalid", handleEvent, false)
+		}
+		</script>
+   <!--[if lte IE 7]>
+   <style>
+   div {display: inline-block;} /* trigger haslayout for IE>5.0 */
+   div {display: block;} /* put it back to what it should be in separate rule */ 
+   </style>
+   <![endif]-->
+
+	</head>
+	<body>
+		<div style="margin-left:10em; margin-top:3em; position:relative;">
+		<form>
+			<label for="name">Name: </label><input type="text" id="name" name="name" required="required" pattern="\w+( \w+)+" oninvalid="if(!document.addEventListener) handleEvent(event)" /><br />
+			<label for="email">Email: </label><input type="email" id="email" name="email" required="required" oninvalid="if(!document.addEventListener) handleEvent(event)" /><br />
+			<button type="submit">Submit</button>
+		</form>
+		</div>
+		
+
+		<fieldset id="eventLogBox">
+			<legend><strong>Event Log</strong></legend>
+			<table cellspacing="0" cellpadding="5">
+				<thead>
+					<tr>
+						<th width="5%">#</th>
+						<th width="10%">Type</th>
+						<th width="30%">Element</th>
+						<th>Invalid states</th>
+					</tr>
+				</thead>
+				<tbody id="eventLog"></tbody>
+			</table>
+			<div id="doNote"><em>(Click the <code>add</code> button above to fire events)</em></div>
+		</fieldset>
+	</body>
+</html>

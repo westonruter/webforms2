@@ -1,21 +1,33 @@
 
+//How can we emulate the :invalid selector, even with an "invalid" class name? 
+//We need to be able to remove this 
+
 if(!window.ValidityState && document.implementation && document.implementation.hasFeature && !document.implementation.hasFeature("WebForms", "2.0")){
-	var clearErrorMsgs = function(){
-		while(document.body.lastChild.className && document.body.lastChild.className.indexOf("wf2_errorMsg") != -1){
-			document.body.removeChild(document.body.lastChild);
+	var clearErrorIndicators = function(){
+		//while(document.body.lastChild.className && document.body.lastChild.className.indexOf("wf2_errorMsg") != -1){
+		//	document.body.removeChild(document.body.lastChild);
+		//}
+		var insts = ValidityState.__invalidInstances;
+		while(insts.length){
+			if(insts[0].errorMsg && insts[0].errorMsg.parentNode)
+				insts[0].errorMsg.parentNode.removeChild(insts[0].errorMsg);
+			window.clearInterval(insts[0].intervalId);
+			insts[0].srcElement.className = insts[0].srcElement.className.replace(/\s?wf2_invalid/, ""); //([^\b]\s)?
+			insts.shift();
 		}
 	}
 	if(document.addEventListener){
-		document.addEventListener("mousedown", clearErrorMsgs, false);
-		document.addEventListener("keydown", clearErrorMsgs, false);
+		document.addEventListener("mousedown", clearErrorIndicators, false);
+		document.addEventListener("keydown", clearErrorIndicators, false);
 	}
 	else if(document.attachEvent){
-		document.attachEvent("onmousedown", clearErrorMsgs);
-		document.attachEvent("onkeydown", clearErrorMsgs);
+		document.attachEvent("onmousedown", clearErrorIndicators);
+		document.attachEvent("onkeydown", clearErrorIndicators);
 	}
 
 
 	var ValidityState = {
+		__invalidInstances : [], //{srcElement:..., intervalCounter:[1-5], errorMsg:[],intervalId:#}
 		__initDescendents : function(context){
 			context = (context || document);
 			var i,j, form, forms = context.getElementsByTagName('form');
@@ -75,18 +87,36 @@ if(!window.ValidityState && document.implementation && document.implementation.h
 		
 		_form_checkValidity : function(){
 			var invalidElements = [];
-			var valid = true;
-			for(var i = 0; el = this.elements[i]; i++){
+			var i,valid = true;
+			for(i = 0; el = this.elements[i]; i++){
 				if(el.checkValidity && el.willValidate == true){
 					if(!el.checkValidity()){
-						invalidElements.push(el);
+						//invalidElements.push(el);
 						valid = false;
 					}
 				}
 			}
 			
-			if(invalidElements.length)
-				invalidElements[0].focus();
+			//if(invalidElements.length)
+			//	invalidElements[0].focus();
+			
+			if(!valid){
+				//var base_zIndex = 100;
+				var insts = ValidityState.__invalidInstances;
+				//insts[0].errorMsg.style.zIndex = base_zIndex + insts.length;
+				insts[0].errorMsg.className += " wf2_firstErrorMsg";
+				//for(i = 1; i < insts.length; i++){
+				//	insts[i].errorMsg.style.zIndex = base_zIndex + insts.length - i;
+				//}
+				insts[0].srcElement.focus();
+			}
+			
+			//while(insts.length){
+			//	insts[0].errorMsg.parentNode.removeChild(insts[0].errorMsg);
+			//	window.clearInterval(insts[0].intervalId);
+			//	insts[0].srcElement.className = insts[0].srcElement.className.replace(/\s?wf2_invalid/, ""); //([^\b]\s)?
+			//	insts.shift();
+			//}
 			
 			return valid;
 		},
@@ -94,8 +124,8 @@ if(!window.ValidityState && document.implementation && document.implementation.h
 		_control_checkValidity : function(){
 			//ValidityState._updateValidityState.apply(this, [{currentTarget:this}]);
 			//ValidityState._updateValidityState({currentTarget:this});
-			this._updateValidityState();
 			
+			this._updateValidityState();
 			if(this.validity.valid){
 				return true;
 			}
@@ -147,15 +177,15 @@ if(!window.ValidityState && document.implementation && document.implementation.h
 	//      implementation. The notices could be shown only when focus remains on an element.
 	//      Add focus and blur events to determine when a box is shown or deleted?
 			
-				if(!this.className.match(/\binvalid\b/))
-					this.className += " invalid"; //substitute for :invalid pseudo class
+				//if(!this.className.match(/\bwf2_invalid\b/))
+				//	this.className += " wf2_invalid"; //substitute for :invalid pseudo class
 				
 				//show contextual help message
 				var msg = document.createElement('div');
 				msg.className = "wf2_errorMsg";
-				msg.title = "Close";
-				msg.id = (this.id || this.name) + "_errorMsg"; //QUESTION: does this work for MSIE?
-				msg.onclick = function(){ //UNNECESSARY
+				//msg.title = "Close";
+				msg.id = (this.id || this.name) + "_wf2_errorMsg"; //QUESTION: does this work for MSIE?
+				msg.onmousedown = function(){
 					this.parentNode.removeChild(this);
 				};
 				
@@ -191,23 +221,65 @@ if(!window.ValidityState && document.implementation && document.implementation.h
 				if(document.getElementById(msg.id))
 					document.body.removeChild(document.getElementById(msg.id));
 				//this.parentNode.insertBefore(msg, this); //Inserting error message next to element in question causes problems when the element has a positioned containing block
-				document.body.insertBefore(msg, null); //insert at the end of the document
+				if(ValidityState.__invalidInstances.length) //insert before other error messages so that it appears on top
+					document.body.insertBefore(msg, ValidityState.__invalidInstances[ValidityState.__invalidInstances.length-1].errorMsg);
+				else //insert at the end of the document
+					document.body.insertBefore(msg, null); 
+				//this.wf2_errorMsg = msg;
 				
 				var top = left = 0;
-				var obj = this;
-				if (obj.offsetParent) {
-					left = obj.offsetLeft
-					top = obj.offsetTop
-					while (obj = obj.offsetParent) {
-						left += obj.offsetLeft
-						top += obj.offsetTop
+				var el = this;
+				while(el && (el.nodeType != 1 || (el.style.display == 'none' || !el.offsetParent)))
+					el = el.nextSibling;
+				
+				var cur = el;
+				if(cur && cur.offsetParent) {
+					left = cur.offsetLeft
+					top = cur.offsetTop
+					while (cur = cur.offsetParent) {
+						left += cur.offsetLeft
+						top += cur.offsetTop
 					}
+					top += el.offsetHeight;
 				}
-				top += this.offsetHeight;
 				msg.style.top = top + "px";
 				msg.style.left = left + "px";
 				
 				//NOTE: delete this element after click or after timeout?
+				var i = ValidityState.__invalidInstances.length;
+				var srcElement_id = this.id || this.name;
+				var errorMsg_id = msg.id;
+				//var _this = this;
+				ValidityState.__invalidInstances.push({
+					srcElement : this,
+					errorMsg : msg,
+					intervalId : window.setInterval(function(){
+						var _this = ValidityState.__invalidInstances[i].srcElement; //closure???
+						if(++ValidityState.__invalidInstances[i].intervalCounter % 2){
+							_this.className = _this.className.replace(/\s?wf2_invalid/, ""); //
+							if(ValidityState.__invalidInstances[i].intervalCounter > 4){
+								window.clearInterval(ValidityState.__invalidInstances[i].intervalId);
+								window.setTimeout(function(){
+									if(!ValidityState.__invalidInstances[i])
+										return;
+									var msg = document.getElementById(errorMsg_id);
+									if(msg)
+										msg.parentNode.removeChild(msg);
+									ValidityState.__invalidInstances[i].errorMsg = null;
+								}, 4000);
+							}
+						}
+						else {
+							if(!_this.className.match(/\bwf2_invalid\b/))
+								_this.className += " wf2_invalid"; //substitute for :invalid pseudo class
+						}
+						//console.info("Flasher " + i + ": " + ValidityState.__invalidInstances[i].intervalCounter);
+						//console.info(_this)
+					}, 500),
+					intervalCounter : 0
+				});
+				if(!this.className.match(/\bwf2_invalid\b/))
+					this.className += " wf2_invalid";
 			}
 			
 			return false;
@@ -368,17 +440,25 @@ if(!window.ValidityState && document.implementation && document.implementation.h
 				|| this.validity.customError
 			);
 			
-			if(this.validity.valid){
-				this.className = this.className.replace(/\s*\binvalid\b\s*/g, " "); //substitute for :invalid pseudo class
-				var errMsg = document.getElementById((this.id || this.name) + "_errorMsg");
-				if(errMsg)
-					errMsg.parentNode.removeChild(errMsg);
-			}
+			//This is now done onmousedown or onkeydown, just as Opera does
+			//if(this.validity.valid){
+			//	this.className = this.className.replace(/\s*\binvalid\b\s*/g, " "); //substitute for :invalid pseudo class
+			//	//if(this.wf2_errorMsg){
+			//	//	this.wf2_errorMsg.parentNode.removeChild(this.wf2_errorMsg);
+			//	//	this.wf2_errorMsg = null;
+			//	//}
+			//	var errMsg = document.getElementById((this.id || this.name) + "_wf2_errorMsg");
+			//	if(errMsg)
+			//		errMsg.parentNode.removeChild(errMsg);
+			//}
 		},
 		
 		_applyValidityInterface : function(node){
-			if(node.validity)
+			if(node.validity && typeof node.validity.typeMismatch != 'undefined') //MSIE needs the second test for some reason
 				return;
+				
+			//if(node.id == "section-CONTENT0")
+			//	alert(/(hidden|button|reset|add|remove|move-up|move-down)/.test(node.getAttribute('type')) || !node.name || node.disabled);
 			
 			node.validationMessage = "";
 			
@@ -409,8 +489,8 @@ if(!window.ValidityState && document.implementation && document.implementation.h
 			node._updateValidityState = ValidityState._updateValidityState;
 			node.setCustomValidity = ValidityState._control_setCustomValidity;
 			node.checkValidity = ValidityState._control_checkValidity;
-				
-			if(String(node.getAttribute('type')).match(/(hidden|button|reset|add|remove|move-up|move-down)/) || !node.name || node.disabled)
+			
+			if(/(hidden|button|reset|add|remove|move-up|move-down)/.test(node.getAttribute('type')) || !node.name || node.disabled)
 				node.willValidate = false;
 			else if(window.RepetitionElement) {
 				var parent = node;
@@ -422,24 +502,24 @@ if(!window.ValidityState && document.implementation && document.implementation.h
 				}
 			}
 			
-			var handler = function(event){
-				return (event.currentTarget || event.srcElement)._updateValidityState();
-			};
+			//var handler = function(event){
+			//	return (event.currentTarget || event.srcElement)._updateValidityState();
+			//};
 			
-			//attempt to check validity live
-			if(document.addEventListener){
-				node.addEventListener('change', handler, false);
-				node.addEventListener('blur', handler, false);
-				node.addEventListener('keyup', handler, false);
-			}
-			else if(window.attachEvent){
-				node.attachEvent('onchange', handler);
-				node.attachEvent('onblur', handler);
-				node.attachEvent('onkeyup', handler);
-			}
-			else {
-			
-			}
+			////attempt to check validity live
+			//if(document.addEventListener){
+			//	node.addEventListener('change', handler, false);
+			//	node.addEventListener('blur', handler, false);
+			//	node.addEventListener('keyup', handler, false);
+			//}
+			//else if(window.attachEvent){
+			//	node.attachEvent('onchange', handler);
+			//	node.attachEvent('onblur', handler);
+			//	node.attachEvent('onkeyup', handler);
+			//}
+			//else {
+			//
+			//}
 			
 			return node;
 		}
