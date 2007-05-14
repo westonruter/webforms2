@@ -108,7 +108,21 @@ if(!window.ValidityState && document.implementation && document.implementation.h
 				//for(i = 1; i < insts.length; i++){
 				//	insts[i].errorMsg.style.zIndex = base_zIndex + insts.length - i;
 				//}
-				insts[0].srcElement.focus();
+				
+				var el = insts[0].srcElement;
+				if(el.style.display == 'none' || !el.offsetParent){
+					while(el && (el.nodeType != 1 || (el.style.display == 'none' || !el.offsetParent)))
+						el = el.previousSibling;
+					var cur = el;
+					var top = 0;
+					if(cur && cur.offsetParent) {
+						top = cur.offsetTop;
+						while (cur = cur.offsetParent)
+							top += cur.offsetTop;
+					}
+					window.scrollTo(0, top);
+				}
+				else el.focus();
 			}
 			
 			//while(insts.length){
@@ -227,18 +241,30 @@ if(!window.ValidityState && document.implementation && document.implementation.h
 					document.body.insertBefore(msg, null); 
 				//this.wf2_errorMsg = msg;
 				
-				var top = left = 0;
-				var el = this;
-				while(el && (el.nodeType != 1 || (el.style.display == 'none' || !el.offsetParent)))
-					el = el.nextSibling;
+				//if(this.style.display == 'none' || !this.offsetParent){
+				//	var prevEl = this.previousSibling;
+				//	var nextEl = this.nextSibling;
+				//	var prevCount = 0, nextCount = 0;
+				//	while(prevEl && (prevEl.nodeType != 1 || (prevEl.style.display == 'none' || !prevEl.offsetParent)) && ++prevCount)
+				//		prevEl = prevEl.previousSibling;
+				//	while(nextEl && (nextEl.nodeType != 1 || (nextEl.style.display == 'none' || !nextEl.offsetParent)) && ++nextCount)
+				//		nextEl = nextEl.nextSibling;
+				//	
+				//	if(prevEl && prevCount > nextCount)
+				//	
+				//}
+				var el = this.parentNode;
+				while(el && (el.nodeType != 1 || (el.style.display == 'none' || el.style.visibility == 'hidden' || !el.offsetParent)))
+					el = el.parentNode;
 				
+				var top = left = 0;
 				var cur = el;
 				if(cur && cur.offsetParent) {
-					left = cur.offsetLeft
-					top = cur.offsetTop
+					left = cur.offsetLeft;
+					top = cur.offsetTop;
 					while (cur = cur.offsetParent) {
-						left += cur.offsetLeft
-						top += cur.offsetTop
+						left += cur.offsetLeft;
+						top += cur.offsetTop;
 					}
 					top += el.offsetHeight;
 				}
