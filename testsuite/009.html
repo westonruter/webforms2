@@ -1,0 +1,80 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>Test Case 9: Repetition Buttons &laquo; Repetition Model Test Suite</title>
+		<meta name="description" content="Demonstrates repetition buttons created with BUTTON and INPUT elements." />
+		<script type="text/javascript" src="../repetition-model.js"></script>
+		<link rel="stylesheet" type="text/css" href="testcase.css" /><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
+		<!-- prev --><link rel="prev" href="008.html" /><!-- /prev -->
+		<!-- next --><link rel="next" href="010.html" /><!-- /next -->
+		<link rel="home" href="index.html" />
+		
+		<style type="text/css">
+			div {
+				padding:.5em;
+				background-color:#EEE;
+			}
+		</style>
+		
+	</head>
+	<body>
+		<div id="testSuiteNote">
+
+			<h1>Web Forms 2.0 Test Case 9: Repetition Buttons</h1>
+			<p class="purpose">
+			This test case demonstrates functionality of the Web Forms 2.0 specification and tests the compliance of 
+			this cross-browser <a href="http://code.google.com/p/repetitionmodel/">Web Forms 2.0 implementation</a>.</p>
+
+			 <p>The following test verifies whether repetition buttons can be created using either <code>button</code> or <code>input</code> elements. This functionality does not work in <a href="http://code.google.com/p/repetitionmodel/">this implementation</a>. However, as the specification <a href="http://whatwg.org/specs/web-forms/current-work/#suggestions">suggests</a>:</p> <blockquote> <p>The add and remove buttons act as submit buttons in compliant HTML4 UAs only if <code>button</code> elements are used. If <code>input</code> buttons are used, then legacy UAs will instead render the controls as text fields. It is thus recommended that authors use <code>button</code> elements.</p> </blockquote> 
+			
+			<div class="testSuiteNavigation">
+				<!-- prev -->&larr;&nbsp;<a href="008.html" class="prev">Initialization Time</a> |<!-- /prev -->
+				<a href="index.html" class="index">Test Suite Index</a>
+				<!-- next -->| <a href="010.html" class="next">Orphan Repetition Blocks</a>&nbsp;&rarr;<!-- /next -->
+			</div>
+			
+			<hr />
+		</div>
+  
+
+
+		<div>
+			<ol>
+				<li id="j" repeat="template">
+					<input type="text" value="[j]" size="2" />
+					<input type="remove" value="Remove " />
+					<input type="move-up" value="Move Up" />
+					<input type="move-down" value="Move Down" />
+				</li>
+			</ol>
+			<p><input type="add" template="j" value="Add" /></p>
+		</div>
+		
+		<p>The preceding <code>DIV</code> should appear exactly as the one below:</p>
+		
+		<div>
+			<ol>
+				<li id="i" repeat="template">
+					<input type="text" value="[i]" size="2" />
+					<button type="remove">Remove</button>
+					<button type="move-up">Move Up</button>
+					<button type="move-down">Move Down</button>
+				</li>
+			</ol>
+			<p><button type="add" template="i">Add</button></p>
+		</div>
+		
+		
+		
+  
+		<hr />
+
+		<hr />
+		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br />
+		Version: 0.1 (2007-05) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
+		<address>
+		<a href="http://weston.ruter.net/">Weston Ruter</a>
+		</address>
+	</body>
+</html>

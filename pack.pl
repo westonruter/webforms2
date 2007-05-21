@@ -9,7 +9,7 @@ $source =~ s{\bwebforms2\.js\b}
 #$source =~ s{(/\*\@cc_on \@\*/\n/\*\@if \(\@_win32\).+?/\*\@end \@\*/)}
 #            {MSIE_ONDOMCONTENTLOADED();}s;
 #(?=/\*\s+cssQuery)
-$source =~ s{(if\(!window\.RepetitionElement.+)} 
+$source =~ s{(if\(document\.implementation.+)} 
             {jsPack($1) . "\n\n"}es;
 
 

@@ -1,0 +1,65 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>Test Case 1: Spec Example: Sample Order Form &laquo; Repetition Model Test Suite</title>
+		<meta name="description" content="" />
+		<script type="text/javascript" src="../repetition-model.js"></script>
+		<link rel="stylesheet" type="text/css" href="testcase.css" /><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
+		
+		<!-- next --><link rel="next" href="002.html" /><!-- /next -->
+		<link rel="home" href="index.html" />
+		
+	</head>
+	<body>
+		<div id="testSuiteNote">
+
+			<h1>Web Forms 2.0 Test Case 1: Spec Example: Sample Order Form</h1>
+			<p class="purpose">
+			This test case demonstrates functionality of the Web Forms 2.0 specification and tests the compliance of 
+			this cross-browser <a href="http://code.google.com/p/repetitionmodel/">Web Forms 2.0 implementation</a>.</p>
+
+			 <p>The following is the <a href="http://whatwg.org/specs/web-forms/current-work/#introduction1">first example</a> from the specification:</p> 
+			
+			<div class="testSuiteNavigation">
+				
+				<a href="index.html" class="index">Test Suite Index</a>
+				<!-- next -->| <a href="002.html" class="next">Spec Example: Repeated rows</a>&nbsp;&rarr;<!-- /next -->
+			</div>
+			
+			<hr />
+		</div>
+  
+
+  <h1>Sample Order Form</h1>
+  <form>
+   <table>
+    <thead>
+     <tr>
+      <th>Product</th>
+      <th>Quantity</th>
+     </tr>
+    </thead>
+    </tbody>
+     <tr id="order" repeat="template" repeat-start="3">
+      <td><input type="text" name="row[order].product" value=""></td>
+      <td><input type="text" name="row[order].quantity" value="1"></td>
+      <td><button type="remove">Remove This Row</button></td>
+     </tr>
+    </tbody>
+   </table>
+   <p><button type="add" template="order">Add Row</button></p>
+   <p><button type="submit">Submit</button></p>
+  </form>
+
+  
+		<hr />
+
+		<hr />
+		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br />
+		Version: 0.1 (2007-05) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
+		<address>
+		<a href="http://weston.ruter.net/">Weston Ruter</a>
+		</address>
+	</body>
+</html>

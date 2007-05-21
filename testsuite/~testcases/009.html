@@ -1,0 +1,63 @@
+﻿<html debug="true" xmlns="http://www.w3.org/1999/xhtml"><!-- debug -->
+	<head>
+		<title>Repetition Buttons</title>
+		<meta name="description" content="Demonstrates repetition buttons created with BUTTON and INPUT elements." />
+		<script type="text/javascript" src="../../webforms2.js"></script>
+		<script type="text/javascript" src="firebug/firebug.js"></script>
+		
+		<!-- BEGIN HEAD -->
+		<style type="text/css">
+			div {
+				padding:.5em;
+				background-color:#EEE;
+			}
+		</style>
+		<!-- END HEAD -->
+	</head>
+	<body>
+		<div id="testcaseDesc">
+			<p>The following test verifies whether repetition buttons can be created using either <code>button</code> or <code>input</code> elements. 
+			This functionality does not work in <a href="http://code.google.com/p/repetitionmodel/">this implementation</a>.
+			However, as the specification <a href="http://whatwg.org/specs/web-forms/current-work/#suggestions">suggests</a>:</p>
+			
+			<blockquote>
+				<p>The add and remove buttons act as submit buttons in compliant
+				HTML4 UAs only if <code>button</code> elements are used. If
+				<code>input</code> buttons are used, then legacy UAs will instead render
+				the controls as text fields. It is thus recommended that authors use
+				<code>button</code> elements.</p>
+			</blockquote>
+		</div>
+		
+		<!-- BEGIN TEST CASE -->
+
+		<div>
+			<ol>
+				<li id="j" repeat="template">
+					<input type="text" value="[j]" size="2" />
+					<input type="remove" value="Remove " />
+					<input type="move-up" value="Move Up" />
+					<input type="move-down" value="Move Down" />
+				</li>
+			</ol>
+			<p><input type="add" template="j" value="Add" /></p>
+		</div>
+		
+		<p>The preceding <code>DIV</code> should appear exactly as the one below:</p>
+		
+		<div>
+			<ol>
+				<li id="i" repeat="template">
+					<input type="text" value="[i]" size="2" />
+					<button type="remove">Remove</button>
+					<button type="move-up">Move Up</button>
+					<button type="move-down">Move Down</button>
+				</li>
+			</ol>
+			<p><button type="add" template="i">Add</button></p>
+		</div>
+		
+		
+		<!-- END TEST CASE -->
+	</body>
+</html>

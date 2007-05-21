@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html debug="true">
+	<head>
+		<title>Spec Example: Sample Order Form</title>
+		<script type="text/javascript" src="../../webforms2.js"></script>
+		<script type="text/javascript" src="firebug/firebug.js"></script>
+	</head>
+<body>
+<div id="testcaseDesc">
+	<p>The following is the <a href="http://whatwg.org/specs/web-forms/current-work/#introduction1">first example</a> from the specification:</p>
+</div>
+
+<!-- BEGIN TEST CASE -->
+  <h1>Sample Order Form</h1>
+  <form>
+   <table>
+    <thead>
+     <tr>
+      <th>Product</th>
+      <th>Quantity</th>
+     </tr>
+    </thead>
+    </tbody>
+     <tr id="order" repeat="template" repeat-start="3">
+      <td><input type="text" name="row[order].product" value=""></td>
+      <td><input type="text" name="row[order].quantity" value="1"></td>
+      <td><button type="remove">Remove This Row</button></td>
+     </tr>
+    </tbody>
+   </table>
+   <p><button type="add" template="order">Add Row</button></p>
+   <p><button type="submit">Submit</button></p>
+  </form>
+<!-- END TEST CASE -->  
+  
+ </body>
+</html>

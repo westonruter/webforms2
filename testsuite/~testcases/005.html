@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<title>Repetition Index in Attributes</title>
+		<meta name="description" content="Replacing template name block's current repetition index in all attributes" />
+		<script type="text/javascript" src="../../webforms2.js"></script>
+		<link rel="stylesheet" type="text/css" href="../testcase.css" />
+
+		<!-- BEGIN HEAD -->
+		<style type="text/css">
+		.pass {
+			background-color:#99FF99;
+		}
+		.fail {
+			background-color:#FFCCCC;
+		}
+		#testResults td {
+			padding-left:1ex;
+			padding-right:1ex;
+		}
+		</style>
+		<script type="text/javascript">
+		window.onload = function(){
+			var block,i,j,name;
+			
+			try {
+				block = document.getElementById('j').repetitionBlocks[0];
+			}
+			catch(e){
+				document.getElementById('testBox').style.display = 'none';
+				document.getElementById('testResults').style.display = 'none';
+				document.getElementById('failList').style.display = 'none';
+				var testResult = document.getElementById('testResult');
+				testResult.innerHTML = "Failed! Test failed because Repetition model was not initialized before user onload. See \u003Ca href='008.html'>test case 8\u003C/a>";
+				testResult.style.color = 'red';
+				//throw Error("Repetition model not yet initialized; user onload called before repetition model could be initialized.");
+				return;
+			}
+			
+			
+			var attributeResults = {};
+			
+			var elements = block.getElementsByTagName("*");
+			for(i = 0; el = elements[i]; i++){
+				if(el.attributes)
+				for(j = 0; attr = el.attributes[j]; j++){
+					if(attr.specified && attr.name.toLowerCase() != 'type')
+						attributeResults[attr.name + " (" + el.nodeName + ")"] = (attr.name == 'style' ? el.style.cssText : attr.value);
+				}
+			}
+			
+			var attributeNames = [];
+			for(name in attributeResults)
+				attributeNames.push(name);
+			attributeNames = attributeNames.sort();
+			
+			var failTotal = 0;
+			var failList = document.getElementById('failList');
+			failList.innerHTML = '';
+			
+			var table = document.getElementById('testResults').getElementsByTagName('tbody')[0];
+			
+			for(i = 0; name = attributeNames[i]; i++){
+				var tr = document.createElement('tr');
+				var tdName = document.createElement('td');
+				tdName.appendChild(document.createTextNode(name));
+				var tdValue = document.createElement('td');
+				tdValue.appendChild(document.createTextNode(attributeResults[name]));
+				tr.appendChild(tdName);
+				tr.appendChild(tdValue);
+				
+				if(!attributeResults[name].match(/10/)){
+					failTotal++;
+					tr.className = 'fail';
+					var li = document.createElement('li');
+					li.appendChild(document.createTextNode(name));
+					failList.appendChild(li);
+				}
+				else {
+					tr.className = 'pass';
+				}
+				
+				table.appendChild(tr);
+			}
+			
+			document.getElementById('testResult').innerHTML = failTotal ? failTotal + " failed" : "passed!";
+			document.getElementById('testBox').style.display = 'none';
+		}
+		</script>
+		<!-- END HEAD -->
+	</head>
+<body>
+<div id="testcaseDesc">
+	<p>For all attributes in a block, template name is to be replaced with the block's current repetition index. The first section below is a test case taken from: &lt;<a href="http://simon.html5.org/test/webforms2/repetition/addition/001.htm">http://simon.html5.org/test/webforms2/repetition/addition/001.htm</a>&gt;; the second section contains a more thorough test case.
+	It demonstrates Opera bug #230280 and this implementation's <a href="http://code.google.com/p/repetitionmodel/issues/detail?id=7">issue #7</a>. The specification defines the correct behavior in <a href="http://www.whatwg.org/specs/web-forms/current-work/#addition">3.6.1. Addition</a>:</p>
+	
+	<blockquote>
+		<p>...any occurrences of a string consisting of an opening square bracket (U+005B, "[") or a modifier 
+		letter half triangular colon (U+02D1, "ˑ"), the template's name, and a closing square bracket (U+005D, "]") 
+		or a middle dot (U+00B7, "·"), are replaced by the new repetition block's index. This is performed regardless 
+		of the types, names, or namespaces of attributes, and is done to all descendants, even those inside nested forms,
+		 nested repetition templates, and so forth.</p>
+	</blockquote>
+</div>
+
+<!-- BEGIN TEST CASE -->
+<h2>Test Case from simon.html5.org</h2>
+<div>
+<div id="i" repeat="template" repeat-start="2">
+ <table border="[i][i]" width="[i][i][i]" style="height:[i][i][i]px">
+  <tr><td><font size="[i][i]" color="#[i][i][i][i][i][i]">TEST</font></td></tr>
+ </table>
+</div>
+
+<p>The above should be exactly equivalent to the following:</p>
+
+<div>
+ <table border="00" width="000" style="height:000px">
+  <tr><td><font size="00" color="#000000">TEST</font></td></tr>
+ </table>
+ <table border="11" width="111" style="height:111px">
+  <tr><td><font size="11" color="#111111">TEST</font></td></tr>
+ </table>
+</div>
+</div>
+
+<hr />
+<h2>Extensive Attribute Test</h2>
+
+<p>Whereas every attribute which contains "<code>[j]</code>" should be replaced with the repetition index (0), 
+it is likely, due to Opera bug #230280 and my <a href="http://code.google.com/p/repetitionmodel/issues/detail?id=7">issue #7</a>, 
+the specified behavior will fail in <code>style</code> and non-CDATA attributes (note that a '1' is also included as "<code>1[j]</code>" so the value of "10" should appear in each attribute):</p>
+<!--
+code 	APPLET
+codebase 	OBJECT
+codebase 	APPLET
+codetype 	OBJECT
+content 	META
+coords 	AREA
+coords 	A
+data 	OBJECT
+object 	APPLET
+-->
+
+<div id="testBox">
+<div id="j" repeat="template">
+	<table border="1[j]" style="margin-top:1[j];" cellpadding="1[j]" cellspacing="1[j]" summary="table 1[j]">
+
+		<colgroup span="1[j]">
+			<col span="1[j]" />
+		</colgroup>
+		
+		<tr>
+			<th axis="axis1[j]" id="header1[j]">T</th>
+			<td>
+				<object standby="Wait, loading 1[j]" archive="1[j]" codebase="http://localhost/1[j]">
+				
+				</object>
+				<form action="process1[j].php" onreset="status = '1[j]'" onsubmit="status = '1[j]'">
+					<label for="text1[j]" accesskey="1[j]">Text: </label>
+					<input id="text1[j]" maxlength="1[j]" name="text1[j]" value="Index delimited by brackets: 1[j]" size="1[j]"
+						onblur="status = '1[j]'" 
+						onchange="status = '1[j]'" 
+						onclick="status = '1[j]'" 
+						ondblclick="status = '1[j]'" 
+						onfocus="status = '1[j]'" 
+						onkeydown="status = '1[j]'"
+						onkeypress="status = '1[j]'"
+						onkeyup="status = '1[j]'"
+						onmousedown="status = '1[j]'"	
+						onmousemove="status = '1[j]'"	
+						onmouseout="status = '1[j]'"	
+						onmouseover="status = '1[j]'"	
+						onmouseup="status = '1[j]'"
+						onselect="status = '1[j]'"
+					 /> (This field has access key set to 1[j])
+					 <button value="Index delimited by U+02D1 and U+00B7: 1&#x02D1;j&#x00B7;">hi</button>
+					 <isindex prompt="Hello 1[j]" />
+					<br />
+					<textarea cols="1[j]" rows="1[j]" tabindex="1[j]" >textarea</textarea>
+					<select size="1[j]">
+						<optgroup label="Group 1[j]">
+							<option value="1[j]">v</option>
+						</optgroup>
+					</select>
+				</form>
+				<hr size="1[j]" />
+			</td>
+			<td char="1[j]" charoff="1[j]">
+				<img src="image1[j].jpg" alt="Image 1[j]" height="1[j]" width="1[j]" title="Image 1[j]" border="1[j]" hspace="1[j]" vspace="1[j]" longdesc="http://localhost/1[j].html" onload="status = '1[j]'" onerror="status = '1[j]'" usemap="http://localhost/1[j].map" />
+				<font size="1[j]" color="#1[j]1[j]1[j]" face="arial1[j]">test</font>
+			</td>
+		</tr>
+		
+		<tr bgcolor="#1[j]1[j]1[j]" class="row1[j]">
+			<td rowspan="1[j]" headers="header1[j]">rowspan</td>
+			<td colspan="1[j]">colspan</td>
+			<td>
+				
+				<blockquote cite="http://localhost/1[j].html">
+				<q cite="http://localhost/1[j].html">q</q>
+				</blockquote>
+				<pre style='background-image:url("test1[j].jpg")'>test</pre>
+				
+				<iframe frameborder="1[j]" height="1[j]" marginheight="1[j]" marginwidth="1[j]"></iframe>
+				
+				<a href="http://localhost/1[j].htmnl" target="window1[j]">test</a>
+				
+				<ol start="1[j]">
+					<!--<li value="1[j]">item</li>--> <!-- NOTE: This line causes MSIE 7 to crash -->
+				</ol>
+				
+			</td>
+		</tr>
+
+	</table>
+</div>
+</div>
+
+
+<h3>Test results</h3>
+<table id="testResults">
+	<tbody>
+		<tr>
+			<th>Attribute</th>
+			<th>Value of attribute (should contain '10')</th>
+		</tr>
+	</tbody>
+</table>
+<p>Test result: <span id="testResult">working...</span></p>
+<ol id="failList">
+	<li>working...</li>
+</ol>
+
+<!-- END TEST CASE -->  
+  
+ </body>
+</html>

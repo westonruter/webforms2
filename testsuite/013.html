@@ -1,0 +1,117 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>Test Case 13: Repeated Photo Albums &laquo; Repetition Model Test Suite</title>
+		<meta name="description" content="Demonstrates repetition model-driven content in nested repetition templates." />
+		<script type="text/javascript" src="../repetition-model.js"></script>
+		<link rel="stylesheet" type="text/css" href="testcase.css" /><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
+		<!-- prev --><link rel="prev" href="012.html" /><!-- /prev -->
+		
+		<link rel="home" href="index.html" />
+		
+		<script type="text/javascript">
+		var updateCount = function(evt){
+			var rt = evt.element.repetitionTemplate;
+			var id = rt.id;
+			if(id.match(/photo/)){
+				document.getElementById('photoCount' + id.match(/(\d+)/)[1]).innerHTML = rt.repetitionBlocks.length;
+				evt.element.onclick = function(){
+					evt.element.removeRepetitionBlock();
+				}
+			}
+		}
+
+		if(document.addEventListener){
+			document.addEventListener("added", updateCount, false);
+			document.addEventListener("removed", updateCount, false);
+			window.onload = function(){
+				document.body.className = 'addEventListener';
+			}
+		}
+		</script>
+		<style type="text/css">
+		fieldset {
+			margin-top:1em;
+		}
+		img.albumNumber {
+			height:1em;
+			width:.9em;
+		}
+		div.photoContainer img {
+			width:90px;
+			height:108px;
+			border:solid 1px #DDD;
+			margin:3px;
+		}
+		.addEventListener div.photoContainer img:hover {
+			border-color:red;
+		}
+		body .addEventListener {
+			display:none;
+		}
+		.addEventListener .addEventListener {
+			display:block;
+		}
+		.addEventListener img {
+			cursor:pointer;
+		}
+		div.photoContainer {
+			margin:1em;
+			margin-right:150px;
+		}
+		span.hint {
+			color:Gray; 
+			font-size:smaller;
+		}
+		</style>
+		
+	</head>
+	<body>
+		<div id="testSuiteNote">
+
+			<h1>Web Forms 2.0 Test Case 13: Repeated Photo Albums</h1>
+			<p class="purpose">
+			This test case demonstrates functionality of the Web Forms 2.0 specification and tests the compliance of 
+			this cross-browser <a href="http://code.google.com/p/repetitionmodel/">Web Forms 2.0 implementation</a>.</p>
+
+			 <p>The following demonstrates repetition model-driven content in nested repetition templates. Note the use of repetition indexes in <code>img[src]</code>, <code>img[alt]</code>, and <code>img[repeat-start]</code> attributes, as well as in the <code>background-image</code> CSS property within a <code>style</code> attribute. If your browser supports <code>addEventListener</code>, you will see a dynamic count of the photos in an album, and you will be able to delete a photo by clicking it. There are only images for numbers from 0 to 16. Opera 9.02 does not display the repetition model-driven background image, and furthermore it does not correctly initialize the nested repetition template; this is probably due to the repetition index appearing in the <code>repeat-start</code> which Opera requires to be an integer.</p> 
+			
+			<div class="testSuiteNavigation">
+				<!-- prev -->&larr;&nbsp;<a href="012.html" class="prev">repeat-min, repeat-max, and repeat-start attributes</a> |<!-- /prev -->
+				<a href="index.html" class="index">Test Suite Index</a>
+				
+			</div>
+			
+			<hr />
+		</div>
+  
+
+
+		<div>
+			<fieldset id="albums" repeat="template" style="background-image:url('013/[albums].gif'); background-repeat:no-repeat; background-position:top right;">
+				<legend><img src="013/[albums].gif" class="albumNumber" alt="Album #[albums]" /> Photo album #<input type="text" value="[albums]" size="2" /> <button type="remove">Delete</button></legend>
+				<div class="photoContainer">
+					<p class="addEventListener">There are currently <span id="photoCount[albums]">0</span> photo(s) in this album. Click on a photo to delete it.</p>
+					<button type="add" template="album[albums].photos">Add photo</button> <span class="hint">(max-repeat = 17; repeat-start = repetitionIndex)</span>
+					<div>
+						<img id="album[albums].photos" repeat="template" repeat-max="17" repeat-start="[albums]" src="013/[album[albums].photos].gif" alt="Image in album [albums], with repetition index [album[albums].photos]" />
+					</div>
+				</div>
+			</fieldset>
+		</div>
+		<p><button type="add" template="albums">Add album</button></p>
+		
+		<p>Graphics from &lt;<a href="http://school.discovery.com/clipart/category/letr0.html">http://school.discovery.com/clipart/category/letr0.html</a>&gt;.</p>
+		
+  
+		<hr />
+
+		<hr />
+		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br />
+		Version: 0.1 (2007-05) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
+		<address>
+		<a href="http://weston.ruter.net/">Weston Ruter</a>
+		</address>
+	</body>
+</html>

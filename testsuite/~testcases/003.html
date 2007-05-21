@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html debug="true">
+	<head>
+		<title>Spec Example: Solar system</title>
+		<meta name="description" content="Nesting repetition elements two levels deep" />
+		<script type="text/javascript" src="../../webforms2.js"></script>
+		<script type="text/javascript" src="firebug/firebug.js"></script>
+	</head>
+<body>
+<div id="testcaseDesc">
+	<p>The following is the <a href="http://whatwg.org/specs/web-forms/current-work/#nested">specification's example</a> of nested
+	repetition elements:</p>
+	
+	<blockquote>
+	<p>The <a href="__previousNumber__.html">previous example</a> does not demonstrate nested repeat blocks, reordering repetition blocks, and inserting new repetition blocks in the middle of the existing sequence, all of which are possible using the facilities described above. This example shows nested repeats. </p>
+	<p>Note that to uniquely identify each nested repeat (which is required since the add buttons are dependent on IDs to specify which template should have a block added), the IDs of the nested templates are specified in terms of the ancestor template's ID, using the index substitution feature.</p>
+	</blockquote>
+</div>
+
+<!-- BEGIN TEST CASE -->
+  <form>
+   <h1> Solar system </h1>
+   <p> <label> System Name: <input name="name"/> </label> </p>
+   <h2> Planets </h2>
+   <ol>
+    <li repeat="template" repeat-start="0" id="planets">
+     <label> Name: <input name="planet[planets].name" required="required"/> </label>
+     <h3> Moons </h3>
+     <ul>
+      <li repeat="template" repeat-start="0" id="planet[planets].moons">
+       <input name="planet[planets].moon[planet[planets].moons]"/>
+       <button type="remove">Delete Moon</button>
+      </li>
+     </ul>
+     <p><button type="add" template="planet[planets].moons">Add Moon</button></p>
+     <p><button type="remove">Delete Planet</button></p>
+    </li>
+   </ol>
+   <p><button type="add" template="planets">Add Planet</button></p>
+   <p><button type="submit">Submit</button></p>
+  </form>
+<!-- END TEST CASE -->  
+  
+ </body>
+</html>

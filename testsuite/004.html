@@ -1,0 +1,313 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>Test Case 4: Movement Buttons and Cancelling Default Action &laquo; Repetition Model Test Suite</title>
+		<meta name="description" content="" />
+		<script type="text/javascript" src="../repetition-model.js"></script>
+		<link rel="stylesheet" type="text/css" href="testcase.css" /><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
+		<!-- prev --><link rel="prev" href="003.html" /><!-- /prev -->
+		<!-- next --><link rel="next" href="005.html" /><!-- /next -->
+		<link rel="home" href="index.html" />
+		
+		<script type="text/javascript">
+		
+		var addCount = 0;
+		
+		window.onload = function(){
+			addHandlers();
+			document.getElementById('order').onadd = function(e){
+				e.element.style.backgroundColor = colors[++addCount % colors.length];
+				addHandlers(e.element);
+			}
+			//document.getElementById('order').onmove = function(e){
+			//	addHandlers();
+			//}
+			document.getElementById('order').addRepetitionBlock(null);
+			document.getElementById('order').addRepetitionBlock(null);
+			
+			/*
+			//eventTestBtn
+			var btn = document.getElementById('eventTestBtn');
+			if(btn.attachEvent){
+				btn.attachEvent('onclick', function(e){
+					var ol = document.getElementById('eventTestResults'); 
+					var li = document.createElement('li'); 
+					li.innerHTML = 'MSIE Event Model (attachEvent)'; 
+					ol.appendChild(li);
+				});
+			}
+			if(btn.addEventListener){
+				btn.addEventListener('click', function(e){
+					var ol = document.getElementById('eventTestResults'); 
+					var li = document.createElement('li'); 
+					li.innerHTML = 'Event Model Level 2 (addEventListener)'; 
+					ol.appendChild(li);
+				}, false);
+			}
+			btn.onclick = function(){
+				var ol = document.getElementById('eventTestResults'); 
+				var li = document.createElement('li'); 
+				li.innerHTML = 'onclick DOM property'; 
+				ol.appendChild(li);
+			}
+			btn.click();
+			*/
+		}
+		
+		var colors = [
+			'rgb(204, 204, 204)',
+			'rgb(255, 204, 204)',
+			'rgb(255, 204, 153)',
+			'rgb(255, 255, 153)',
+			'rgb(255, 255, 204)',
+			'rgb(153, 255, 153)',
+			'rgb(153, 255, 255)',
+			'rgb(204, 255, 255)',
+			'rgb(204, 204, 255)',
+			'rgb(255, 204, 255)'
+		];
+		
+		//event handlers for repetition events
+		var confirmAdd = function(e){
+			if(!e) 
+				var e = window.event;
+			var doAdd = confirm("Are you sure you wish to add?")
+			if(!doAdd && e.preventDefault)
+				e.preventDefault();
+			//e.cancelBubble = true;
+			//e.returnValue = false;
+			return this.returnValue = doAdd;
+		}
+		var confirmRemove = function(e){
+			if(!e) 
+				var e = window.event;
+			var doRemove = confirm("Are you sure you wish to delete?")
+			if(!doRemove && e.preventDefault)
+				e.preventDefault();
+			//e.cancelBubble = true;
+			//e.returnValue = false;
+			return this.returnValue = doRemove;
+		}
+		var confirmMoveUp = function(e){
+			if(!e) 
+				var e = window.event;
+			var doMoveUp = confirm("Are you sure you wish to move up?")
+			if(!doMoveUp && e.preventDefault)
+				e.preventDefault();
+			//e.cancelBubble = true;
+			//e.returnValue = false;
+			return this.returnValue = doMoveUp;
+		}
+		var confirmMoveDown = function(e){
+			if(!e) 
+				var e = window.event;
+			var doMoveDown = confirm("Are you sure you wish to move down?")
+			if(!doMoveDown && e.preventDefault)
+				e.preventDefault();
+			//e.cancelBubble = true;
+			//e.returnValue = false;
+			return this.returnValue = doMoveDown;
+		}
+		
+		
+		//apply all of the event handlers to the buttons 
+		function addHandlers(context){
+			if(!context) context = document;
+	
+			var btn, btns = context.getElementsByTagName('button');
+			for(var i = 0; btn = btns[i]; i++){
+				switch(btn.getAttribute('type')){
+					case "add":
+						if(btn.className.match(/onclickProperty/))
+							btn.onclick = confirmAdd;
+						if(btn.className.match(/DOM2/)){
+							if(btn.addEventListener)
+								btn.addEventListener("click", confirmAdd, false);
+							if(btn.attachEvent)
+								btn.attachEvent("onclick", confirmAdd);
+						}
+						break;
+					case "remove":
+						if(btn.className.match(/onclickProperty/))
+							btn.onclick = confirmRemove;
+						if(btn.className.match(/DOM2/)){
+							if(btn.addEventListener)
+								btn.addEventListener("click", confirmRemove, false);
+							if(btn.attachEvent)
+								btn.attachEvent("onclick", confirmRemove);
+						}
+						break;
+					case "move-up":
+						if(btn.className.match(/onclickProperty/))
+							btn.onclick = confirmMoveUp;
+						if(btn.className.match(/DOM2/)){
+							if(btn.addEventListener)
+								btn.addEventListener("click", confirmMoveUp, false);
+							if(btn.attachEvent)
+								btn.attachEvent("onclick", confirmMoveUp);
+						}
+						break;
+					case "move-down":
+						if(btn.className.match(/onclickProperty/))
+							btn.onclick = confirmMoveDown;
+						if(btn.className.match(/DOM2/)){
+							if(btn.addEventListener)
+								btn.addEventListener("click", confirmMoveDown, false);
+							if(btn.attachEvent)
+								btn.attachEvent("onclick", confirmMoveDown);
+						}
+						break;
+				}
+			}
+		}
+		</script>
+		<style type="text/css">
+		td {
+			padding:.5em;
+		}
+		table th {
+			font-weight:normal;
+			text-align:right;
+			font-size:smaller;
+		}
+		table td {
+			padding:0;
+		}
+		table td button {
+			font-size:8pt;
+		}
+		</style>
+		
+	</head>
+	<body>
+		<div id="testSuiteNote">
+
+			<h1>Web Forms 2.0 Test Case 4: Movement Buttons and Cancelling Default Action</h1>
+			<p class="purpose">
+			This test case demonstrates functionality of the Web Forms 2.0 specification and tests the compliance of 
+			this cross-browser <a href="http://code.google.com/p/repetitionmodel/">Web Forms 2.0 implementation</a>.</p>
+
+			 <p>The following demonstrates the use of all of the repetition model buttons&mdash;<code>add</code>, <code>remove</code>, <code>move-up</code> and <code>move-down</code>&mdash;as well as the various ways to cancel the default action of these repetition buttons. It also provides examples of customized addition buttons.</p> 
+			
+			<div class="testSuiteNavigation">
+				<!-- prev -->&larr;&nbsp;<a href="003.html" class="prev">Spec Example: Solar system</a> |<!-- /prev -->
+				<a href="index.html" class="index">Test Suite Index</a>
+				<!-- next -->| <a href="005.html" class="next">Repetition Index in Attributes</a>&nbsp;&rarr;<!-- /next -->
+			</div>
+			
+			<hr />
+		</div>
+  
+
+		
+		
+		<p><strong>Note:</strong> Buttons with ellipses will confirm the action.</p>
+		<form>
+			<table cellspacing="0">
+				<tbody>
+				<tr id="order" repeat="template" repeat-start="0" repeat-min="0" repeat-max="5">				
+					<td>
+						<input type="text" name="row[order].quantity" value="[order]" size="6">
+					</td>
+					<td>
+						<table class="buttons">
+							<tr>
+								<th>No onclick handler &raquo;</th>
+								<td><button type="remove">Remove</button></td>
+								<td>
+									   <button type="move-down">&#x2193;</button><!--
+									--><button type="move-up">&#x2191;</button><br />
+								</td>
+							</tr>
+							<tr>
+								<th>onclick HTML attr. &raquo;</th>
+								<td><button type="remove" class="onclickAttribute" onclick="return confirmRemove.apply(this, [event])">Remove...</button></td>
+								<td>
+									   <button type="move-down" class="onclickAttribute" onclick="return confirmMoveDown.apply(this, [event])">&#x2193;...</button><!--
+									--><button type="move-up"   class="onclickAttribute" onclick="return confirmMoveUp.apply(this, [event])">&#x2191;...</button><br />
+								</td>
+							</tr>
+							<tr>
+								<th>onclick DOM property &raquo;</th>
+								<td><button type="remove" class="onclickProperty">Remove...</button></td>
+								<td>
+									   <button type="move-down" class="onclickProperty">&#x2193;...</button><!--
+									--><button type="move-up"   class="onclickProperty">&#x2191;...</button>
+								</td>
+							</tr>
+							<tr>
+								<th>DOM Event Level 2 <!--or MSIE--> click &raquo; <br />(native implementations only)</th>
+								<td><button type="remove" class="DOM2">Remove...</button></td>
+								<td>
+									   <button type="move-down" class="DOM2">&#x2193;...</button><!--
+									--><button type="move-up"   class="DOM2">&#x2191;...</button>
+								</td>
+							</tr>
+							<!--<tr>
+								<th>all event models </th>
+								<td><button type="remove" class="onclickAttribute onclickProperty DOM2">Remove...</button></td>
+								<td>
+									<button type="move-down" class="onclickAttribute onclickProperty DOM2">&#x2193;...</button>
+									<button type="move-up"   class="onclickAttribute onclickProperty DOM2">&#x2191;...</button>
+								</td>
+							</tr>-->
+						</table>
+					</td>
+				</tr>
+				</tbody>
+			</table>
+			
+			<p>Form addition buttons (RepeatMax = 5):</p>
+			<table>
+				<tr>
+					<th>No onclick handler &raquo;</th>
+					<td><button type="add" template="order">Add block</button></td>
+				</tr>
+				<tr>
+					<th>onclick HTML attr. &raquo;</th>
+					<td><button type="add" template="order" class="onclickAttribute" onclick="return confirmAdd.apply(this, [event])">Add block...</button></td>
+				</tr>
+				<tr>
+					<th>onclick DOM property &raquo;</th>
+					<td><button type="add" template="order" class="onclickProperty">Add block...</button></td>
+				</tr>
+				<tr>
+					<th>DOM Event Level 2 <!--or MSIE--> click &raquo;<br />(native implementations only)</th>
+					<td><button type="add" template="order" class="DOM2">Add block...</button></td>
+				</tr>
+				<!--<tr>
+					<th>all event models</th>
+					<td><button type="add" template="order" class="onclickAttribute onclickProperty DOM2">Add block...</button></td>
+				</tr>-->
+			</table>
+			<p>Other addition buttons: 
+				<button type="button" onclick="var x = prompt('How many rows would you like to add?', 3); if(!isNaN(x)) for(var i = 0; i < x; i++) document.getElementById('order').addRepetitionBlock(null)">Add X rows...</button>
+				<button type="button" onclick="document.getElementById('order').addRepetitionBlockByIndex(document.getElementsByTagName('tbody')[0].firstChild, 100)">Add Row near top</button>
+			</p>
+			
+			<button type="submit">Submit</button>
+		</form>
+		
+		
+		<!--<fieldset>
+			<legend>Event Model Test</legend>
+			<p>Determine which onclick handler is fired first.</p>
+			<button id="eventTestBtn" type="button" onclick="var ol = document.getElementById('eventTestResults'); var li = document.createElement('li'); li.innerHTML = 'onclick HTML attribute'; ol.appendChild(li);">Click me</button> &lt;- click to determine onclick handler order of execution
+			<ol id="eventTestResults">
+				
+			</ol>
+		</fieldset>-->
+
+		
+  
+		<hr />
+
+		<hr />
+		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br />
+		Version: 0.1 (2007-05) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
+		<address>
+		<a href="http://weston.ruter.net/">Weston Ruter</a>
+		</address>
+	</body>
+</html>

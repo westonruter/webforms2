@@ -1,0 +1,66 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>Test Case 3: Spec Example: Solar system &laquo; Repetition Model Test Suite</title>
+		<meta name="description" content="Nesting repetition elements two levels deep" />
+		<script type="text/javascript" src="../repetition-model.js"></script>
+		<link rel="stylesheet" type="text/css" href="testcase.css" /><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
+		<!-- prev --><link rel="prev" href="002.html" /><!-- /prev -->
+		<!-- next --><link rel="next" href="004.html" /><!-- /next -->
+		<link rel="home" href="index.html" />
+		
+	</head>
+	<body>
+		<div id="testSuiteNote">
+
+			<h1>Web Forms 2.0 Test Case 3: Spec Example: Solar system</h1>
+			<p class="purpose">
+			This test case demonstrates functionality of the Web Forms 2.0 specification and tests the compliance of 
+			this cross-browser <a href="http://code.google.com/p/repetitionmodel/">Web Forms 2.0 implementation</a>.</p>
+
+			 <p>The following is the <a href="http://whatwg.org/specs/web-forms/current-work/#nested">specification's example</a> of nested repetition elements:</p> <blockquote> <p>The <a href="002.html">previous example</a> does not demonstrate nested repeat blocks, reordering repetition blocks, and inserting new repetition blocks in the middle of the existing sequence, all of which are possible using the facilities described above. This example shows nested repeats. </p> <p>Note that to uniquely identify each nested repeat (which is required since the add buttons are dependent on IDs to specify which template should have a block added), the IDs of the nested templates are specified in terms of the ancestor template's ID, using the index substitution feature.</p> </blockquote> 
+			
+			<div class="testSuiteNavigation">
+				<!-- prev -->&larr;&nbsp;<a href="002.html" class="prev">Spec Example: Repeated rows</a> |<!-- /prev -->
+				<a href="index.html" class="index">Test Suite Index</a>
+				<!-- next -->| <a href="004.html" class="next">Movement Buttons and Cancelling Default Action</a>&nbsp;&rarr;<!-- /next -->
+			</div>
+			
+			<hr />
+		</div>
+  
+
+  <form>
+   <h1> Solar system </h1>
+   <p> <label> System Name: <input name="name"/> </label> </p>
+   <h2> Planets </h2>
+   <ol>
+    <li repeat="template" repeat-start="0" id="planets">
+     <label> Name: <input name="planet[planets].name" required="required"/> </label>
+     <h3> Moons </h3>
+     <ul>
+      <li repeat="template" repeat-start="0" id="planet[planets].moons">
+       <input name="planet[planets].moon[planet[planets].moons]"/>
+       <button type="remove">Delete Moon</button>
+      </li>
+     </ul>
+     <p><button type="add" template="planet[planets].moons">Add Moon</button></p>
+     <p><button type="remove">Delete Planet</button></p>
+    </li>
+   </ol>
+   <p><button type="add" template="planets">Add Planet</button></p>
+   <p><button type="submit">Submit</button></p>
+  </form>
+
+  
+		<hr />
+
+		<hr />
+		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br />
+		Version: 0.1 (2007-05) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
+		<address>
+		<a href="http://weston.ruter.net/">Weston Ruter</a>
+		</address>
+	</body>
+</html>

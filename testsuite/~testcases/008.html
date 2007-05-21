@@ -1,0 +1,55 @@
+﻿<html debug="true" xmlns="http://www.w3.org/1999/xhtml"><!-- debug -->
+	<head>
+		<title>Initialization Time</title>
+		<meta name="description" content="Verifies whether or not the repetition template is initialized before onload." />
+		<script type="text/javascript" src="../../webforms2.js"></script>
+		
+		<!-- BEGIN HEAD -->
+		<style type="text/css">
+		.pass {
+			background-color:#99FF99;
+		}
+		.fail {
+			background-color:#FFCCCC;
+		}
+		#testResults td {
+			padding-left:1ex;
+			padding-right:1ex;
+		}
+		</style>
+		<script type="text/javascript">
+		window.onload = function(){
+			var rt = document.getElementById('i');
+			var pass = (RepetitionElement.REPETITION_TEMPLATE != undefined && rt.repetitionType == RepetitionElement.REPETITION_TEMPLATE && rt.repetitionBlocks && rt.repetitionBlocks.length);
+
+			var span = document.getElementById('result');
+			span.style.backgroundColor = pass ? '#99FF99' : '#FFCCCC';
+			span.innerHTML = pass ? 'Passed! Repetition Template initialized before <code>onload</code>' : 'Failure! Repetition Template initialized after <code>onload</code>';
+		}
+		</script>
+		<!-- END HEAD -->
+	</head>
+	<body>
+		<div id="testcaseDesc">
+			<p>The following test verifies whether or not the repetition template is initialized before the user's <code>onload</code> fires.</p>
+		</div>
+		
+		<!-- BEGIN TEST CASE -->
+		<p>Test result: <span id="result" style="padding:0.5em;">loading page...</span></p>
+		
+		<div>
+			<div id="i" repeat="template"></div>
+		</div>
+		
+		<script type="text/javascript">
+		if(window.location.href.match(/loadimage/)){
+			document.write('<p><em>Try the page <a href="' + window.location.href.replace(/loadimage/, '') + '">without the image</a>.</em></p>');
+			document.write('<p><a href="http://www.flickr.com/photos/54337445@N00/138887012/" title="Photo Sharing"><img src="http://farm1.static.flickr.com/36/138887012_9af79f54a4_b.jpg?' + Math.random() +'" width="320" height="240" alt="Sunrise from Rocky Butte" /></a></p>');
+		}
+		else {
+			document.write('<p><em>Also try the page <a href="' + window.location.href.replace(/(\?+)?$/, "?loadimage") + '">with an image</a>.</em></p>');
+		}
+		</script>
+		<!-- END TEST CASE -->
+	</body>
+</html>

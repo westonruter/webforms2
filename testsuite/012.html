@@ -1,0 +1,103 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>Test Case 12: repeat-min, repeat-max, and repeat-start attributes &laquo; Repetition Model Test Suite</title>
+		<meta name="description" content="" />
+		<script type="text/javascript" src="../repetition-model.js"></script>
+		<link rel="stylesheet" type="text/css" href="testcase.css" /><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
+		<!-- prev --><link rel="prev" href="011.html" /><!-- /prev -->
+		<!-- next --><link rel="next" href="013.html" /><!-- /next -->
+		<link rel="home" href="index.html" />
+		
+		<script type="text/javascript">
+		var count = 0;
+		var doStrip = true;
+		function addEventLogEntry(evt){
+			document.getElementById('doNote').style.display='none';
+		
+			count++;
+			var tbody = document.getElementById('eventLog');
+			var row = document.createElement('tr');
+			var cell;
+			
+			cell = document.createElement('th');
+			cell.appendChild(document.createTextNode(evt.element.repetitionIndex));
+			row.appendChild(cell);
+			
+			cell = document.createElement('td');
+			cell.appendChild(document.createTextNode(evt.type));
+			cell.className = 'type';
+			row.appendChild(cell);
+			
+			cell = document.createElement('td');
+			cell.appendChild(document.createTextNode(evt.element.repetitionTemplate.repetitionBlocks.length));
+			row.appendChild(cell);
+			
+			tbody.insertBefore(row, tbody.firstChild);
+		}
+		</script>
+		
+	</head>
+	<body>
+		<div id="testSuiteNote">
+
+			<h1>Web Forms 2.0 Test Case 12: repeat-min, repeat-max, and repeat-start attributes</h1>
+			<p class="purpose">
+			This test case demonstrates functionality of the Web Forms 2.0 specification and tests the compliance of 
+			this cross-browser <a href="http://code.google.com/p/repetitionmodel/">Web Forms 2.0 implementation</a>.</p>
+
+			 <p>The following verifies that the <code>repeat-min</code>, <code>repeat-max</code>, and <code>repeat-start</code> attributes work correctly. The event log utilizes the <code>onadd</code> and <code>onremove</code> extensions to the repetition model specification.</p> 
+			
+			<div class="testSuiteNavigation">
+				<!-- prev -->&larr;&nbsp;<a href="011.html" class="prev">Disabled Form Fields in Template</a> |<!-- /prev -->
+				<a href="index.html" class="index">Test Suite Index</a>
+				<!-- next -->| <a href="013.html" class="next">Repeated Photo Albums</a>&nbsp;&rarr;<!-- /next -->
+			</div>
+			
+			<hr />
+		</div>
+  
+
+
+		<p>For the following repetition template:</p>
+		<ul>
+			<li><code>repeat-min</code> = 1</li>
+			<li><code>repeat-max</code> = 5</li>
+			<li><code>repeat-start</code> = 3</li>
+		</ul>
+
+		<div>
+			<div id="i" repeat="template" repeat-start="3" repeat-min="1" repeat-max="5" onadd="addEventLogEntry(event)" onremove="addEventLogEntry(event)">
+				#<input type="text" value="[i]" /><button type="remove">Remove</button>
+			</div>
+		</div>
+		<p><button type="add" template="i">Add block</button></p>
+				
+		<fieldset id="eventLogBox">
+			<legend><strong>Event Log</strong></legend>
+			<table cellspacing="0" cellpadding="5">
+				<thead>
+					<tr>
+						<th>#</th>
+						<th>Type</th>
+						<th><code>repetitionBlocks.length</code></th>
+					</tr>
+				</thead>
+				<tbody id="eventLog"></tbody>
+			</table>
+			<div id="doNote"><em>(Click the <code>add</code> button above to fire events)</em></div>
+		</fieldset>
+	
+		
+  
+		<hr />
+
+		<hr />
+		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br />
+		Version: 0.1 (2007-05) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
+		<address>
+		<a href="http://weston.ruter.net/">Weston Ruter</a>
+		</address>
+	</body>
+</html>

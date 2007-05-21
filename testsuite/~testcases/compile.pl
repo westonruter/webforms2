@@ -24,7 +24,7 @@ while(1){
 	close S;
 	$counter = 1;
 	
-	open S, "../../repetition-model.js";
+	open S, "../../webforms2.js";
 	$s = join '', <S>;
 	$s =~ /Version:\s+(.+?)\s+\((.+?)\)/;
 	$implementationVersion = $1;

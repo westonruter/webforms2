@@ -1,0 +1,126 @@
+﻿<html debug="true" xmlns="http://www.w3.org/1999/xhtml"><!-- debug -->
+	<head>
+		<title>Repetition Event Handler Attributes</title>
+		<meta name="description" content="Demonstrating the use of the onadd, onremove, and onmove attribute handler extensions" />
+		<script type="text/javascript" src="../../webforms2.js"></script>
+		<script type="text/javascript" src="../firebug/firebug.js"></script>
+		
+		<!-- BEGIN HEAD -->
+		<script type="text/javascript">
+		
+		var colors = [
+			'rgb(255, 255, 255)',
+			'rgb(255, 204, 204)',
+			'rgb(255, 204, 153)',
+			'rgb(255, 255, 153)',
+			'rgb(255, 255, 204)',
+			'rgb(153, 255, 153)',
+			'rgb(153, 255, 255)',
+			'rgb(204, 255, 255)',
+			'rgb(204, 204, 255)',
+			'rgb(255, 204, 255)',
+			'rgb(204, 204, 204)'
+		];
+
+		var count = 0;
+		var doStrip = true;
+		function addEventLogEntry(evt){
+			document.getElementById('doNote').style.display='none';
+		
+			count++;
+			var tbody = document.getElementById('eventLog');
+			var row = document.createElement('tr');
+			var cell;
+			
+			cell = document.createElement('th');
+			cell.appendChild(document.createTextNode(count));
+			row.appendChild(cell);
+			
+			cell = document.createElement('td');
+			cell.appendChild(document.createTextNode(evt.type));
+			cell.className = 'type';
+			row.appendChild(cell);
+			
+			cell = document.createElement('td');
+			cell.appendChild(document.createTextNode(evt.element));
+			row.appendChild(cell);
+			
+			if(!evt.element.style || !evt.element.style.backgroundColor)
+				evt.element.style.backgroundColor = colors[count % colors.length];
+			row.style.backgroundColor = evt.element.style.backgroundColor;
+			
+			tbody.insertBefore(row, tbody.firstChild);
+		}
+		
+		</script>
+		<style type="text/css">
+			ul {
+				width:60ex;
+			}
+			li {
+				margin-top:.3em;
+				margin-bottom:.3em;
+				padding-left:1ex;
+				padding-top:.1em;
+				padding-bottom:.1em;
+				padding-right:.1em;
+			}
+			td,th {
+				padding-left:1ex;
+				padding-right:1ex;
+				font-size:9pt;
+			}
+			fieldset#eventLogBox {
+				width:50ex;
+			}
+			fieldset#eventLogBox div {
+				text-align:center;
+			}
+			fieldset#eventLogBox table{
+				width:100%;
+			}
+			td.type {
+				font-size:larger;
+				font-weight:bold;
+			}
+		</style>
+		<!-- END HEAD -->
+	</head>
+	<body>
+		<div id="testcaseDesc">
+			<p>The following demonstrates the handling of repetition events handled by <code>onadd</code>, <code>onmove</code>, and <code>onremove</code>
+			HTML attributes set on a repetition template which handle their respective events. This is made possible by an <a href="http://code.google.com/p/repetitionmodel/wiki/Extensions">extension</a> to the specification, found in <a href="http://code.google.com/p/repetitionmodel/">this implementation</a>.</p>
+		</div>
+		
+		<!-- BEGIN TEST CASE -->
+		
+		<form>
+			<p><button type="add" template="i" style="font-size:large">Add row</button></p>
+			<ul>
+				<li id="i" repeat="template" repeat-start="0" onadd="addEventLogEntry(event)" onremove="addEventLogEntry(event)" onmove="addEventLogEntry(event)">
+					<input type="text" id="text[i]" value="Index [i]" />
+					<button type="move-down">&#x2193;</button><button type="move-up">&#x2191;</button>
+					<button type="remove">Remove</button>
+				</li>
+			</ul>
+		</form>
+		<br />
+		
+		<fieldset id="eventLogBox">
+			<legend><strong>Event Log</strong></legend>
+			<table cellspacing="0" cellpadding="5">
+				<thead>
+					<tr>
+						<th>#</th>
+						<th>Type</th>
+						<th>Element</th>
+					</tr>
+				</thead>
+				<tbody id="eventLog"></tbody>
+			</table>
+			<div id="doNote"><em>(Click the <code>add</code> button above to fire events)</em></div>
+		</fieldset>
+		
+		<!-- END TEST CASE -->
+	</body>
+</html>

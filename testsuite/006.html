@@ -1,0 +1,229 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>Test Case 6: Repetition Events &laquo; Repetition Model Test Suite</title>
+		<meta name="description" content="Demonstrating the handling of added, removed, and moved events" />
+		<script type="text/javascript" src="../repetition-model.js"></script>
+		<link rel="stylesheet" type="text/css" href="testcase.css" /><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
+		<!-- prev --><link rel="prev" href="005.html" /><!-- /prev -->
+		<!-- next --><link rel="next" href="007.html" /><!-- /next -->
+		<link rel="home" href="index.html" />
+		
+		<script type="text/javascript">
+		
+		var colors = [
+			'rgb(255, 255, 255)',
+			'rgb(255, 204, 204)',
+			'rgb(255, 204, 153)',
+			'rgb(255, 255, 153)',
+			'rgb(255, 255, 204)',
+			'rgb(153, 255, 153)',
+			'rgb(153, 255, 255)',
+			'rgb(204, 255, 255)',
+			'rgb(204, 204, 255)',
+			'rgb(255, 204, 255)',
+			'rgb(204, 204, 204)'
+		];
+		window.onload = function(){
+			var dom2EventModel = document.getElementById('dom2EventModel');
+			var oldEventModel = document.getElementById('oldEventModel');
+		
+			try {
+				if(document.addEventListener && document.createEvent('UIEvents')){
+					toggleDOM2Events(dom2EventModel.checked);
+				}
+				else throw Error();
+			}
+			catch(err){
+				dom2EventModel.checked = false;
+				dom2EventModel.disabled = true;
+				dom2EventModel.parentNode.className = 'disabled';
+				oldEventModel.checked = true;	
+			}
+			toggleTraditionalEvents(oldEventModel.checked);
+		}
+		
+		var count = 0;
+		var doStrip = true;
+		function addEventLogEntry(type, element, model){
+			document.getElementById('doNote').style.display='none';
+		
+			count++;
+			var tbody = document.getElementById('eventLog');
+			var row = document.createElement('tr');
+			var cell;
+			
+			cell = document.createElement('th');
+			cell.appendChild(document.createTextNode(count));
+			row.appendChild(cell);
+			
+			cell = document.createElement('td');
+			cell.appendChild(document.createTextNode(type));
+			cell.className = 'type';
+			row.appendChild(cell);
+			
+			cell = document.createElement('td');
+			cell.appendChild(document.createTextNode(element));
+			row.appendChild(cell);
+			
+			cell = document.createElement('td');
+			cell.appendChild(document.createTextNode(model));
+			row.appendChild(cell);
+			
+			if(!element.style || !element.style.backgroundColor)
+				element.style.backgroundColor = colors[count % colors.length];
+			row.style.backgroundColor = element.style.backgroundColor;
+			
+			tbody.insertBefore(row, tbody.firstChild);
+		}
+		
+		function handle_DOM2Event(event){
+			addEventLogEntry(event.type, event.element, 'DOM Level 2');
+		}
+		function handle_traditionalEvent(event){
+			addEventLogEntry(event.type, event.element, 'traditional');
+		}
+
+		function toggleDOM2Events(toggle){
+			if(toggle){
+				document.addEventListener('added', handle_DOM2Event, false);
+				document.addEventListener('removed', handle_DOM2Event, false);
+				document.addEventListener('moved', handle_DOM2Event, false);
+			}
+			else {
+				document.removeEventListener('added', handle_DOM2Event, false);
+				document.removeEventListener('removed', handle_DOM2Event, false);
+				document.removeEventListener('moved', handle_DOM2Event, false);
+			}
+		}
+		function toggleTraditionalEvents(toggle){
+			if(toggle){
+				var rt = document.getElementById('i');
+				rt.onadd = handle_traditionalEvent;
+				rt.onremove = handle_traditionalEvent;
+				rt.onmove = handle_traditionalEvent;
+			}
+			else {
+				var rt = document.getElementById('i');
+				rt.onadd = null;
+				rt.onremove = null;
+				rt.onmove = null;
+			}
+		}
+		
+		</script>
+		<style type="text/css">
+			ul {
+				width:60ex;
+			}
+			li {
+				margin-top:.3em;
+				margin-bottom:.3em;
+				padding-left:1ex;
+				padding-top:.1em;
+				padding-bottom:.1em;
+				padding-right:.1em;
+			}
+			td,th {
+				padding-left:1ex;
+				padding-right:1ex;
+				font-size:9pt;
+			}
+			fieldset#eventLogBox {
+				width:50ex;
+			}
+			fieldset#eventLogBox div {
+				text-align:center;
+			}
+			fieldset#eventLogBox table{
+				width:100%;
+			}
+			td.type {
+				font-size:larger;
+				font-weight:bold;
+			}
+			.disabled label {
+				text-decoration:line-through;
+			}
+			.error {
+				display:none;
+			}
+			.disabled .error {
+				color:red;
+				display:inline;
+			}
+		</style>
+		
+	</head>
+	<body>
+		<div id="testSuiteNote">
+
+			<h1>Web Forms 2.0 Test Case 6: Repetition Events</h1>
+			<p class="purpose">
+			This test case demonstrates functionality of the Web Forms 2.0 specification and tests the compliance of 
+			this cross-browser <a href="http://code.google.com/p/repetitionmodel/">Web Forms 2.0 implementation</a>.</p>
+
+			 <p>The following demonstrates the handling of repetition events, using both the DOM Level 2 event model and the traditional event model; the MSIE's proprietary event model is not demonstrated.</p> 
+			
+			<div class="testSuiteNavigation">
+				<!-- prev -->&larr;&nbsp;<a href="005.html" class="prev">Repetition Index in Attributes</a> |<!-- /prev -->
+				<a href="index.html" class="index">Test Suite Index</a>
+				<!-- next -->| <a href="007.html" class="next">Repetition Event Handler Attributes</a>&nbsp;&rarr;<!-- /next -->
+			</div>
+			
+			<hr />
+		</div>
+  
+
+		
+		<form>
+			<fieldset style="display:inline;">
+				<legend><strong>Event model options</strong></legend>
+				<div><input type="checkbox" id="dom2EventModel" onclick="toggleDOM2Events(this.checked)" checked="checked" />
+				<label for="dom2EventModel">Use DOM Level 2 event model</label>
+				<span class="error">Unsupported by this browser</span>
+				</div>
+				<div><input type="checkbox" id="oldEventModel" onclick="toggleTraditionalEvents(this.checked)" />
+				<label for="oldEventModel">Use traditional event model</label> (<a href="http://code.google.com/p/repetitionmodel/wiki/Extensions">extension</a> provided by <a href="http://code.google.com/p/repetitionmodel/">implementation</a>)</div>
+			</fieldset>
+			
+			<p><button type="add" template="i" style="font-size:large">Add row</button></p>
+			<ul>
+				<li id="i" repeat="template" repeat-start="0">
+					<input type="text" id="text[i]" value="Index [i]" />
+					<button type="move-down">&#x2193;</button><button type="move-up">&#x2191;</button>
+					<button type="remove">Remove</button>
+				</li>
+			</ul>
+		</form>
+		<br />
+		
+		<fieldset id="eventLogBox">
+			<legend><strong>Event Log</strong></legend>
+			<table cellspacing="0" cellpadding="5">
+				<thead>
+					<tr>
+						<th>#</th>
+						<th>Type</th>
+						<th>Element</th>
+						<th>Model</th>
+					</tr>
+				</thead>
+				<tbody id="eventLog"></tbody>
+			</table>
+			<div id="doNote"><em>(Click the <code>add</code> button above to fire events)</em></div>
+		</fieldset>
+		
+		
+  
+		<hr />
+
+		<hr />
+		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br />
+		Version: 0.1 (2007-05) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
+		<address>
+		<a href="http://weston.ruter.net/">Weston Ruter</a>
+		</address>
+	</body>
+</html>

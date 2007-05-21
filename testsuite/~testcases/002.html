@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html debug="true">
+	<head>
+		<title>Spec Example: Repeated rows</title>
+		<meta name="description" content="Dynamically adding table rows" />
+		<meta name="description" content="" />
+		<script type="text/javascript" src="../../webforms2.js"></script>
+		<script type="text/javascript" src="firebug/firebug.js"></script>
+	</head>
+<body>
+<div id="testcaseDesc">
+	<p>The following example <a href="http://whatwg.org/specs/web-forms/current-work/#repeatExample">from the specification</a> "shows how to use repetition templates to dynamically add rows to a form in a table":
+	
+	<blockquote>
+	<p>Initially, two rows would be visible, each with two text input controls, the first row having the values "John Smith" and "2", the second row having the values "" (a blank text field) and "1". The second row is the result of the (implied) repeat-start attribute adding a repetition block when the document was loaded.</p>
+	<p>If the "Add Row" button is pressed, a new row is added. The first such row would have the index 2 (since there are already two repetition blocks numbered 0 and 1) and so the controls would be named "name_2" and "count_2" respectively.</p>
+	<p>If the "Delete Row" button above is pressed, the row is removed. </p>
+	</blockquote>
+</div>
+
+<!-- BEGIN TEST CASE -->
+  <form action="http://software.hixie.ch/utilities/cgi/test-tools/echo" method="post" enctype="multipart/form-data">
+   <table>
+    <thead>
+     <tr>
+      <th>Name</th>
+      <th>Number of Cats</th>
+      <th></th>
+     </tr>
+    </thead>
+    <tbody>
+     <tr repeat="0">
+      <td><input type="text" name="name_0" value="John Smith"></td>
+      <td><input type="text" name="count_0" value="2"></td>
+      <td><button type="remove">Delete Row</button></td>
+     </tr>
+     <tr repeat="template" id="row">
+      <td><input type="text" name="name_[row]" value=""></td>
+      <td><input type="text" name="count_[row]" value="1"></td>
+      <td><button type="remove">Delete Row</button></td>
+     </tr>
+    </tbody>
+   </table>
+   <p>
+    <button type="add" template="row">Add Row</button>
+    <button type="submit">Submit</button>
+   </p>
+  </form>
+<!-- END TEST CASE -->  
+  
+ </body>
+</html>

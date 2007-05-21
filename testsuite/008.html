@@ -1,0 +1,83 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>Test Case 8: Initialization Time &laquo; Repetition Model Test Suite</title>
+		<meta name="description" content="Verifies whether or not the repetition template is initialized before onload." />
+		<script type="text/javascript" src="../repetition-model.js"></script>
+		<link rel="stylesheet" type="text/css" href="testcase.css" /><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
+		<!-- prev --><link rel="prev" href="007.html" /><!-- /prev -->
+		<!-- next --><link rel="next" href="009.html" /><!-- /next -->
+		<link rel="home" href="index.html" />
+		
+		<style type="text/css">
+		.pass {
+			background-color:#99FF99;
+		}
+		.fail {
+			background-color:#FFCCCC;
+		}
+		#testResults td {
+			padding-left:1ex;
+			padding-right:1ex;
+		}
+		</style>
+		<script type="text/javascript">
+		window.onload = function(){
+			var rt = document.getElementById('i');
+			var pass = (RepetitionElement.REPETITION_TEMPLATE != undefined && rt.repetitionType == RepetitionElement.REPETITION_TEMPLATE && rt.repetitionBlocks && rt.repetitionBlocks.length);
+
+			var span = document.getElementById('result');
+			span.style.backgroundColor = pass ? '#99FF99' : '#FFCCCC';
+			span.innerHTML = pass ? 'Passed! Repetition Template initialized before <code>onload</code>' : 'Failure! Repetition Template initialized after <code>onload</code>';
+		}
+		</script>
+		
+	</head>
+	<body>
+		<div id="testSuiteNote">
+
+			<h1>Web Forms 2.0 Test Case 8: Initialization Time</h1>
+			<p class="purpose">
+			This test case demonstrates functionality of the Web Forms 2.0 specification and tests the compliance of 
+			this cross-browser <a href="http://code.google.com/p/repetitionmodel/">Web Forms 2.0 implementation</a>.</p>
+
+			 <p>The following test verifies whether or not the repetition template is initialized before the user's <code>onload</code> fires.</p> 
+			
+			<div class="testSuiteNavigation">
+				<!-- prev -->&larr;&nbsp;<a href="007.html" class="prev">Repetition Event Handler Attributes</a> |<!-- /prev -->
+				<a href="index.html" class="index">Test Suite Index</a>
+				<!-- next -->| <a href="009.html" class="next">Repetition Buttons</a>&nbsp;&rarr;<!-- /next -->
+			</div>
+			
+			<hr />
+		</div>
+  
+
+		<p>Test result: <span id="result" style="padding:0.5em;">loading page...</span></p>
+		
+		<div>
+			<div id="i" repeat="template"></div>
+		</div>
+		
+		<script type="text/javascript">
+		if(window.location.href.match(/loadimage/)){
+			document.write('<p><em>Try the page <a href="' + window.location.href.replace(/loadimage/, '') + '">without the image</a>.</em></p>');
+			document.write('<p><a href="http://www.flickr.com/photos/54337445@N00/138887012/" title="Photo Sharing"><img src="http://farm1.static.flickr.com/36/138887012_9af79f54a4_b.jpg?' + Math.random() +'" width="320" height="240" alt="Sunrise from Rocky Butte" /></a></p>');
+		}
+		else {
+			document.write('<p><em>Also try the page <a href="' + window.location.href.replace(/(\?+)?$/, "?loadimage") + '">with an image</a>.</em></p>');
+		}
+		</script>
+		
+  
+		<hr />
+
+		<hr />
+		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br />
+		Version: 0.1 (2007-05) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
+		<address>
+		<a href="http://weston.ruter.net/">Weston Ruter</a>
+		</address>
+	</body>
+</html>

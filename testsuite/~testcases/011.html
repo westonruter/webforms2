@@ -1,0 +1,98 @@
+﻿<html debug="true" xmlns="http://www.w3.org/1999/xhtml"><!-- debug -->
+	<head>
+		<title>Disabled Form Fields in Template</title>
+		<meta name="description" content="" />
+		<script type="text/javascript" src="../../webforms2.js"></script>
+		<script type="text/javascript" src="firebug/firebug.js"></script>
+		
+		<!-- BEGIN HEAD -->
+		<style type="text/css">
+		#nonsuccessfulTestResult {
+		
+		}
+		#disabledTestResult {
+		
+		}
+		
+		span.passed .pretest,
+		span.failed .pretest {
+			display:none;
+		}
+		
+		span .pass,
+		span .fail {
+			display:none;
+		}
+		
+		span .pass {
+			background-color:#99FF99;
+		}
+		span .fail {
+			background-color:#FFCCCC;
+		}
+		
+		span.passed .pass,
+		span.failed .fail {
+			display:inline;
+			padding-left:1em;
+			padding-right:1em;
+		}
+		</style>
+		<script type="text/javascript">
+		window.onload = function(){
+			if(!window.location.href.match(/\?.+/)){
+				document.forms[0].submit();
+			}
+			//disabledTestResult
+			else {
+				document.getElementById('disabledTestResult').className = window.location.href.match(/unsubmitted/) ? 'failed' : 'passed';
+				document.getElementById('nonsuccessfulTestResult').className = window.location.href.match(/submitted%5Bi%5D/) ? 'failed' : 'passed';
+			}
+		}
+		</script>
+		<!-- END HEAD -->
+	</head>
+	<body>
+		<div id="testcaseDesc">
+			<p>The following verifies that form fields within a repetition template are not successful. It also tests whether form fields disabled 
+			in the repetition template are also disabled in each instantiated repetition block, but note: for this to work in this implementation, authors must 
+			include a class name of "disabled" on all disabled elements in the repetition template element to ensure that they are also disabled in each repetition block. This is due to an issue in Firefox which is detailed in issue <a href="http://code.google.com/p/repetitionmodel/issues/detail?id=9">#9</a>.</p>
+		</div>
+		
+		<!-- BEGIN TEST CASE -->
+
+		
+				
+		<form method="get">
+			<ol>
+				<li repeat="template" id="i">
+					Not disabled element: <input type="text" name="submitted[i]" value="submitted" /><br />
+					Disabled element: <input type="text" name="unsubmitted[i]" value="not submitted" disabled="disabled" class="disabled" /> <em><small>(this should not be successful in form submission)</small></em>
+				</li>
+			</ol>
+			<button type="add" template="i">Add block</button> 
+			<button type="submit"><strong>Submit form</strong></button>
+		</form>
+		
+		<h2>Test results</h2>
+		<ol>
+			<li><p>Form fields in repetition template should not be 'successful' (there should not be any querystring parameters with keys such as <code>submitted[i]</code>; these fields should not be submitted): 
+			<span id="nonsuccessfulTestResult">
+				<span class='pretest'>Press 'submit form' to test...</span>
+				<span class="pass">Passed</span>
+				<span class="fail">Failed!</span>
+			</span>
+			</p></li>
+			
+			<li><p>Form fields in the repetition template which are originally flagged as <code>disabled</code> should be disabled in each instantiated repetition block:
+			<span id="disabledTestResult">
+				<span class='pretest'>Press 'submit form' to test...</span>
+				<span class="pass">Passed</span>
+				<span class="fail">Failed!</span>
+			</span>
+			</p></li>
+		</ol>
+		<!-- END TEST CASE -->
+		
+	</body>
+</html>
