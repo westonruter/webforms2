@@ -10,18 +10,19 @@
  *  Usage: <script type="text/javascript" src="webforms2.js"></script>
  */
 
+if(!window.$wf2){
 var $wf2 = {};
 
 if(document.implementation && document.implementation.hasFeature && 
   !document.implementation.hasFeature("WebForms", "2.0")){
 
-if(!window.RepetitionElement){
-	var RepetitionElement = {
-		REPETITION_NONE:0,
-		REPETITION_TEMPLATE:1,
-		REPETITION_BLOCK:2
-	};
-}
+//if(!window.RepetitionElement){
+var RepetitionElement = {
+	REPETITION_NONE:0,
+	REPETITION_TEMPLATE:1,
+	REPETITION_BLOCK:2
+};
+//}
 
 $wf2 = {
 	version : "0.1",
@@ -97,7 +98,7 @@ $wf2 = {
 	 # REPETITION MODEL
 	 ##############################################################################################*/
 
-	// REPETITION TEMPLATE --------------------------------------------------------------------------
+	//## REPETITION TEMPLATE #############################################################
 	repetitionTemplate_constructor : function(){
 		if(this._initialized)
 			return;
@@ -186,7 +187,7 @@ $wf2 = {
 	},
 
 
-	// REPETITION BLOCK  --------------------------------------------------------------------------
+	//## REPETITION BLOCK  #############################################################
 	repetitionBlock_constructor : function(){
 		if(this._initialized)
 			return;
@@ -233,7 +234,7 @@ $wf2 = {
 	},
 	
 	
-	// Repetition buttons ---------------------------------------------------------------------
+	//## Repetition buttons #############################################################
 	repetitionButtonDefaultLabels : {
 		'add' : "Add",
 		'remove' : "Remove",
@@ -396,7 +397,7 @@ $wf2 = {
 	//	$wf2.initRepetitionButtons('move-down', parentNode);
 	//},
 	
-	// AddRepetitionBlock algorithm -----------------------------------------------------------------	
+	//## AddRepetitionBlock algorithm #############################################################	
 	//Element addRepetitionBlock(in Node refNode);
 	addRepetitionBlock : function(refNode, index){ //addRepetitionBlockByIndex functionalty enabled if @index defined
 		if(refNode && !refNode.nodeType)
@@ -675,7 +676,7 @@ $wf2 = {
 		}
 		catch(err){
 			//throw exception within setTimeout so that the current execution will not be aborted
-			window.setTimeout(function(){
+			setTimeout(function(){
 				throw err;
 			}, 0); //using 0 milliseconds done at <http://novemberborn.net/javascript/threading-quick-tip>
 		}
@@ -688,7 +689,7 @@ $wf2 = {
 		$wf2.addRepetitionBlock.apply(this, [refNode, index])
 	},
 	
-	// RemoveRepetitionBlock algorithm ---------------------------------------------------------
+	//## RemoveRepetitionBlock algorithm #############################################################
 	
 	//void removeRepetitionBlock();
 	removeRepetitionBlock : function(){
@@ -758,7 +759,7 @@ $wf2 = {
 			}
 			catch(err){
 				//throw exception within setTimeout so that the current execution will not be aborted
-				window.setTimeout(function(){
+				setTimeout(function(){
 					throw err;
 				}, 0);
 			}
@@ -795,7 +796,7 @@ $wf2 = {
 		}
 	},
 
-	// MoveRepetitionBlock algorithm ---------------------------------------------------------------
+	//## MoveRepetitionBlock algorithm #############################################################
 	 
 	//void moveRepetitionBlock(in long distance);
 	moveRepetitionBlock : function(distance){
@@ -924,7 +925,7 @@ $wf2 = {
 			}
 			catch(err){
 				//throw exception within setTimeout so that the current execution will not be aborted
-				window.setTimeout(function(){
+				setTimeout(function(){
 					throw err;
 				}, 0); //using 0 milliseconds done at <http://novemberborn.net/javascript/threading-quick-tip>
 			}
@@ -934,7 +935,7 @@ $wf2 = {
 	/*#############################################################################################
 	 # Form Validation model
 	 ##############################################################################################*/
-	invalidInstances : [],
+	invalidIndicators : [],
 	
 	initValidationModel : function(parent){
 		parent = (parent || document);
@@ -950,7 +951,7 @@ $wf2 = {
 		}
 		
 		var tagNames = ["input","select","textarea","button"];
-		var controls = parent.getElementsByTagName([i])
+		var controls = parent.getElementsByTagName([i]);
 		for(i = 0; i < tagNames.length; i++){
 			controls = parent.getElementsByTagName(tagNames[i]); 
 			for(j = 0; control = controls[j]; j++){
@@ -961,30 +962,31 @@ $wf2 = {
 	},
 	
 	formCheckValidity : function(){
-		var invalidElements = [];
-		var i,valid = true;
-		for(i = 0; el = this.elements[i]; i++){
+		var i, el, valid = true;
+		
+		//When a form is submitted, user agents must act as if they used the following algorithm.
+		//   First, each element in that form's elements list is added to a temporary list (note that
+		//   the elements list is defined to be in document order).
+		
+		//An invalid event must be fired on each element that, when checked, is found to fail to comply with its constraints
+		//  (i.e. each element whose validity.valid DOM attribute is false) and is still a member of the form after the event has been handled.
+		var _elements = [];
+		for(i = 0; i < this.elements.length; i++)
+			_elements.push(this.elements[i]);
+		
+		for(i = 0; el = _elements[i]; i++){
+			//Then, each element in this list whose willValidate DOM attribute is true is checked for validity
 			if(el.checkValidity && el.willValidate == true){
-				if(!el.checkValidity()){
-					//invalidElements.push(el);
+				if(!el.checkValidity())
 					valid = false;
-				}
 			}
 		}
 		
-		//if(invalidElements.length)
-		//	invalidElements[0].focus();
-		
 		if(!valid){
-			//var base_zIndex = 100;
-			var insts = $wf2.invalidInstances;
-			//insts[0].errorMsg.style.zIndex = base_zIndex + insts.length;
-			insts[0].errorMsg.className += " wf2_firstErrorMsg";
-			//for(i = 1; i < insts.length; i++){
-			//	insts[i].errorMsg.style.zIndex = base_zIndex + insts.length - i;
-			//}
+			$wf2.invalidIndicators[0].errorMsg.className += " wf2_firstErrorMsg";
 			
-			var el = insts[0].srcElement;
+			//scroll to near the location where invalid control is
+			el = $wf2.invalidIndicators[0].target;
 			if(el.style.display == 'none' || !el.offsetParent){
 				while(el && (el.nodeType != 1 || (el.style.display == 'none' || !el.offsetParent)))
 					el = el.previousSibling;
@@ -997,26 +999,15 @@ $wf2 = {
 				}
 				window.scrollTo(0, top);
 			}
+			//focus on the first invalid control
 			else el.focus();
 		}
-		
-		//while(insts.length){
-		//	insts[0].errorMsg.parentNode.removeChild(insts[0].errorMsg);
-		//	window.clearInterval(insts[0].intervalId);
-		//	insts[0].srcElement.className = insts[0].srcElement.className.replace(/\s?wf2_invalid/, ""); //([^\b]\s)?
-		//	insts.shift();
-		//}
-		
 		return valid;
 	},
 	controlCheckValidity : function(){
-		//$wf2._updateValidityState.apply(this, [{currentTarget:this}]);
-		//$wf2._updateValidityState({currentTarget:this});
-		
 		$wf2.updateValidityState(this);
-		if(this.validity.valid){
+		if(this.validity.valid)
 			return true;
-		}
 		
 		var canceled = false;
 		
@@ -1027,7 +1018,7 @@ $wf2 = {
 			else if(document.createEventObject)
 				evt = document.createEventObject();
 			evt.initEvent("invalid", true /*canBubble*/, true /*cancelable*/);
-			evt.srcElement = this;
+			evt.target = evt.srcElement = this;
 			if(this.dispatchEvent)
 				canceled = !this.dispatchEvent(evt);
 			else if(this.fireEvent){
@@ -1043,7 +1034,7 @@ $wf2 = {
 				evt.type = "invalid";
 				evt.cancelBubble = false;
 			}
-			evt.srcElement = this;
+			evt.target = evt.srcElement = this;
 		}
 		
 		//Add support for event handler set with HTML attribute
@@ -1056,134 +1047,11 @@ $wf2 = {
 			canceled = this.oninvalid(evt) === false || canceled;
 		
 		//do default action
-		if(!canceled){
-
-//NOTE: currently an element which has an intrinsit invalid state will persist in that state until
-//      the new newsletter is loaded and the person blurs or changes the content of a text box
-//      Furthermore, the following removal of the error messages should be held by the validation
-//      implementation. The notices could be shown only when focus remains on an element.
-//      Add focus and blur events to determine when a box is shown or deleted?
-		
-			//if(!this.className.match(/\bwf2_invalid\b/))
-			//	this.className += " wf2_invalid"; //substitute for :invalid pseudo class
-			
-			//show contextual help message
-			var msg = document.createElement('div');
-			msg.className = "wf2_errorMsg";
-			//msg.title = "Close";
-			msg.id = (this.id || this.name) + "_wf2_errorMsg"; //QUESTION: does this work for MSIE?
-			msg.onmousedown = function(){
-				this.parentNode.removeChild(this);
-			};
-			
-			function createLI(text){
-				var li = document.createElement('li');
-				li.appendChild(document.createTextNode(text));
-				return li;
-			}
-			
-			var ol = document.createElement('ol');
-			if(this.validity.valueMissing)
-				ol.appendChild(createLI('The value must be supplied.'));
-			if(this.validity.typeMismatch)
-				ol.appendChild(createLI("The value is invalid for the type '" + this.getAttribute('type') + "'."));
-			if(this.validity.rangeUnderflow)
-				ol.appendChild(createLI('The value must be greater than ' + this.getAttribute('min') + "."));
-			if(this.validity.rangeOverflow)
-				ol.appendChild(createLI('The value must be less than ' + this.getAttribute('min') + "."));
-			if(this.validity.stepMismatch)
-				ol.appendChild(createLI('The value has a step mismatch; it must be a value by adding multiples of ' + this.getAttribute('step') + " to " + this.getAttribute('min') + "."));
-			if(this.validity.tooLong)
-				ol.appendChild(createLI('The value is too long.'));
-			if(this.validity.patternMismatch)
-				ol.appendChild(createLI('The value does not match the pattern (regular expression) "' + this.getAttribute('pattern') + '".'));
-			if(this.validity.customError)
-				ol.appendChild(createLI(this.validationMessage));
-			
-			if(ol.childNodes.length == 1)
-				ol.className = "single";
-				
-			msg.appendChild(ol);
-			//remove existing error message
-			if(document.getElementById(msg.id))
-				document.body.removeChild(document.getElementById(msg.id));
-			//this.parentNode.insertBefore(msg, this); //Inserting error message next to element in question causes problems when the element has a positioned containing block
-			if($wf2.invalidInstances.length) //insert before other error messages so that it appears on top
-				document.body.insertBefore(msg, $wf2.invalidInstances[$wf2.invalidInstances.length-1].errorMsg);
-			else //insert at the end of the document
-				document.body.insertBefore(msg, null); 
-			//this.wf2_errorMsg = msg;
-			
-			//if(this.style.display == 'none' || !this.offsetParent){
-			//	var prevEl = this.previousSibling;
-			//	var nextEl = this.nextSibling;
-			//	var prevCount = 0, nextCount = 0;
-			//	while(prevEl && (prevEl.nodeType != 1 || (prevEl.style.display == 'none' || !prevEl.offsetParent)) && ++prevCount)
-			//		prevEl = prevEl.previousSibling;
-			//	while(nextEl && (nextEl.nodeType != 1 || (nextEl.style.display == 'none' || !nextEl.offsetParent)) && ++nextCount)
-			//		nextEl = nextEl.nextSibling;
-			//	
-			//	if(prevEl && prevCount > nextCount)
-			//	
-			//}
-			var el = this.parentNode;
-			while(el && (el.nodeType != 1 || (el.style.display == 'none' || el.style.visibility == 'hidden' || !el.offsetParent)))
-				el = el.parentNode;
-			
-			var top = left = 0;
-			var cur = el;
-			if(cur && cur.offsetParent) {
-				left = cur.offsetLeft;
-				top = cur.offsetTop;
-				while (cur = cur.offsetParent) {
-					left += cur.offsetLeft;
-					top += cur.offsetTop;
-				}
-				top += el.offsetHeight;
-			}
-			msg.style.top = top + "px";
-			msg.style.left = left + "px";
-			
-			//NOTE: delete this element after click or after timeout?
-			var i = $wf2.invalidInstances.length;
-			var srcElement_id = this.id || this.name;
-			var errorMsg_id = msg.id;
-			//var _this = this;
-			$wf2.invalidInstances.push({
-				srcElement : this,
-				errorMsg : msg,
-				intervalId : window.setInterval(function(){
-					var _this = $wf2.invalidInstances[i].srcElement; //closure???
-					if(++$wf2.invalidInstances[i].intervalCounter % 2){
-						_this.className = _this.className.replace(/\s?wf2_invalid/, ""); //
-						if($wf2.invalidInstances[i].intervalCounter > 4){
-							window.clearInterval($wf2.invalidInstances[i].intervalId);
-							window.setTimeout(function(){
-								if(!$wf2.invalidInstances[i])
-									return;
-								var msg = document.getElementById(errorMsg_id);
-								if(msg)
-									msg.parentNode.removeChild(msg);
-								$wf2.invalidInstances[i].errorMsg = null;
-							}, 4000);
-						}
-					}
-					else {
-						if(!_this.className.match(/\bwf2_invalid\b/))
-							_this.className += " wf2_invalid"; //substitute for :invalid pseudo class
-					}
-					//console.info("Flasher " + i + ": " + $wf2.invalidInstances[i].intervalCounter);
-					//console.info(_this)
-				}, 500),
-				intervalCounter : 0
-			});
-			if(!this.className.match(/\bwf2_invalid\b/))
-				this.className += " wf2_invalid";
-		}
-		
+		if(!canceled)
+			$wf2.addInvalidIndicator(this);
 		return false;
 	},
-	
+
 	updateValidityState : function(node){
 		//valueMissing -- The control has the required attribute set but it has not been satisfied. 
 		node.validity.valueMissing = Boolean(node.getAttributeNode('required') && (node.options ? node.selectedIndex == -1 : !node.value));
@@ -1352,11 +1220,8 @@ $wf2 = {
 	},
 
 	applyValidityInterface : function(node){
-		if(node.validity && typeof node.validity.typeMismatch != 'undefined') //MSIE needs the second test for some reason
+		if(node.validity && node.validity.typeMismatch !== undefined) //MSIE needs the second test for some reason
 			return;
-			
-		//if(node.id == "section-CONTENT0")
-		//	alert(/(hidden|button|reset|add|remove|move-up|move-down)/.test(node.getAttribute('type')) || !node.name || node.disabled);
 		
 		node.validationMessage = "";
 		
@@ -1454,17 +1319,120 @@ $wf2 = {
 		);
 	},
 
-	clearInvalidIndicators : function(){
-		//while(document.body.lastChild.className && document.body.lastChild.className.indexOf("wf2_errorMsg") != -1){
-		//	document.body.removeChild(document.body.lastChild);
+	//## Default action functions for invalid events ##################################################
+
+	indicatorTimeoutId : null,
+	indicatorIntervalId : null,
+
+	addInvalidIndicator : function(target){
+		//show contextual help message
+		var msg = document.createElement('div');
+		msg.className = "wf2_errorMsg";
+		//msg.title = "Close";
+		msg.id = (target.id || target.name) + "_wf2_errorMsg"; //QUESTION: does this work for MSIE?
+		msg.onmousedown = function(){
+			this.parentNode.removeChild(this);
+		};
+		
+		var ol = document.createElement('ol');
+		if(target.validity.valueMissing)
+			ol.appendChild($wf2.createLI('The value must be supplied.'));
+		if(target.validity.typeMismatch)
+			ol.appendChild($wf2.createLI("The value is invalid for the type '" + target.getAttribute('type') + "'."));
+		if(target.validity.rangeUnderflow)
+			ol.appendChild($wf2.createLI('The value must be greater than ' + target.getAttribute('min') + "."));
+		if(target.validity.rangeOverflow)
+			ol.appendChild($wf2.createLI('The value must be less than ' + target.getAttribute('min') + "."));
+		if(target.validity.stepMismatch)
+			ol.appendChild($wf2.createLI('The value has a step mismatch; it must be a value by adding multiples of ' + target.getAttribute('step') + " to " + target.getAttribute('min') + "."));
+		if(target.validity.tooLong)
+			ol.appendChild($wf2.createLI('The value is too long.'));
+		if(target.validity.patternMismatch)
+			ol.appendChild($wf2.createLI('The value does not match the pattern (regular expression) "' + target.getAttribute('pattern') + '".'));
+		if(target.validity.customError)
+			ol.appendChild($wf2.createLI(target.validationMessage));
+		
+		if(ol.childNodes.length == 1)
+			ol.className = "single";
+			
+		msg.appendChild(ol);
+		////remove existing error message
+		//if(document.getElementById(msg.id))
+		//	document.body.removeChild(document.getElementById(msg.id));
+		//target.parentNode.insertBefore(msg, target); //Inserting error message next to element in question causes problems when the element has a positioned containing block
+		if($wf2.invalidIndicators.length) //insert before other error messages so that it appears on top
+			document.body.insertBefore(msg, $wf2.invalidIndicators[$wf2.invalidIndicators.length-1].errorMsg);
+		else //insert at the end of the document
+			document.body.insertBefore(msg, null); 
+		//target.wf2_errorMsg = msg;
+		
+		//if(target.style.display == 'none' || !target.offsetParent){
+		//	var prevEl = target.previousSibling;
+		//	var nextEl = target.nextSibling;
+		//	var prevCount = 0, nextCount = 0;
+		//	while(prevEl && (prevEl.nodeType != 1 || (prevEl.style.display == 'none' || !prevEl.offsetParent)) && ++prevCount)
+		//		prevEl = prevEl.previousSibling;
+		//	while(nextEl && (nextEl.nodeType != 1 || (nextEl.style.display == 'none' || !nextEl.offsetParent)) && ++nextCount)
+		//		nextEl = nextEl.nextSibling;
+		//	
+		//	if(prevEl && prevCount > nextCount)
+		//	
 		//}
-		var insts = $wf2.invalidInstances;
-		while(insts.length){
-			if(insts[0].errorMsg && insts[0].errorMsg.parentNode)
-				insts[0].errorMsg.parentNode.removeChild(insts[0].errorMsg);
-			window.clearInterval(insts[0].intervalId);
-			insts[0].srcElement.className = insts[0].srcElement.className.replace(/\s?wf2_invalid/, ""); //([^\b]\s)?
-			insts.shift();
+		var el = target.parentNode;
+		while(el && (el.nodeType != 1 || (el.style.display == 'none' || el.style.visibility == 'hidden' || !el.offsetParent)))
+			el = el.parentNode;
+		
+		var top = left = 0;
+		var cur = el;
+		if(cur && cur.offsetParent) {
+			left = cur.offsetLeft;
+			top = cur.offsetTop;
+			while (cur = cur.offsetParent) {
+				left += cur.offsetLeft;
+				top += cur.offsetTop;
+			}
+			top += el.offsetHeight;
+		}
+		msg.style.top = top + "px";
+		msg.style.left = left + "px";
+		
+		$wf2.invalidIndicators.push({
+			target : target,
+			errorMsg : msg
+		});
+		if(!target.className.match(/\bwf2_invalid\b/))
+			target.className += " wf2_invalid";
+		
+		if($wf2.indicatorIntervalId == null){
+			//var i = $wf2.invalidIndicators.length - 1;
+			$wf2.indicatorIntervalId = setInterval(function(){
+				var invalidIndicator;
+				for(var i = 0; invalidIndicator = $wf2.invalidIndicators[i]; i++){
+					if(!invalidIndicator.target.className.match(/\bwf2_invalid\b/)){
+						invalidIndicator.target.className += " wf2_invalid";
+					}
+					else {
+						invalidIndicator.target.className = invalidIndicator.target.className.replace(/\s?wf2_invalid/, "");
+					}
+				}
+			}, 500);
+			$wf2.indicatorTimeoutId = setTimeout($wf2.clearInvalidIndicators, 4000);
+		}
+	},
+
+	clearInvalidIndicators : function(){
+		window.clearTimeout($wf2.indicatorTimeoutId);
+		$wf2.indicatorTimeoutId = null;
+		window.clearInterval($wf2.indicatorIntervalId);
+		$wf2.indicatorIntervalId = null;
+
+		var invalidIndicator;
+		while(invalidIndicator = $wf2.invalidIndicators[0]){
+			if(invalidIndicator.errorMsg && invalidIndicator.errorMsg.parentNode)
+				invalidIndicator.errorMsg.parentNode.removeChild(invalidIndicator.errorMsg);
+			//window.clearInterval(insts[0].intervalId);
+			invalidIndicator.target.className = invalidIndicator.target.className.replace(/\s?wf2_invalid/, ""); //([^\b]\s)?
+			$wf2.invalidIndicators.shift();
 		}
 	},
 
@@ -1771,6 +1739,12 @@ $wf2 = {
 				return 3 - (a.compareDocumentPosition(b) & 6);
 			};
 		}
+	},
+
+	createLI : function(text){
+		var li = document.createElement('li');
+		li.appendChild(document.createTextNode(text));
+		return li;
 	}
 };
 
@@ -1921,9 +1895,7 @@ if(!eventSet){
 } //End If(!window.RepetitionElement...
 
 //Extend the WebForms 2.0 Repetition Model to allow for the old event model
-else if(document.addEventListener && 
-        ($wf2.oldRepetitionEventModelEnabled === undefined || $wf2.oldRepetitionEventModelEnabled)
-       ){
+else if(document.addEventListener && ($wf2.oldRepetitionEventModelEnabled === undefined || $wf2.oldRepetitionEventModelEnabled)){
 	$wf2.oldRepetitionEventModelEnabled = true;
 	(function(){
 		
@@ -1964,7 +1936,7 @@ else if(document.addEventListener &&
 	})();
 }
 
-
+} //end if(!window.$wf2)
 
 
 //if(!window.ValidityState){
@@ -1994,23 +1966,3 @@ else if(document.addEventListener &&
 //if(!window.HTMLOutputElement){
 	
 //}
-//
-//
-//
-//
-////*** END WEB FORMS 2.0 IMPLEMENTATION CODE ***************************************************************
-//
-//if (!Array.prototype.some)
-//{	//http://www.dustindiaz.com/basement/sugar-arrays.html
-//	Array.prototype.some = function(fn, thisObj) {
-//		var scope = thisObj || window;
-//		for ( var i=0, j=this.length; i < j; ++i ) {
-//			if ( fn.call(scope, this[i], i, this) ) {
-//				return true;
-//			}
-//		}
-//		return false;
-//	};
-//}
-//
-
