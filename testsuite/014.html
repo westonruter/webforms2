@@ -1,0 +1,68 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>Test Case 14: Exceptions in Repetition Events &laquo; Repetition Model Test Suite</title>
+		<meta name="description" content="" />
+		<script type="text/javascript" src="../webforms2.js"></script>
+		<link rel="stylesheet" type="text/css" href="testcase.css" /><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
+		<!-- prev --><link rel="prev" href="013.html" /><!-- /prev -->
+		
+		<link rel="home" href="index.html" />
+		
+		<script type="text/javascript">
+		
+		function createRuntimeException(){
+			window.nonExistentFunction();
+			//throw Error("Exception created within repetition event handler. Was the DOM structure of the repetition model adversely affected?");
+		}
+		
+		if(document.addEventListener){
+			document.addEventListener("added", createRuntimeException, false);
+			document.addEventListener("removed", createRuntimeException, false);
+			document.addEventListener("moved", createRuntimeException, false);
+		}
+		</script>
+		
+	</head>
+	<body>
+		<div id="testSuiteNote">
+
+			<h1>Web Forms 2.0 Test Case 14: Exceptions in Repetition Events</h1>
+			<p class="purpose">
+			This test case demonstrates functionality of the Web Forms 2.0 specification and tests the compliance of 
+			this cross-browser <a href="http://code.google.com/p/repetitionmodel/">Web Forms 2.0 implementation</a>.</p>
+
+			 <p>The following demonstrates that the repetition model code does not fail when a user-supplied event handler raises an exception.</p> 
+			
+			<div class="testSuiteNavigation">
+				<!-- prev -->&larr;&nbsp;<a href="013.html" class="prev">Repeated Photo Albums</a> |<!-- /prev -->
+				<a href="index.html" class="index">Test Suite Index</a>
+				
+			</div>
+			
+			<hr />
+		</div>
+  
+
+		<p>Note that the there should be errors raised whenever repetition behavior is envoked. <span style="color:red">An event handler <code>createRuntimeException</code> purposely raises a runtime error.</span></p>
+		<ol>
+			<li id="t" repeat-start="0" repeat="template" onadd="createRuntimeException()" onremove="createRuntimeException()" onmove="createRuntimeException()">
+				<input type="text" size="3" value="[t]" />
+				<input type="move-up" />
+				<input type="move-down" />
+				<input type="remove" />
+			</li>
+		</ol>
+		<input type="add" template="t" />
+
+		
+
+		<hr />
+		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br />
+		Version: 0.1 (2007-05) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
+		<address>
+		<a href="http://weston.ruter.net/">Weston Ruter</a>
+		</address>
+	</body>
+</html>

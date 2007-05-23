@@ -1,0 +1,43 @@
+﻿<html debug="true" xmlns="http://www.w3.org/1999/xhtml"><!-- debug -->
+	<head>
+		<title>Exceptions in Repetition Events</title>
+		<meta name="description" content="" />
+		<script type="text/javascript" src="../../webforms2.js"></script>
+		
+		<!-- BEGIN HEAD -->
+		<script type="text/javascript">
+		
+		function createRuntimeException(){
+			window.nonExistentFunction();
+			//throw Error("Exception created within repetition event handler. Was the DOM structure of the repetition model adversely affected?");
+		}
+		
+		if(document.addEventListener){
+			document.addEventListener("added", createRuntimeException, false);
+			document.addEventListener("removed", createRuntimeException, false);
+			document.addEventListener("moved", createRuntimeException, false);
+		}
+		</script>
+		<!-- END HEAD -->
+	</head>
+	<body>
+		<div id="testcaseDesc">
+			<p>The following demonstrates that the repetition model code does not fail when a user-supplied event handler raises an exception.</p>
+		</div>
+		
+		<!-- BEGIN TEST CASE -->
+		<p>Note that the there should be errors raised whenever repetition behavior is envoked. <span style="color:red">An event handler <code>createRuntimeException</code> purposely raises a runtime error.</span></p>
+		<ol>
+			<li id="t" repeat-start="0" repeat="template" onadd="createRuntimeException()" onremove="createRuntimeException()" onmove="createRuntimeException()">
+				<input type="text" size="3" value="[t]" />
+				<input type="move-up" />
+				<input type="move-down" />
+				<input type="remove" />
+			</li>
+		</ol>
+		<input type="add" template="t" />
+
+		<!-- END TEST CASE -->
+		
+	</body>
+</html>

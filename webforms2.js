@@ -10,6 +10,8 @@
  *  Usage: <script type="text/javascript" src="webforms2.js"></script>
  */
 
+var $wf2 = {};
+
 if(document.implementation && document.implementation.hasFeature && 
   !document.implementation.hasFeature("WebForms", "2.0")){
 
@@ -21,7 +23,7 @@ if(!window.RepetitionElement){
 	};
 }
 
-var $wf2 = {
+$wf2 = {
 	version : "0.1",
 	isInitialized : false,
 	repetitionTemplates:[],
@@ -112,7 +114,7 @@ var $wf2 = {
 		this.repeatMax   = /^\d+$/.test(_attr = this.getAttribute('repeat-max'))   ? parseInt(_attr) : Infinity;
 		
 		if(!this.addRepetitionBlock) this.addRepetitionBlock = function(refNode, index){
-			return $wf2.addRepetitionBlock.apply(this, [refNode, index]); //wrapper to save memory
+			return $wf2.addRepetitionBlock.apply(this, [refNode, index]); //wrapper to save memory?
 		};
 		if(!this.addRepetitionBlockByIndex)
 			this.addRepetitionBlockByIndex = this.addRepetitionBlock/*ByIndex*/; //one method implements both algorithms
@@ -166,7 +168,8 @@ var $wf2 = {
 		//   Then, while the number of repetition blocks associated with the repetition template is less than 
 		//   the template's repeat-min attribute, the template's replication behaviour must be further invoked. 
 		//   (Invoking the template's replication behaviour means calling its addRepetitionBlock() method).
-		for(var i = 0; i < Math.max(this.repeatStart, this.repeatMin); i++)
+		//for(var i = 0; i < Math.max(this.repeatStart, this.repeatMin); i++)
+		for(var i = 0; (i < this.repeatStart || this.repetitionBlocks.length < this.repeatMin); i++)
 			this.addRepetitionBlock();
 		
 		$wf2.repetitionTemplates.push(this);
@@ -280,9 +283,8 @@ var $wf2 = {
 		var inputs = $wf2.getElementsByNameAndAttribute.apply(parentNode, ['input', 'type', btnType]);
 		for(i = 0; i < inputs.length; i++){
 			var btn = document.createElement('button');
-			//NOTE: the _cloneNode behavior must be generalized for use here
 			for(var j = 0, attr; attr = inputs[i].attributes[j]; j++)
-				btn.setAttribute(attr.nodeName, attr.nodeValue);
+				btn.setAttribute(attr.nodeName, inputs[i].getAttribute(attr.nodeName)); //MSIE returns correct value with getAttribute but not nodeValue
 			inputs[i].parentNode.replaceChild(btn, inputs[i]);
 			btn = null;
 		}
@@ -403,7 +405,7 @@ var $wf2 = {
 		if(this.repetitionType != RepetitionElement.REPETITION_TEMPLATE)
 			//throw DOMException("NOT_SUPPORTED_ERR");
 			throw Error("DOMException: NOT_SUPPORTED_ERR");
-	
+
 		//1. If the template has no parent node or its parent node is not an element, then the method must abort 
 		//   the steps and do nothing. 
 		if(this.parentNode == null)
@@ -456,17 +458,9 @@ var $wf2 = {
 		//   the following steps. Otherwise, the template has no name. (If there is more than one ID attribute, 
 		//   the "first" one in terms of node order is used. [DOM3CORE]) 
 		//   [Since this step was moved here, it uses 'this' and not 'block', which hasn't been created yet]
-		//NOTE: hasAttribute throws error in IE
 		//var IDAttr = block.getAttributeNode('id') ? block.getAttributeNode('id') : block.getAttributeNode('name'); //DETECT ID TYPE For others?
 		var IDAttrName = this.getAttribute('id') ? 'id' : this.getAttribute('name') ? 'name' : ''; //NOTE: hasAttribute not implemented in MSIE
 		var IDAttrValue = this.getAttribute(IDAttrName);
-		
-		//10. If the template has a name (see the previous step), and that name contains either an opening square 
-		//    bracket (U+005B, "[") a modifier letter half triangular colon (U+02D1), a closing square bracket 
-		//    (U+005D, "]") or a middle dot (U+00B7), then the template's name is ignored for the purposes of 
-		//    the next step.
-		var ignoreName = /\u005B|\u02D1|\u005D|\u00B7/.test(IDAttrValue); //VALID LOGIC?
-		var boolProcessAttr = IDAttrValue && !ignoreName;
 
 		//5. A clone of the template is made. The resulting element is the new repetition block element.
 		//   [Note that the DOM cloneNode method is not invoked in this implementation due to MSIE 
@@ -484,108 +478,26 @@ var $wf2 = {
 		//      and is done to all descendants, even those inside nested forms, nested repetition templates, and so forth.
 		var block;
 		
-		//Function that processes an attribute value as defined in step 11
+		//(10). If the template has a name (see the previous step), and that name contains either an opening square 
+		//      bracket (U+005B, "[") a modifier letter half triangular colon (U+02D1), a closing square bracket 
+		//      (U+005D, "]") or a middle dot (U+00B7), then the template's name is ignored for the purposes of 
+		//      [this] step.
 		var replaceValue = this.repetitionIndex;
-		var reTemplateName = new RegExp("(\\[|\u02D1)" + IDAttrValue + "(\\]|\u00B7)", 'g'); //new RegExp('(\\u005B|\\u02D1)' + IDAttrValue + '(\\u005D|\\u00B7)', 'g');
-		function _processAttr(attrVal){
-			if(!attrVal) 
-				return attrVal;
-			attrVal = attrVal.toString();
-			if(attrVal.indexOf("\uFEFF") === 0)
-				return attrVal.replace(/^\uFEFF/, '');
-			return attrVal.replace(reTemplateName, replaceValue);
+		var reTemplateName, _processAttr;
+		if(IDAttrValue && !/\u005B|\u02D1|\u005D|\u00B7/.test(IDAttrValue)){ //VALID LOGIC?
+			reTemplateName = new RegExp("(\\[|\u02D1)" + IDAttrValue + "(\\]|\u00B7)", 'g'); //new RegExp('(\\u005B|\\u02D1)' + IDAttrValue + '(\\u005D|\\u00B7)', 'g');
+			_processAttr = function(attrVal){ //Function that processes an attribute value as defined in step 11
+				if(!attrVal) 
+					return attrVal;
+				attrVal = attrVal.toString();
+				if(attrVal.indexOf("\uFEFF") === 0)
+					return attrVal.replace(/^\uFEFF/, '');
+				return attrVal.replace(reTemplateName, replaceValue);
+			};
 		}
-		
-		var _customAttrs = { //FOR MSIE BUG: it cannot perceive the attributes that were actually specified
-			'type':1,'template':1,'repeat':1,'repeat-template':1,'repeat-min':1,
-			'repeat-max':1,'repeat-start':1,'value':1,'class':1,'required':1,
-			'pattern':1,'form':1,'autocomplete':1,'autofocus':1,'inputmode':1
-		};
-		var _skippedAttrs = {
-			'name':1,  //due to MSIE bug, set via $wf2.createElementWithName
-			'class':1, //due to MSIE bug, set below (see http://www.alistapart.com/articles/jslogging)
-			'for':1,   //due to preceived MSIE bug, set below
-			'style':1,  //inline styles require special handling
-			onadd:1,onremove:1,onmove:1, //don't copy Repetition old model event attributes not methods
-			onmoved:1,onadded:1,onremoved:1, //deprecated
-			
-			//for MSIE, properties (or methods) == attributes
-			addRepetitionBlock:1,addRepetitionBlockByIndex:1,moveRepetitionBlock:1,
-			removeRepetitionBlock:1, repetitionBlocks:1, 
-			_initialized:1
-		};
-		
-		//BROWSER BUG: _cloneNode used with Gecko because Gecko starts to have irratic behavior with a cloned 
-		//  input's value attribute and value property; furthermore, various MSIE bugs prevent its ise of cloneNode
-		function _cloneNode(node){
-			var clone, i, attr, el;
-			if(node.nodeType == 1 /*Node.ELEMENT_NODE*/){
-				//BROWSER BUG: MSIE does not allow the setting of the node.name, except when creating the new node
-				clone = node.name ? 
-				        $wf2.createElementWithName(node.nodeName, (boolProcessAttr ? _processAttr(node.name) : node.name)) 
-				      : document.createElement(node.nodeName);
-						
-				for(i = 0; attr = node.attributes[i]; i++){
-					//PROBLEM: some attributes that were specified are being skipped
-					//VALUE IS REPEATED IN MSIE WHEN VALUE ATTRIBUTE SET?
-					//if(attr.specified || node.getAttribute(attr.nodeName)) //_customAttrs[attr.nodeName] || 
-					//	if(window.console && console.info) console.info(node.nodeName + "@" + attr.nodeName + " -- " + attr.specified + " <font color=red>" + node.getAttribute(attr.nodeName) + "</font>(" + typeof node.getAttribute(attr.nodeName) + ")<br>");
-
-					if((attr.specified || _customAttrs[attr.name]) && !_skippedAttrs[attr.name]){
-						//MSIE BUG: when button[type=add|remove|move-up|move-down], then (attr.nodeValue and attr.value == 'button') but node.getAttribute(attr.nodeName) == 'add|remove|move-up|move-down' (as desired)
-						
-						//clone and process an event handler property (attribute)
-						if((attr.name.indexOf("on") === 0) && (typeof node[attr.name] == 'function')){
-							var funcBody = _processAttr(node[attr.name].toString().match(/{((?:.|\n)+)}/)[1]);
-							funcBody = _processAttr(funcBody);
-							clone[attr.name] = new Function('event', funcBody);
-						}
-						//clone and process other attributes
-						else {
-							var attrValue = node.getAttribute(attr.name);
-							attrValue = (boolProcessAttr ? _processAttr(attrValue) : attrValue);
-							clone.setAttribute(attr.name, attrValue);
-						}
-					}
-				}
-				//MSIE BUG: setAttribute('class') creates duplicate value attribute in MSIE; 
-				//QUESTION: will setting className on this clonedNode still cause this error later on for users? will addClassName croak? Should it be improved?
-				//see: http://www.alistapart.com/articles/jslogging
-				if(node.className){
-					var _className = (boolProcessAttr ? _processAttr(node.className) : node.className);
-					if(clone.getAttributeNode('class')){
-						for(i = 0; i < clone.attributes.length; i++) {
-							if(clone.attributes[i].name == 'class')
-								clone.attributes[i].value = _className;
-						}
-					}
-					else clone.setAttribute('class', _className);
-				}
-
-				//Restore the template's elements to the originally coded disabled state (indicated by 'disabled' class name)
-				// All elements within the repetition template are disabled to prevent them from being successful.
-				if(!/\bdisabled\b/.test(node.className))
-					clone.disabled = false;
-				
-				//Process the inline style
-				if(node.style){
-					//clone.setAttribute('style', _processAttr(node.style.cssText));
-					clone.style.cssText = _processAttr(node.style.cssText);
-				}
-				
-				//label's 'for' attribute, set here due to MSIE bug
-				if(node.nodeName.toLowerCase() == 'label' && node.htmlFor)
-					clone.htmlFor = (boolProcessAttr ? _processAttr(node.htmlFor) : node.htmlFor);
-				
-				for(i = 0; el = node.childNodes[i]; i++)
-					clone.appendChild(_cloneNode(el));
-			}
-			else clone = node.cloneNode(true);
-			return clone;
-		}
-		block = _cloneNode(this);
+		block = $wf2.cloneNode(this, _processAttr);
 		block._initialized = false;
-	
+		reTemplateName = null;
 		
 		//6. If this algorithm was invoked via the addRepetitionBlockByIndex()  method, the new repetition block 
 		//   element's index is set to the method's index argument. Otherwise, the new repetition block element's 
@@ -718,6 +630,9 @@ var $wf2 = {
 			$wf2.updateMoveButtons(this.parentNode);
 		}
 		
+		//Setup block with the Web Forms 2.0 behavior
+		$wf2.initValidationModel(block);
+		
 		//17. An added event with no namespace, which bubbles but is not cancelable and has no default action, 
 		//    must be fired on the repetition template using the RepetitionEvent interface, with the repetition 
 		//    block's DOM node as the context information in the element  attribute.
@@ -746,12 +661,24 @@ var $wf2 = {
 		var onaddAttr = this.getAttribute('onadd') || /* deprecated */ this.getAttribute('onadded');
 		if(onaddAttr && (!this.onadd || typeof this.onadd != 'function')) //in MSIE, attribute == property
 			this.onadd = new Function('event', onaddAttr);
-		
-		//Dispatch events for the old event model (extension to spec)
-		if(this.onadd)
-			this.onadd(addEvt);
-		else if(this.onadded) //deprecated
-			this.onadded(addEvt);
+
+		try {
+			//Dispatch events for the old event model (extension to spec)
+			if(this.onadd){
+				//this.onadd(addEvt); 
+				this.onadd.apply(this, [addEvt]); //for some reason, exceptions cannot be caught if using the method above in MSIE
+			}
+			else if(this.onadded){ //deprecated
+				//this.onadded(addEvt);
+				this.onadded.apply(this, [addEvt]); 
+			}
+		}
+		catch(err){
+			//throw exception within setTimeout so that the current execution will not be aborted
+			window.setTimeout(function(){
+				throw err;
+			}, 0); //using 0 milliseconds done at <http://novemberborn.net/javascript/threading-quick-tip>
+		}
 
 		//18. The return value is the newly cloned element.
 		return block;
@@ -817,12 +744,24 @@ var $wf2 = {
 			                   || /* deprecated */ this.repetitionTemplate.getAttribute('onremoved');
 			if(onremoveAttr && (!this.repetitionTemplate.onremove || typeof this.repetitionTemplate.onremove != 'function')) //in MSIE, attribute == property
 				this.repetitionTemplate.onremove = new Function('event', onremoveAttr);
-			
-			//Dispatch events for the old event model (extension to spec)
-			if(this.repetitionTemplate.onremove)
-				this.repetitionTemplate.onremove(removeEvt);
-			else if(this.repetitionTemplate.onremoved) //deprecated
-				this.repetitionTemplate.onremoved(removeEvt);
+
+			try {
+				//Dispatch events for the old event model (extension to spec)
+				if(this.repetitionTemplate.onremove){
+					//this.repetitionTemplate.onremove(removeEvt);	
+					this.repetitionTemplate.onremove.apply(this, [removeEvt]); //for some reason, exceptions cannot be caught if using the method above in MSIE
+				}
+				else if(this.repetitionTemplate.onremoved){ //deprecated
+					//this.repetitionTemplate.onremoved(removeEvt);
+					this.repetitionTemplate.onremoved.apply(this, [removeEvt]); 
+				}
+			}
+			catch(err){
+				//throw exception within setTimeout so that the current execution will not be aborted
+				window.setTimeout(function(){
+					throw err;
+				}, 0);
+			}
 		}
 
 		//3. If the repetition block is not an orphan, then while the remaining number of repetition blocks 
@@ -916,11 +855,19 @@ var $wf2 = {
 			this._clickedMoveBtn = null;
 		}
 		
+		//In addition, user agents must automatically disable move-up buttons (irrespective of the 
+		//   value of the disabled DOM attribute) when their repetition block could not be moved any 
+		//   higher according to the algorithm above, and when the buttons are not in a repetition 
+		//   block. Similarly, user agents must automatically disable move-down buttons when their 
+		//   repetition block could not be moved any lower according to the algorithm above, and 
+		//   when the buttons are not in a repetition block. This automatic disabling does not affect 
+		//   the DOM disabled  attribute. It is an intrinsic property of these buttons.
+		$wf2.updateMoveButtons(this.parentNode);
+		
 		//6. A moved event with no namespace, which bubbles but is not cancelable and has no default action, 
 		//   must be fired on the element's repetition template (if it has one), using the RepetitionEvent 
 		//   interface, with the repetition block's DOM node as the context information in the element  attribute.
-		var isNotOrphan = this.repetitionTemplate != null;
-		if(isNotOrphan){
+		if(this.repetitionTemplate != null){
 			var moveEvt;
 			try {
 				if(document.createEvent)
@@ -963,23 +910,24 @@ var $wf2 = {
 			//   ){
 			//	this.repetitionTemplate.onmove = new Function('event', onmoveAttr);
 			//}
-		}
-		
-		//In addition, user agents must automatically disable move-up buttons (irrespective of the 
-		//   value of the disabled DOM attribute) when their repetition block could not be moved any 
-		//   higher according to the algorithm above, and when the buttons are not in a repetition 
-		//   block. Similarly, user agents must automatically disable move-down buttons when their 
-		//   repetition block could not be moved any lower according to the algorithm above, and 
-		//   when the buttons are not in a repetition block. This automatic disabling does not affect 
-		//   the DOM disabled  attribute. It is an intrinsic property of these buttons.
-		$wf2.updateMoveButtons(this.parentNode);
-		
-		if(isNotOrphan){
-			//Dispatch events for the old event model (extension to spec)
-			if(this.repetitionTemplate.onmove)
-				this.repetitionTemplate.onmove(moveEvt);
-			else if(this.repetitionTemplate.onmoved) //deprecated
-				this.repetitionTemplate.onmoved(moveEvt);
+
+			try {
+				//Dispatch events for the old event model (extension to spec)
+				if(this.repetitionTemplate.onmove){
+					//this.repetitionTemplate.onmove(moveEvt);
+					this.repetitionTemplate.onmove.apply(this, [moveEvt]);
+				}
+				else if(this.repetitionTemplate.onmoved){ //deprecated
+					//this.repetitionTemplate.onmoved(moveEvt);
+					this.repetitionTemplate.onmoved.apply(this, [moveEvt]);
+				}
+			}
+			catch(err){
+				//throw exception within setTimeout so that the current execution will not be aborted
+				window.setTimeout(function(){
+					throw err;
+				}, 0); //using 0 milliseconds done at <http://novemberborn.net/javascript/threading-quick-tip>
+			}
 		}
 	},
 
@@ -1473,7 +1421,7 @@ var $wf2 = {
 		
 		return node;
 	},
-	
+
 	onsubmitValidityHandler : function(event){
 		var form = event.currentTarget || event.srcElement;
 		if(!form.checkValidity()){
@@ -1485,7 +1433,7 @@ var $wf2 = {
 		event.returnValue = true;
 		return true;
 	},
-	
+
 	controlSetCustomValidity : function(error){
 		if(error){
 			this.validationMessage = String(error);
@@ -1505,7 +1453,7 @@ var $wf2 = {
 			|| this.validity.customError
 		);
 	},
-	
+
 	clearInvalidIndicators : function(){
 		//while(document.body.lastChild.className && document.body.lastChild.className.indexOf("wf2_errorMsg") != -1){
 		//	document.body.removeChild(document.body.lastChild);
@@ -1519,11 +1467,99 @@ var $wf2 = {
 			insts.shift();
 		}
 	},
-	
-	
+
 	/*##############################################################################################
 	 # other helper functions (not made into methods)
 	 ##############################################################################################*/
+
+	cloneNode_customAttrs : { //FOR MSIE BUG: it cannot perceive the attributes that were actually specified
+		'type':1,'template':1,'repeat':1,'repeat-template':1,'repeat-min':1,
+		'repeat-max':1,'repeat-start':1,'value':1,'class':1,'required':1,
+		'pattern':1,'form':1,'autocomplete':1,'autofocus':1,'inputmode':1
+	},
+	cloneNode_skippedAttrs : {
+		'name':1,  //due to MSIE bug, set via $wf2.createElementWithName
+		'class':1, //due to MSIE bug, set below (see http://www.alistapart.com/articles/jslogging)
+		'for':1,   //due to preceived MSIE bug, set below
+		'style':1,  //inline styles require special handling
+		onadd:1,onremove:1,onmove:1, //don't copy Repetition old model event attributes not methods
+		onmoved:1,onadded:1,onremoved:1, //deprecated
+		
+		//for MSIE, properties (or methods) == attributes
+		addRepetitionBlock:1,addRepetitionBlockByIndex:1,moveRepetitionBlock:1,
+		removeRepetitionBlock:1, repetitionBlocks:1, 
+		_initialized:1
+	},
+
+	//The following cloneNode algorithm was designed to handle the attribute processing that the repetition
+	//  model specifies. Gecko starts to have irratic behavior with a cloned input's value attribute and value
+	//  property when using DOM cloneNode; furthermore, various MSIE bugs prevent its use of DOM cloneNode
+	cloneNode : function (node, processAttr){
+		var clone, i, attr, el;
+		if(node.nodeType == 1 /*Node.ELEMENT_NODE*/){
+			//BROWSER BUG: MSIE does not allow the setting of the node.name, except when creating the new node
+			clone = node.name ? 
+					$wf2.createElementWithName(node.nodeName, (processAttr ? processAttr(node.name) : node.name)) 
+				  : document.createElement(node.nodeName);
+					
+			for(i = 0; attr = node.attributes[i]; i++){
+				//PROBLEM: some attributes that were specified are being skipped
+				//VALUE IS REPEATED IN MSIE WHEN VALUE ATTRIBUTE SET?
+				//if(attr.specified || node.getAttribute(attr.nodeName)) //$wf2.cloneNode_customAttrs[attr.nodeName] || 
+				//	if(window.console && console.info) console.info(node.nodeName + "@" + attr.nodeName + " -- " + attr.specified + " <font color=red>" + node.getAttribute(attr.nodeName) + "</font>(" + typeof node.getAttribute(attr.nodeName) + ")<br>");
+
+				if((attr.specified || $wf2.cloneNode_customAttrs[attr.name]) && !$wf2.cloneNode_skippedAttrs[attr.name]){
+					//MSIE BUG: when button[type=add|remove|move-up|move-down], then (attr.nodeValue and attr.value == 'button') but node.getAttribute(attr.nodeName) == 'add|remove|move-up|move-down' (as desired)
+					
+					//clone and process an event handler property (attribute)
+					if((attr.name.indexOf("on") === 0) && (typeof node[attr.name] == 'function')){
+						var funcBody = processAttr(node[attr.name].toString().match(/{((?:.|\n)+)}/)[1]);
+						funcBody = processAttr(funcBody);
+						clone[attr.name] = new Function('event', funcBody);
+					}
+					//clone and process other attributes
+					else {
+						var attrValue = node.getAttribute(attr.name);
+						attrValue = (processAttr ? processAttr(attrValue) : attrValue);
+						clone.setAttribute(attr.name, attrValue);
+					}
+				}
+			}
+			//MSIE BUG: setAttribute('class') creates duplicate value attribute in MSIE; 
+			//QUESTION: will setting className on this clonedNode still cause this error later on for users? will addClassName croak? Should it be improved?
+			//see: http://www.alistapart.com/articles/jslogging
+			if(node.className){
+				var _className = (processAttr ? processAttr(node.className) : node.className);
+				if(clone.getAttributeNode('class')){
+					for(i = 0; i < clone.attributes.length; i++) {
+						if(clone.attributes[i].name == 'class')
+							clone.attributes[i].value = _className;
+					}
+				}
+				else clone.setAttribute('class', _className);
+			}
+
+			//Restore the template's elements to the originally coded disabled state (indicated by 'disabled' class name)
+			// All elements within the repetition template are disabled to prevent them from being successful.
+			if(!/\bdisabled\b/.test(node.className))
+				clone.disabled = false;
+			
+			//Process the inline style
+			if(node.style){
+				//clone.setAttribute('style', processAttr(node.style.cssText));
+				clone.style.cssText = (processAttr ? processAttr(node.style.cssText) : node.style.cssText);
+			}
+			
+			//label's 'for' attribute, set here due to MSIE bug
+			if(node.nodeName.toLowerCase() == 'label' && node.htmlFor)
+				clone.htmlFor = (processAttr ? processAttr(node.htmlFor) : node.htmlFor);
+			
+			for(i = 0; el = node.childNodes[i]; i++)
+				clone.appendChild($wf2.cloneNode(el, processAttr));
+		}
+		else clone = node.cloneNode(true);
+		return clone;
+	},
 	getRepetitionBlock : function(node){
 		while(node = node.parentNode){
 			if(node.repetitionType == RepetitionElement.REPETITION_BLOCK){
@@ -1532,7 +1568,7 @@ var $wf2 = {
 		}
 		return null;
 	},
-	
+
 	getHtmlTemplate : function(button){
 		var attr = button.getAttribute('template');
 		var node;
@@ -1540,7 +1576,7 @@ var $wf2 = {
 			return node;
 		return null;
 	},
-	
+
 	updateAddButtons : function(rt){
 		//In addition, user agents must automatically disable add buttons (irrespective of the value of the 
 		//   disabled DOM attribute) when the buttons are not in a repetition block that has an associated 
@@ -1562,7 +1598,7 @@ var $wf2 = {
 			}
 		}
 	},
-	
+
 	updateMoveButtons : function(parentNode){
 		//In addition, user agents must automatically disable move-up buttons (irrespective of the value of 
 		//   the disabled DOM attribute) when their repetition block could not be moved any higher according 
@@ -1582,7 +1618,8 @@ var $wf2 = {
 			//var repetitionBlocks = $wf2.getElementsByProperty('repetitionType', RepetitionElement.REPETITION_BLOCK);
 			var repetitionBlocks = $wf2.getElementsByNameAndAttribute.apply(document.body, ['*', 'repeat', 'template', true]);
 			for(i = 0; block = repetitionBlocks[i]; i++){
-				if(!visitedParents.some(function(i){return i == block.parentNode})){
+				//if(!visitedParents.some(function(i){return i == block.parentNode})){
+				if(!$wf2.arrayHasItem(visitedParents, block.parentNode)){
 					$wf2.updateMoveButtons(block.parentNode);
 					visitedParents.push(block.parentNode);
 				}
@@ -1688,6 +1725,14 @@ var $wf2 = {
 		return results;
 	},
 	
+	arrayHasItem : function(arr, item){
+		for(var i = 0; i < arr.length; i++){
+			if(arr[i] == item)
+				return true;
+		}
+		return false;
+	},
+	
 	createMiscFunctions : function(){
 		//createElementWithName code by Anthony Lieuallen <http://www.easy-reader.net/archives/2005/09/02/death-to-bad-dom-implementations/#comment-444>
 		//   The following function enables MSIE to create elements with the name attribute set, per MSDN:
@@ -1785,19 +1830,23 @@ var RepetitionEvent = {
 /*##############################################################################################
  # Initializing Web Forms 2.0 in the document
  ##############################################################################################*/
- 
 
 //   Some of the following code was borrowed from Dean Edwards, John Resig, et al <http://dean.edwards.name/weblog/2006/06/again/>
 (function(){
 
-
 var match; //get path to source directory
-var scripts = document.getElementsByTagName('head')[0].getElementsByTagName('script');
+var scripts = document.getElementsByTagName('script'); //getElementsByTagName('head')[0]
 for(var i = 0; i < scripts.length; i++){
 	if(match = scripts[i].src.match(/^(.*)webforms2[^\/]+$/))
 		$wf2.libpath = match[1];
 }	
-	
+
+//The script has been included after the DOM has loaded (perhaps via Greasemonkey), so fire immediately 
+if(document.body){
+	$wf2.init();
+	return;
+}
+
 var eventSet = 0;
 if(document.addEventListener){
 	//onDOMload for Gecko and Opera
@@ -1945,7 +1994,23 @@ else if(document.addEventListener &&
 //if(!window.HTMLOutputElement){
 	
 //}
-
-
-
+//
+//
+//
+//
+////*** END WEB FORMS 2.0 IMPLEMENTATION CODE ***************************************************************
+//
+//if (!Array.prototype.some)
+//{	//http://www.dustindiaz.com/basement/sugar-arrays.html
+//	Array.prototype.some = function(fn, thisObj) {
+//		var scope = thisObj || window;
+//		for ( var i=0, j=this.length; i < j; ++i ) {
+//			if ( fn.call(scope, this[i], i, this) ) {
+//				return true;
+//			}
+//		}
+//		return false;
+//	};
+//}
+//
 
