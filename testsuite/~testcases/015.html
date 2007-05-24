@@ -1,0 +1,53 @@
+﻿<html debug="true" xmlns="http://www.w3.org/1999/xhtml"><!-- debug -->
+	<head>
+		<title>Required Elements in Repeated Blocks</title>
+		<meta name="description" content="" />
+		<meta name="keywords" content="repetition, validation" />
+		<script type="text/javascript" src="../../webforms2.js"></script>
+		
+		<!-- BEGIN HEAD -->
+		<script type="text/javascript">
+		
+		</script>
+		<!-- END HEAD -->
+	</head>
+	<body>
+		<div id="testcaseDesc">
+			<p>The following demonstrates that the repetition model code does not fail when a user-supplied event handler raises an exception.</p>
+		</div>
+		
+		<!-- BEGIN TEST CASE -->
+
+
+  <form action="http://software.hixie.ch/utilities/cgi/test-tools/echo" method="post" enctype="multipart/form-data">
+   <table>
+    <thead>
+     <tr>
+      <th>Name</th>
+      <th>Number of Cats</th>
+      <th></th>
+     </tr>
+    </thead>
+    <tbody>
+     <tr repeat="0">
+      <td><input type="text" name="name_0" value="John Smith" required="required"></td>
+      <td><input type="number" name="count_0" value="2"></td>
+      <td><button type="remove">Delete Row</button></td>
+     </tr>
+     <tr repeat="template" id="row">
+      <td><input type="text" name="name_[row]" value="" required="required"></td>
+      <td><input type="number" name="count_[row]" value="1" autofocus></td>
+      <td><button type="remove">Delete Row</button></td>
+     </tr>
+    </tbody>
+   </table>
+   <p>
+    <button type="add" template="row">Add Row</button>
+    <button type="submit">Submit</button>
+   </p>
+  </form>
+
+		<!-- END TEST CASE -->
+		
+	</body>
+</html>

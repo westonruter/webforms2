@@ -2,6 +2,7 @@
 <html debug="true">
 	<head>
 		<title>Spec Example: Repeated rows</title>
+		<meta name="keywords" content="repetition" />
 		<meta name="description" content="Dynamically adding table rows" />
 		<meta name="description" content="" />
 		<script type="text/javascript" src="../../webforms2.js"></script>
@@ -36,7 +37,7 @@
      </tr>
      <tr repeat="template" id="row">
       <td><input type="text" name="name_[row]" value=""></td>
-      <td><input type="text" name="count_[row]" value="1"></td>
+      <td><input type="text" name="count_[row]" value="1" autofocus></td>
       <td><button type="remove">Delete Row</button></td>
      </tr>
     </tbody>

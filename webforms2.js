@@ -112,8 +112,24 @@ $wf2 = {
 		if(el.autofocus === false || el.autofocus === true) //(el.autofocus !== undefined) does not work due to MSIE's handling of attributes
 			return;
 		el.autofocus = true;
-		if(!el.disabled && (el.style.display != 'none' && el.style.visibility != 'hidden')) //ISSUE: how to determine that an element is not focusable?
-			el.focus(); //BUG: in Gecko this does not work within DOMNodeInserted event handler, but the following does; setTimeout(function(){el.focus();}, 0);
+		
+		//[autofocus if]the control is not disabled
+		if(el.disabled)
+			return;
+
+		//[control] is of a type normally focusable in the user's operating environment
+		//Don't focus on the control if it is not visible or nor displayed
+		var node = el;
+		while(node && node.nodeType == 1){
+			if($wf2.getElementStyle(node, 'visibility') == 'hidden' || $wf2.getElementStyle(node, 'display') == 'none')
+				return;
+			node = node.parentNode;
+		}
+
+		//Then the UA should focus the control, as if the control's focus() method was invoked.
+		//  UAs with a viewport should also scroll the document enough to make the control visible,
+		//  [[even if it is not of a type normally focusable.]] //WHAT DOES THIS MEAN?
+		el.focus(); //BUG: in Gecko this does not work within DOMNodeInserted event handler, but the following does; setTimeout(function(){el.focus();}, 0);
 	},
 	
 	/*##############################################################################################
@@ -1722,6 +1738,16 @@ $wf2 = {
 				return true;
 		}
 		return false;
+	},
+	
+	getElementStyle : function(el, property) { //adapted from Danny Goodman <http://www.oreillynet.com/pub/a/javascript/excerpt/JSDHTMLCkbk_chap5/index5.html>
+		if(el.currentStyle)
+			return el.currentStyle[property];
+		else if(window.getComputedStyle)
+			return window.getComputedStyle(el, "").getPropertyValue(property);
+		else if(el.style)
+			return el.style[property];
+		else return '';
 	},
 	
 	createMiscFunctions : function(){

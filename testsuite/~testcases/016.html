@@ -1,0 +1,32 @@
+﻿<html debug="true" xmlns="http://www.w3.org/1999/xhtml"><!-- debug -->
+	<head>
+		<title>Autofocus on unfocusable form control</title>
+		<meta name="description" content="" />
+		<meta name="keywords" content="repetition, validation" />
+		<script type="text/javascript" src="../../webforms2.js"></script>
+		<!--<script type="text/javascript" src="firebug/firebug.js"></script>-->
+		
+		<!-- BEGIN HEAD -->
+		<script type="text/javascript">
+		
+		</script>
+		<style type="text/css">
+		
+		</style>
+		<!-- END HEAD -->
+	</head>
+	<body>
+		<div id="testcaseDesc">
+			<p>The following tests whether the INPUT element below is incorrectly (attempted to be) focused upon. Attempting to focus on hidden form controls raises an exception in MSIE.</p>
+		</div>
+		
+		<!-- BEGIN TEST CASE -->
+
+		<form style="display:none">
+			<input type="text" autofocus="autofocus" />
+		</form>
+
+		<!-- END TEST CASE -->
+		
+	</body>
+</html>
