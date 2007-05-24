@@ -39,11 +39,13 @@ $wf2 = {
 		
 		//Include stylesheet
 		var style = document.createElement('link');
-		style.setAttribute('type', "text/css");
-		style.setAttribute('rel', "stylesheet");
-		style.setAttribute('href', $wf2.libpath + "webforms2.css");
-		var head = document.getElementsByTagName('head')[0];
-		head.insertBefore(style, head.firstChild);
+		style.setAttribute('type', 'text/css');
+		style.setAttribute('rel', 'stylesheet');
+		style.setAttribute('href', $wf2.libpath + 'webforms2.css');
+		var parent = document.getElementsByTagName('head')[0];
+		if(!parent)
+			parent = document.getElementsByTagName('*')[0];
+		parent.insertBefore(style, parent.firstChild);
 		
 		// Initialize Repetition Behaviors ****************************************
 
@@ -92,6 +94,26 @@ $wf2 = {
 			document.attachEvent("onkeydown", $wf2.clearInvalidIndicators);
 		}
 		$wf2.initValidationModel();
+		
+		
+		//Autofocus **********************************************************
+		//Authors must not set the autofocus attribute on multiple enabled elements in a document.
+		//  If multiple elements with the autofocus attribute set are inserted into a document, each one
+		//  will be processed as described above, as they are inserted. This means that during document
+		//  load, for example, the last focusable form control in document order with the attribute set
+		//  will end up with the focus.
+		var els = $wf2.getElementsByNameAndAttribute.apply(document.documentElement, ["*", "autofocus"]); //ISSUE: Any form control (except hidden and output controls) can have an autofocus attribute specified. //var elName = els[i].nodeName.toLowerCase(); if(elName == 'output' || (elName == 'input' && els[i].type == 'hidden'))
+		for(var i = 0; i < els.length; i++)
+			$wf2.initAutofocusElement(els[i]);
+	},
+	
+	initAutofocusElement : function(el){
+		//skip if already initialized
+		if(el.autofocus === false || el.autofocus === true) //(el.autofocus !== undefined) does not work due to MSIE's handling of attributes
+			return;
+		el.autofocus = true;
+		if(!el.disabled && (el.style.display != 'none' && el.style.visibility != 'hidden')) //ISSUE: how to determine that an element is not focusable?
+			el.focus(); //BUG: in Gecko this does not work within DOMNodeInserted event handler, but the following does; setTimeout(function(){el.focus();}, 0);
 	},
 	
 	/*##############################################################################################
@@ -181,7 +203,7 @@ $wf2 = {
 		//UAs must iterate through every node in the document, depth first, looking for templates so that their 
 		//   initial repetition blocks can be created. 
 		//var repetitionTemplates = cssQuery("*[repeat=template]", parentNode);
-		var repetitionTemplates = $wf2.getElementsByNameAndAttribute.apply((parentNode || document.body), ['*', 'repeat', 'template']);
+		var repetitionTemplates = $wf2.getElementsByNameAndAttribute.apply((parentNode || document.documentElement), ['*', 'repeat', 'template']);
 		for(var i = 0, rt; i < repetitionTemplates.length; i++)
 			$wf2.repetitionTemplate_constructor.apply(repetitionTemplates[i]);
 	},
@@ -228,7 +250,7 @@ $wf2 = {
 
 	initRepetitionBlocks : function(parentNode){
 		//var repetitionBlocks = cssQuery('*[repeat]:not([repeat="template"])', parentNode); //:not([repeat="template"])
-		var repetitionBlocks = $wf2.getElementsByNameAndAttribute.apply((parentNode || document.body), ['*', 'repeat', 'template', true]);
+		var repetitionBlocks = $wf2.getElementsByNameAndAttribute.apply((parentNode || document.documentElement), ['*', 'repeat', 'template', true]);
 		for(var i = 0; i < repetitionBlocks.length; i++)
 			$wf2.repetitionBlock_constructor.apply(repetitionBlocks[i]);
 	},
@@ -278,7 +300,7 @@ $wf2 = {
 	initRepetitionButtons : function(btnType, parentNode){
 		var i;
 		if(!parentNode)
-			parentNode = document.body;
+			parentNode = document.documentElement;
 	
 		//change INPUTs to BUTTONs
 		var inputs = $wf2.getElementsByNameAndAttribute.apply(parentNode, ['input', 'type', btnType]);
@@ -400,12 +422,11 @@ $wf2 = {
 	//## AddRepetitionBlock algorithm #############################################################	
 	//Element addRepetitionBlock(in Node refNode);
 	addRepetitionBlock : function(refNode, index){ //addRepetitionBlockByIndex functionalty enabled if @index defined
-		if(refNode && !refNode.nodeType)
-			throw Error("Exception: WRONG_ARGUMENTS_ERR");
+		//if(refNode && !refNode.nodeType)
+		//	throw Error("Exception: WRONG_ARGUMENTS_ERR");
 
 		if(this.repetitionType != RepetitionElement.REPETITION_TEMPLATE)
-			//throw DOMException("NOT_SUPPORTED_ERR");
-			throw Error("DOMException: NOT_SUPPORTED_ERR");
+			throw $wf2.DOMException(9); //NOT_SUPPORTED_ERR
 
 		//1. If the template has no parent node or its parent node is not an element, then the method must abort 
 		//   the steps and do nothing. 
@@ -633,7 +654,10 @@ $wf2 = {
 		
 		//Setup block with the Web Forms 2.0 behavior
 		$wf2.initValidationModel(block);
-		
+		var els = $wf2.getElementsByNameAndAttribute.apply(block, ["*", "autofocus"]); //ISSUE: Any form control (except hidden and output controls) can have an autofocus attribute specified. //var elName = els[i].nodeName.toLowerCase(); if(elName == 'output' || (elName == 'input' && els[i].type == 'hidden'))
+		for(var i = 0; i < els.length; i++)
+			$wf2.initAutofocusElement(els[i]);
+
 		//17. An added event with no namespace, which bubbles but is not cancelable and has no default action, 
 		//    must be fired on the repetition template using the RepetitionEvent interface, with the repetition 
 		//    block's DOM node as the context information in the element  attribute.
@@ -694,8 +718,7 @@ $wf2 = {
 	//void removeRepetitionBlock();
 	removeRepetitionBlock : function(){
 		if(this.repetitionType != RepetitionElement.REPETITION_BLOCK)
-			//throw DOMException("NOT_SUPPORTED_ERR");
-			throw Error("DOMException: NOT_SUPPORTED_ERR");
+			throw $wf2.DOMException(9); //NOT_SUPPORTED_ERR
 
 		//1. The node is removed from its parent, if it has one. Mutation events are fired if appropriate. 
 		//   (This occurs even if the repetition block is an orphan repetition block.)
@@ -787,7 +810,7 @@ $wf2 = {
 			//enable add buttons
 			if(this.repetitionTemplate.repetitionBlocks.length < this.repetitionTemplate.repeatMax){
 				//var addBtns = cssQuery("button[type=add]");
-				var addBtns = $wf2.getElementsByNameAndAttribute.apply(document.body, ['button', 'type', 'add']);
+				var addBtns = $wf2.getElementsByNameAndAttribute.apply(document.documentElement, ['button', 'type', 'add']);
 				for(i = 0; i < addBtns.length; i++){
 					if(addBtns[i].htmlTemplate == this.repetitionTemplate)
 						addBtns[i].disabled = false;
@@ -801,8 +824,7 @@ $wf2 = {
 	//void moveRepetitionBlock(in long distance);
 	moveRepetitionBlock : function(distance){
 		if(this.repetitionType != RepetitionElement.REPETITION_BLOCK)
-			//throw DOMException("NOT_SUPPORTED_ERR");
-			throw Error("DOMException: NOT_SUPPORTED_ERR");
+			throw $wf2.DOMException(9); //NOT_SUPPORTED_ERR
 		
 		//1. If distance is 0, or if the repetition block has no parent, nothing happens and the algorithm ends here.
 		if(distance == 0 || this.parentNode == null)
@@ -950,7 +972,7 @@ $wf2 = {
 				form.attachEvent('onsubmit', $wf2.onsubmitValidityHandler);
 		}
 		
-		var tagNames = ["input","select","textarea","button"];
+		var tagNames = ["input","select","textarea","button","fieldset"];
 		var controls = parent.getElementsByTagName([i]);
 		for(i = 0; i < tagNames.length; i++){
 			controls = parent.getElementsByTagName(tagNames[i]); 
@@ -1240,9 +1262,10 @@ $wf2 = {
 		
 		node.willValidate = true;
 		
-		if(node.nodeName.toLowerCase() == 'button'){
+		var nodeName = node.nodeName.toLowerCase();
+		if(nodeName == 'button' || nodeName == 'fieldset'){
 			node.setCustomValidity = function(error){
-				throw Error("NOT_SUPPORTED_ERR");
+				throw $wf2.DOMException(9); //NOT_SUPPORTED_ERR
 			}
 			node.checkValidity = function(){
 				return true;
@@ -1358,12 +1381,12 @@ $wf2 = {
 		msg.appendChild(ol);
 		////remove existing error message
 		//if(document.getElementById(msg.id))
-		//	document.body.removeChild(document.getElementById(msg.id));
+		//	document.documentElement.removeChild(document.getElementById(msg.id));
 		//target.parentNode.insertBefore(msg, target); //Inserting error message next to element in question causes problems when the element has a positioned containing block
 		if($wf2.invalidIndicators.length) //insert before other error messages so that it appears on top
-			document.body.insertBefore(msg, $wf2.invalidIndicators[$wf2.invalidIndicators.length-1].errorMsg);
+			document.documentElement.insertBefore(msg, $wf2.invalidIndicators[$wf2.invalidIndicators.length-1].errorMsg);
 		else //insert at the end of the document
-			document.body.insertBefore(msg, null); 
+			document.documentElement.insertBefore(msg, null); 
 		//target.wf2_errorMsg = msg;
 		
 		//if(target.style.display == 'none' || !target.offsetParent){
@@ -1557,7 +1580,7 @@ $wf2 = {
 		var repetitionTemplates = rt ? [rt] : $wf2.repetitionTemplates;
 		
 		//var btns = cssQuery("button[type=add]");
-		var btns = $wf2.getElementsByNameAndAttribute.apply(document.body, ['button', 'type', 'add']);
+		var btns = $wf2.getElementsByNameAndAttribute.apply(document.documentElement, ['button', 'type', 'add']);
 		for(var i = 0; i < btns.length; i++){
 			for(var t, j = 0; t = repetitionTemplates[j]; j++){
 				if(btns[i].htmlTemplate == t && t.repetitionBlocks.length >= t.repeatMax){
@@ -1584,7 +1607,7 @@ $wf2 = {
 			var visitedParents = [];
 			//var repetitionBlocks = cssQuery('*[repeat]:not([repeat="template"])');
 			//var repetitionBlocks = $wf2.getElementsByProperty('repetitionType', RepetitionElement.REPETITION_BLOCK);
-			var repetitionBlocks = $wf2.getElementsByNameAndAttribute.apply(document.body, ['*', 'repeat', 'template', true]);
+			var repetitionBlocks = $wf2.getElementsByNameAndAttribute.apply(document.documentElement, ['*', 'repeat', 'template', true]);
 			for(i = 0; block = repetitionBlocks[i]; i++){
 				//if(!visitedParents.some(function(i){return i == block.parentNode})){
 				if(!$wf2.arrayHasItem(visitedParents, block.parentNode)){
@@ -1636,7 +1659,7 @@ $wf2 = {
 	//this function has been replaced with getElementsByNameAndAttribute
 //	getElementsByProperty : function(propName, propValue){
 //		var els = [];
-//		var all = document.body.getElementsByTagName('*');
+//		var all = document.documentElement.getElementsByTagName('*');
 //		for(i = 0; i < all.length; i++){
 //			if(all[i][propName] == propValue)
 //				els.push(all[i]);
@@ -1728,7 +1751,7 @@ $wf2 = {
 		}
 		
 		//sortNodes: sort elements in document order (from ppk)
-		var n = document.body.firstChild;
+		var n = document.documentElement.firstChild;
 		if(n.sourceIndex){
 			$wf2.sortNodes = function (a,b){
 				return a.sourceIndex - b.sourceIndex;
@@ -1747,6 +1770,46 @@ $wf2 = {
 		return li;
 	}
 };
+
+//Emulation of DOMException
+$wf2.DOMException = function(code){
+	var err = new Error("DOMException: ");
+	err.code = code;
+	err.name = "DOMException";
+	
+	//Provide error codes and messages for the exception types that are raised by WF2
+	err.INDEX_SIZE_ERR = 1;
+	err.NOT_SUPPORTED_ERR = 9;
+	err.INVALID_STATE_ERR = 11;
+	err.SYNTAX_ERR = 12;
+	err.INVALID_MODIFICATION_ERR = 13;
+	switch(code){
+		case  1: err.message += "INDEX_SIZE_ERR"; break;
+		case  9: err.message += "NOT_SUPPORTED_ERR"; break;
+		case 11: err.message += "INVALID_STATE_ERR"; break;
+		case 12: err.message += "SYNTAX_ERR"; break;
+		case 13: err.message += "INVALID_MODIFICATION_ERR"; break;
+	}
+	return err;
+};
+
+//with($wf2.DOMException.prototype){
+//	INDEX_SIZE_ERR = 1;
+//	DOMSTRING_SIZE_ERR = 2;
+//	HIERARCHY_REQUEST_ERR = 3;
+//	WRONG_DOCUMENT_ERR = 4;
+//	INVALID_CHARACTER_ERR = 5;
+//	NO_DATA_ALLOWED_ERR = 6;
+//	NO_MODIFICATION_ALLOWED_ERR = 7;
+//	NOT_FOUND_ERR = 8;
+//	NOT_SUPPORTED_ERR = 9;
+//	INUSE_ATTRIBUTE_ERR = 10;
+//	INVALID_STATE_ERR = 11;
+//	SYNTAX_ERR = 12;
+//	INVALID_MODIFICATION_ERR = 13;
+//	NAMESPACE_ERR = 14;
+//	INVALID_ACCESS_ERR = 15;
+//};
 
 
 
@@ -1801,19 +1864,55 @@ var RepetitionEvent = {
 	}
 };
 
-/*##############################################################################################
- # Initializing Web Forms 2.0 in the document
- ##############################################################################################*/
 
 //   Some of the following code was borrowed from Dean Edwards, John Resig, et al <http://dean.edwards.name/weblog/2006/06/again/>
 (function(){
-
+//Get the location of this script so that the stylesheet can be included
 var match; //get path to source directory
 var scripts = document.getElementsByTagName('script'); //getElementsByTagName('head')[0]
 for(var i = 0; i < scripts.length; i++){
 	if(match = scripts[i].src.match(/^(.*)webforms2[^\/]+$/))
 		$wf2.libpath = match[1];
-}	
+}
+
+
+/*##############################################################################################
+ # Initializing Web Forms 2.0 in the document
+ ##############################################################################################*/
+
+//When a form control is inserted into a document, the UA must check to see if it has [the autofocus]
+//  attribute set. If it does, and the control is not disabled, and it is of a type normally
+//  focusable in the user's operating environment, then the UA should focus the control, as if
+//  the control's focus() method was invoked. UAs with a viewport should also scroll the document
+//  enough to make the control visible, even if it is not of a type normally focusable.
+//REVISE: there should be one handler for all attr events on the page.
+if(document.addEventListener){
+	document.addEventListener("DOMNodeInsertedIntoDocument", function(evt){ //DOMNodeInserted? DOMNodeInsertedIntoDocument
+		if(evt.target.nodeType == 1 && evt.target.hasAttribute("autofocus")){
+			$wf2.initAutofocusElement(evt.target);
+		}
+		//[[UAs may ignore this attribute if the user has indicated (for example, by starting to type in a
+		//    form control) that he does not wish focus to be changed.]]
+	}, false)
+
+	//NOT CURRENTLY IMPLEMENTABLE:
+	//  Setting the DOM attribute to true must set the content attribute to the value autofocus.
+	//  Setting the DOM attribute to false must remove the content attribute.
+
+	document.addEventListener("DOMAttrModified", function(evt){
+		//The autofocus DOM attribute must return true when the content attribute is present (regardless
+		//   of its value, even if it is the empty string), and false when it is absent.
+		if(evt.attrName == "autofocus"){
+			if(evt.attrChange == evt.ADDITION)
+				//evt.relatedNode.autofocus = true;
+				$wf2.initAutofocusElement(evt.target);
+			else if(evt.attrChange == evt.REMOVAL)
+				evt.target.autofocus = false;
+		}
+	}, false);
+}
+
+//## Execute the document initializers once the DOM has loaded ########################################
 
 //The script has been included after the DOM has loaded (perhaps via Greasemonkey), so fire immediately 
 if(document.body){
@@ -1894,7 +1993,9 @@ if(!eventSet){
 })();
 } //End If(!window.RepetitionElement...
 
-//Extend the WebForms 2.0 Repetition Model to allow for the old event model
+/*##############################################################################################
+ # Extensions for existing Web Forms 2.0 Implementations
+ ##############################################################################################*/
 else if(document.addEventListener && ($wf2.oldRepetitionEventModelEnabled === undefined || $wf2.oldRepetitionEventModelEnabled)){
 	$wf2.oldRepetitionEventModelEnabled = true;
 	(function(){
