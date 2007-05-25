@@ -3,11 +3,21 @@
 <head>
 
 
+
+
+  
+  
   
   
   <meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
 
 
+
+
+  
+  
+  
+  
   
   
   
@@ -20,41 +30,86 @@
 <body>
 
 
+
+
 <ol>
+
+
 
 
   <li>Repetition blocks that are not siblings of template are not included in repetitionBlocks list</li>
 
 
+
+
   <li><font color="#c0c0c0"><strike>Flashing of invalid form controls is not working when there is more than one</strike>.</font></li>
+
+
 
 
   <li>Unable to remove transparency when hovering over an error message.</li>
 
 
-  <li>Use existing test suite to test validation model</li>
+
+
+  
 
   <li>Should onadded be preferred over onadd?</li>
+
+
 
   <li><font color="#c0c0c0"><strike>how to determine that an element is
 not focusable? We should only focus on a form control which
 hasAttribute('autofocus') when it is focusable.</strike></font></li>
 
+
+
   <li>Add DOMAttrModified handlers for repeatStart, et al</li>
+
+
 
   <li>Can we use DOMNodeInserted and just see if it is the child of the document?</li>
 
+
+
   <li>We need to test the implementation in XHTML: is DOMContentLoaded fired after onload in XHTML?</li>
+
+
 
   <li>Make a greasemonkey script available.... webforms2.user.js......... can there be one for MSIE?</li>
 
+
+
   <li>Upload test cases to weston.ruter.net and add redirects from repetition model test cases to these ones</li>
 
+
+
   <li>Can we emulate :valid and :invalid with CSS classNames?</li>
+
+
   <li>Note: using document.body as the test for when loaded is not good... XHTML documents will not work with this.</li>
 
+  <li>We should have a function that applies the WF2 (not just validation) behavior to a specific context</li>
 
+  <li>Execute repetition model before Data attributes are prefilled</li>
+
+  <li>What happens when the MAXLENGTH is changed dynamically?</li>
+
+  <li><font color="#c0c0c0"><strike>Positioning of error messages is incorrect in Firefox and MSIE (note offsetLeft)</strike></font>.</li>
+
+  <li><font color="#ff0000">Add onsubmit listener so that
+form.checkValidity is called... if checkValidity is called by event
+listener (explicitly passed THROW_NO_EXCEPTION argument) &nbsp;then no
+exception is raised. If the submit() function is used, then raise an
+exception... question: is there a submit event raised when manually
+calling submit()??</font>?<br>
+  </li>
+  <li>Created initWF2Functionality to initialize the validation model,
+autofocus, etc. Should the Repetition Model functions be called within
+here?</li>
 </ol>
+
+
 
 
 </body>

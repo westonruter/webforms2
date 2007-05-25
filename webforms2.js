@@ -36,6 +36,7 @@ $wf2 = {
 		$wf2.isInitialized = true;  //Safari needs this here for some reason
 		
 		$wf2.createMiscFunctions();
+		var i;
 		
 		//Include stylesheet
 		var style = document.createElement('link');
@@ -93,8 +94,31 @@ $wf2 = {
 			document.attachEvent("onmousedown", $wf2.clearInvalidIndicators);
 			document.attachEvent("onkeydown", $wf2.clearInvalidIndicators);
 		}
-		$wf2.initValidationModel();
+		$wf2.initWF2Functionality();
+	},
+	
+	initWF2Functionality : function(parent){
+		parent = (parent || document.documentElement);
+		var i,j, form, forms = parent.getElementsByTagName('form');
+		for(i = 0; form = forms[i]; i++){
+			if(form.checkValidity)
+				continue;
+			form.checkValidity = $wf2.formCheckValidity;
+			if(form.addEventListener)
+				form.addEventListener('submit', $wf2.onsubmitValidityHandler, false);
+			else
+				form.attachEvent('onsubmit', $wf2.onsubmitValidityHandler);
+		}
 		
+		var tagNames = ["input","select","textarea","button","fieldset"];
+		var controls = parent.getElementsByTagName([i]);
+		for(i = 0; i < tagNames.length; i++){
+			controls = parent.getElementsByTagName(tagNames[i]); 
+			for(j = 0; control = controls[j]; j++){
+				$wf2.applyValidityInterface(control);
+				$wf2.updateValidityState(control); //control._updateValidityState();
+			}
+		}
 		
 		//Autofocus **********************************************************
 		//Authors must not set the autofocus attribute on multiple enabled elements in a document.
@@ -102,9 +126,19 @@ $wf2 = {
 		//  will be processed as described above, as they are inserted. This means that during document
 		//  load, for example, the last focusable form control in document order with the attribute set
 		//  will end up with the focus.
-		var els = $wf2.getElementsByNameAndAttribute.apply(document.documentElement, ["*", "autofocus"]); //ISSUE: Any form control (except hidden and output controls) can have an autofocus attribute specified. //var elName = els[i].nodeName.toLowerCase(); if(elName == 'output' || (elName == 'input' && els[i].type == 'hidden'))
-		for(var i = 0; i < els.length; i++)
+		var els = $wf2.getElementsByTagNameAndAttribute.apply(document.documentElement, ["*", "autofocus"]); //ISSUE: Any form control (except hidden and output controls) can have an autofocus attribute specified. //var elName = els[i].nodeName.toLowerCase(); if(elName == 'output' || (elName == 'input' && els[i].type == 'hidden'))
+		if(parent.getAttribute('autofocus'))
+			els.unshift(parent);
+		for(i = 0; i < els.length; i++)
 			$wf2.initAutofocusElement(els[i]);
+
+		// Maxlength for textareas ******************************************************
+		var ta,textareas= $wf2.getElementsByTagNameAndAttribute.apply(parent, ['textarea', 'maxlength']);
+		if(parent.nodeName.toLowerCase() == 'textarea')
+			textareas.unshift(parent);
+		for(i = 0; ta = textareas[i]; i++)
+			ta.maxlength = parseInt(ta.getAttribute('maxlength'));
+		//TODO: we must dynamically apply this behavior for new textareas (via repetition model or eventlistener)
 	},
 	
 	initAutofocusElement : function(el){
@@ -219,7 +253,7 @@ $wf2 = {
 		//UAs must iterate through every node in the document, depth first, looking for templates so that their 
 		//   initial repetition blocks can be created. 
 		//var repetitionTemplates = cssQuery("*[repeat=template]", parentNode);
-		var repetitionTemplates = $wf2.getElementsByNameAndAttribute.apply((parentNode || document.documentElement), ['*', 'repeat', 'template']);
+		var repetitionTemplates = $wf2.getElementsByTagNameAndAttribute.apply((parentNode || document.documentElement), ['*', 'repeat', 'template']);
 		for(var i = 0, rt; i < repetitionTemplates.length; i++)
 			$wf2.repetitionTemplate_constructor.apply(repetitionTemplates[i]);
 	},
@@ -266,7 +300,7 @@ $wf2 = {
 
 	initRepetitionBlocks : function(parentNode){
 		//var repetitionBlocks = cssQuery('*[repeat]:not([repeat="template"])', parentNode); //:not([repeat="template"])
-		var repetitionBlocks = $wf2.getElementsByNameAndAttribute.apply((parentNode || document.documentElement), ['*', 'repeat', 'template', true]);
+		var repetitionBlocks = $wf2.getElementsByTagNameAndAttribute.apply((parentNode || document.documentElement), ['*', 'repeat', 'template', true]);
 		for(var i = 0; i < repetitionBlocks.length; i++)
 			$wf2.repetitionBlock_constructor.apply(repetitionBlocks[i]);
 	},
@@ -319,7 +353,7 @@ $wf2 = {
 			parentNode = document.documentElement;
 	
 		//change INPUTs to BUTTONs
-		var inputs = $wf2.getElementsByNameAndAttribute.apply(parentNode, ['input', 'type', btnType]);
+		var inputs = $wf2.getElementsByTagNameAndAttribute.apply(parentNode, ['input', 'type', btnType]);
 		for(i = 0; i < inputs.length; i++){
 			var btn = document.createElement('button');
 			for(var j = 0, attr; attr = inputs[i].attributes[j]; j++)
@@ -329,7 +363,7 @@ $wf2 = {
 		}
 		
 		//construct all buttons
-		var buttons = $wf2.getElementsByNameAndAttribute.apply(parentNode, ['button', 'type', btnType]);
+		var buttons = $wf2.getElementsByTagNameAndAttribute.apply(parentNode, ['button', 'type', btnType]);
 		for(var i = 0; i < buttons.length; i++)
 			$wf2.repetitionButton_constructor.apply(buttons[i], [btnType]);
 	},
@@ -669,10 +703,10 @@ $wf2 = {
 		}
 		
 		//Setup block with the Web Forms 2.0 behavior
-		$wf2.initValidationModel(block);
-		var els = $wf2.getElementsByNameAndAttribute.apply(block, ["*", "autofocus"]); //ISSUE: Any form control (except hidden and output controls) can have an autofocus attribute specified. //var elName = els[i].nodeName.toLowerCase(); if(elName == 'output' || (elName == 'input' && els[i].type == 'hidden'))
-		for(var i = 0; i < els.length; i++)
-			$wf2.initAutofocusElement(els[i]);
+		$wf2.initWF2Functionality(block);
+		//var els = $wf2.getElementsByTagNameAndAttribute.apply(block, ["*", "autofocus"]); //ISSUE: Any form control (except hidden and output controls) can have an autofocus attribute specified. //var elName = els[i].nodeName.toLowerCase(); if(elName == 'output' || (elName == 'input' && els[i].type == 'hidden'))
+		//for(var i = 0; i < els.length; i++)
+		//	$wf2.initAutofocusElement(els[i]);
 
 		//17. An added event with no namespace, which bubbles but is not cancelable and has no default action, 
 		//    must be fired on the repetition template using the RepetitionEvent interface, with the repetition 
@@ -826,7 +860,7 @@ $wf2 = {
 			//enable add buttons
 			if(this.repetitionTemplate.repetitionBlocks.length < this.repetitionTemplate.repeatMax){
 				//var addBtns = cssQuery("button[type=add]");
-				var addBtns = $wf2.getElementsByNameAndAttribute.apply(document.documentElement, ['button', 'type', 'add']);
+				var addBtns = $wf2.getElementsByTagNameAndAttribute.apply(document.documentElement, ['button', 'type', 'add']);
 				for(i = 0; i < addBtns.length; i++){
 					if(addBtns[i].htmlTemplate == this.repetitionTemplate)
 						addBtns[i].disabled = false;
@@ -973,31 +1007,6 @@ $wf2 = {
 	/*#############################################################################################
 	 # Form Validation model
 	 ##############################################################################################*/
-	invalidIndicators : [],
-	
-	initValidationModel : function(parent){
-		parent = (parent || document);
-		var i,j, form, forms = parent.getElementsByTagName('form');
-		for(i = 0; form = forms[i]; i++){
-			if(form.checkValidity)
-				continue;
-			form.checkValidity = $wf2.formCheckValidity;
-			if(form.addEventListener)
-				form.addEventListener('submit', $wf2.onsubmitValidityHandler, false);
-			else
-				form.attachEvent('onsubmit', $wf2.onsubmitValidityHandler);
-		}
-		
-		var tagNames = ["input","select","textarea","button","fieldset"];
-		var controls = parent.getElementsByTagName([i]);
-		for(i = 0; i < tagNames.length; i++){
-			controls = parent.getElementsByTagName(tagNames[i]); 
-			for(j = 0; control = controls[j]; j++){
-				$wf2.applyValidityInterface(control);
-				$wf2.updateValidityState(control); //control._updateValidityState();
-			}
-		}
-	},
 	
 	formCheckValidity : function(){
 		var i, el, valid = true;
@@ -1020,7 +1029,7 @@ $wf2 = {
 			}
 		}
 		
-		if(!valid){
+		if(!valid && $wf2.invalidIndicators.length){ //second condition needed because modal in oninvalid handler may cause indicators to disappear before this is reached
 			$wf2.invalidIndicators[0].errorMsg.className += " wf2_firstErrorMsg";
 			
 			//scroll to near the location where invalid control is
@@ -1052,11 +1061,11 @@ $wf2 = {
 		var evt;
 		try {
 			if(document.createEvent)
-				evt = document.createEvent("UIEvents"); //document.createEvent("RepetitionEvent")
+				evt = document.createEvent("Events"); //document.createEvent("RepetitionEvent")
 			else if(document.createEventObject)
 				evt = document.createEventObject();
 			evt.initEvent("invalid", true /*canBubble*/, true /*cancelable*/);
-			evt.target = evt.srcElement = this;
+			evt.srcElement = this;
 			if(this.dispatchEvent)
 				canceled = !this.dispatchEvent(evt);
 			else if(this.fireEvent){
@@ -1083,7 +1092,7 @@ $wf2 = {
 		//Dispatch events for the old event model (extension to spec
 		if(this.oninvalid)
 			canceled = this.oninvalid(evt) === false || canceled;
-		
+
 		//do default action
 		if(!canceled)
 			$wf2.addInvalidIndicator(this);
@@ -1225,10 +1234,28 @@ $wf2 = {
 		//   not be rounding the value for submission. Empty values and values that caused the typeMismatch 
 		//   flag to be set must not cause this flag to be set. 
 		
-		//tooLong -- The value of a control with a maxlength attribute is longer than the attribute allows, 
+		//[TEXTAREA] tooLong -- The value of a control with a maxlength attribute is longer than the attribute allows, 
 		//   and the value of the control doesn't exactly match the control's default value. 
-		
-		
+		//[The maxlength] attribute must not affect the initial value (the DOM defaultValue attribute). It must only
+		//   affect what the user may enter and whether a validity error is flagged during validation.
+		if(node.maxlength && node.value != node.defaultValue){
+			//A newline in a textarea's value must count as two code points for maxlength processing (because
+			//   newlines in textareas are submitted as U+000D U+000A). [[NOT IMPLEMENTED: This includes the
+			//   implied newlines that are added for submission when the wrap attribute has the value hard.]]
+			//var matches = node.value.match(/((?<!\x0D|^)\x0A|\x0D(?!^\x0A|$))/g); //no negative lookbehind
+			var shortNewlines = 0;
+			var v = node.value;
+			node.wf2ValueLength = v.length;
+			for(var i = 1; i < v.length; i++){
+				if(v[i] === "\x0A" && v[i-1] !== "\x0D" || v[i] == "\x0D" && (v[i+1] && v[i+1] !== "\x0A"))
+					node.wf2ValueLength++;
+			}
+			
+			//The tooLong flag is used when this attribute is specified on a ... textarea control and the control
+			//   has more than the specified number of code points and the value doesn't match the control's default value.
+			node.validity.tooLong = node.wf2ValueLength > node.maxlength;
+		}
+
 		//customError -- The control was marked invalid from script. See the definition of the setCustomValiditiy() method.
 		
 		//with(node.validity){
@@ -1259,7 +1286,7 @@ $wf2 = {
 
 	applyValidityInterface : function(node){
 		if(node.validity && node.validity.typeMismatch !== undefined) //MSIE needs the second test for some reason
-			return;
+			return node;
 		
 		node.validationMessage = "";
 		
@@ -1360,6 +1387,7 @@ $wf2 = {
 
 	//## Default action functions for invalid events ##################################################
 
+	invalidIndicators : [],
 	indicatorTimeoutId : null,
 	indicatorIntervalId : null,
 
@@ -1385,7 +1413,7 @@ $wf2 = {
 		if(target.validity.stepMismatch)
 			ol.appendChild($wf2.createLI('The value has a step mismatch; it must be a value by adding multiples of ' + target.getAttribute('step') + " to " + target.getAttribute('min') + "."));
 		if(target.validity.tooLong)
-			ol.appendChild($wf2.createLI('The value is too long.'));
+			ol.appendChild($wf2.createLI('The value is too long. The field may have a maximum of ' + target.maxlength + ' characters but you supplied ' + (target.wf2ValueLength ? target.wf2ValueLength : target.value.length) + '. Note that each line-break counts as two characters.'));
 		if(target.validity.patternMismatch)
 			ol.appendChild($wf2.createLI('The value does not match the pattern (regular expression) "' + target.getAttribute('pattern') + '".'));
 		if(target.validity.customError)
@@ -1393,18 +1421,18 @@ $wf2 = {
 		
 		if(ol.childNodes.length == 1)
 			ol.className = "single";
-			
+		
 		msg.appendChild(ol);
 		////remove existing error message
 		//if(document.getElementById(msg.id))
 		//	document.documentElement.removeChild(document.getElementById(msg.id));
 		//target.parentNode.insertBefore(msg, target); //Inserting error message next to element in question causes problems when the element has a positioned containing block
+		var parent = document.body ? document.body : document.documentElement;
 		if($wf2.invalidIndicators.length) //insert before other error messages so that it appears on top
-			document.documentElement.insertBefore(msg, $wf2.invalidIndicators[$wf2.invalidIndicators.length-1].errorMsg);
+			parent.insertBefore(msg, $wf2.invalidIndicators[$wf2.invalidIndicators.length-1].errorMsg);
 		else //insert at the end of the document
-			document.documentElement.insertBefore(msg, null); 
+			parent.insertBefore(msg, null); 
 		//target.wf2_errorMsg = msg;
-		
 		//if(target.style.display == 'none' || !target.offsetParent){
 		//	var prevEl = target.previousSibling;
 		//	var nextEl = target.nextSibling;
@@ -1417,7 +1445,7 @@ $wf2 = {
 		//	if(prevEl && prevCount > nextCount)
 		//	
 		//}
-		var el = target.parentNode;
+		var el = target;
 		while(el && (el.nodeType != 1 || (el.style.display == 'none' || el.style.visibility == 'hidden' || !el.offsetParent)))
 			el = el.parentNode;
 		
@@ -1441,7 +1469,7 @@ $wf2 = {
 		});
 		if(!target.className.match(/\bwf2_invalid\b/))
 			target.className += " wf2_invalid";
-		
+			
 		if($wf2.indicatorIntervalId == null){
 			//var i = $wf2.invalidIndicators.length - 1;
 			$wf2.indicatorIntervalId = setInterval(function(){
@@ -1596,7 +1624,7 @@ $wf2 = {
 		var repetitionTemplates = rt ? [rt] : $wf2.repetitionTemplates;
 		
 		//var btns = cssQuery("button[type=add]");
-		var btns = $wf2.getElementsByNameAndAttribute.apply(document.documentElement, ['button', 'type', 'add']);
+		var btns = $wf2.getElementsByTagNameAndAttribute.apply(document.documentElement, ['button', 'type', 'add']);
 		for(var i = 0; i < btns.length; i++){
 			for(var t, j = 0; t = repetitionTemplates[j]; j++){
 				if(btns[i].htmlTemplate == t && t.repetitionBlocks.length >= t.repeatMax){
@@ -1623,7 +1651,7 @@ $wf2 = {
 			var visitedParents = [];
 			//var repetitionBlocks = cssQuery('*[repeat]:not([repeat="template"])');
 			//var repetitionBlocks = $wf2.getElementsByProperty('repetitionType', RepetitionElement.REPETITION_BLOCK);
-			var repetitionBlocks = $wf2.getElementsByNameAndAttribute.apply(document.documentElement, ['*', 'repeat', 'template', true]);
+			var repetitionBlocks = $wf2.getElementsByTagNameAndAttribute.apply(document.documentElement, ['*', 'repeat', 'template', true]);
 			for(i = 0; block = repetitionBlocks[i]; i++){
 				//if(!visitedParents.some(function(i){return i == block.parentNode})){
 				if(!$wf2.arrayHasItem(visitedParents, block.parentNode)){
@@ -1646,7 +1674,7 @@ $wf2 = {
 		//disable or enable movement buttons within each block
 		for(i = 0; block = repetitionBlocks[i]; i++){
 			//var moveUpBtns = cssQuery("button[type=move-up]", block);
-			var moveUpBtns = $wf2.getElementsByNameAndAttribute.apply(block, ['button', 'type', 'move-up']);
+			var moveUpBtns = $wf2.getElementsByTagNameAndAttribute.apply(block, ['button', 'type', 'move-up']);
 			for(j = 0; btn = moveUpBtns[j]; j++){
 				btn.disabled = 
 					//if the button is not in a repetition block
@@ -1656,7 +1684,7 @@ $wf2 = {
 					(i == 0);
 			}
 			//var moveDownBtns = cssQuery("button[type=move-down]", block);
-			var moveDownBtns = $wf2.getElementsByNameAndAttribute.apply(block, ['button', 'type', 'move-down']);
+			var moveDownBtns = $wf2.getElementsByTagNameAndAttribute.apply(block, ['button', 'type', 'move-down']);
 			for(j = 0; btn = moveDownBtns[j]; j++){
 				btn.disabled = 
 					//if the button is not in a repetition block
@@ -1672,7 +1700,7 @@ $wf2 = {
 	 # Generic DOM query functions
 	 ##############################################################################################*/
 	
-	//this function has been replaced with getElementsByNameAndAttribute
+	//this function has been replaced with getElementsByTagNameAndAttribute
 //	getElementsByProperty : function(propName, propValue){
 //		var els = [];
 //		var all = document.documentElement.getElementsByTagName('*');
@@ -1709,7 +1737,7 @@ $wf2 = {
 		return results;
 	},
 	
-	getElementsByNameAndAttribute : function(elName, attrName, attrValue, isNotEqual){
+	getElementsByTagNameAndAttribute : function(elName, attrName, attrValue, isNotEqual){
 		var els,i,results = [];
 		
 		//QUESTION!!! Can we exclude all nodes that are not decendents of the repetiion template?
