@@ -1,0 +1,244 @@
+﻿<html debug="true" xmlns="http://www.w3.org/1999/xhtml"><!-- debug -->
+	<head>
+		<title>Form validation</title>
+		<meta name="description" content="" />
+		<meta name="keywords" content="repetition, validation" />
+		<script type="text/javascript" src="../../webforms2.js"></script>
+		<script type="text/javascript" src="firebug/firebug.js"></script>
+		
+		<!-- BEGIN HEAD -->
+		<script type="text/javascript">
+		var count = 0;
+		function addEventLogEntry(type, element, model){
+			document.getElementById('doNote').style.display='none';
+		
+			count++;
+			var tbody = document.getElementById('eventLog');
+			var row = document.createElement('tr');
+			var cell;
+			
+			cell = document.createElement('th');
+			cell.appendChild(document.createTextNode(count));
+			row.appendChild(cell);
+			
+			cell = document.createElement('td');
+			cell.appendChild(document.createTextNode(type));
+			cell.className = 'type';
+			row.appendChild(cell);
+			
+			cell = document.createElement('td');
+			cell.innerHTML = element.toString();
+			if(element.getAttribute('type'))
+				cell.innerHTML += " @type='" + element.getAttribute('type') + "'"
+			//cell.appendChild(document.createTextNode(element));
+			row.appendChild(cell);
+			
+			cell = document.createElement('td');
+			cell.appendChild(document.createTextNode(model));
+			row.appendChild(cell);
+			
+			row.fadeColor = 0;
+			
+			tbody.insertBefore(row, tbody.firstChild);
+		}
+		function cleanupEventLog(){
+			var trs = document.getElementById('eventLog').getElementsByTagName('tr');
+			for(var i = 0; i < trs.length; i++){
+				;
+				if(++trs[i].fadeColor == "15"){
+					trs[i].parentNode.removeChild(trs[i]);
+					i--;
+				}
+				else {
+					var hex = trs[i].fadeColor.toString(16);
+					trs[i].style.color = "#" + hex + hex + hex + hex + hex + hex;
+				}
+			}
+		}
+		function handle_DOM2Event(event){
+			addEventLogEntry(event.type, event.target, "DOM2 Event");
+		}
+		function handle_traditionalEvent(event){
+			addEventLogEntry(event.type, event.target, "Classic Event");
+		}
+		
+		function getElementsByTagNames(/* ... */){
+			var els,i,results = [];
+			if(document.evaluate){
+				var _tagNames = [];
+				for(i = 0; i < arguments.length; i++)
+					_tagNames.push(".//" + arguments[i]);
+				els = document.evaluate(_tagNames.join('|'), this, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null); 
+				for(i = 0; i < els.snapshotLength; i++)
+					results.push(els.snapshotItem(i));
+			}
+			else {
+				for(i = 0; i < arguments.length; i++){
+					els = this.getElementsByTagName(arguments[i]);
+					for(var j = 0; j < els.length; j++){
+						results.push(els[j]);
+					}
+				}
+				if(!results.length)
+					return [];
+				
+				if($wf2.sortNodes)
+					results.sort($wf2.sortNodes);
+			}
+			return results;
+		}
+		
+		window.onload = function(){
+			var dom2EventModel = document.getElementById('dom2EventModel');
+			var oldEventModel = document.getElementById('oldEventModel');
+		
+			try {
+				if(document.addEventListener && document.createEvent('UIEvents')){
+					toggleDOM2Events(dom2EventModel.checked);
+				}
+				else throw Error();
+			}
+			catch(err){
+				dom2EventModel.checked = false;
+				dom2EventModel.disabled = true;
+				dom2EventModel.parentNode.className = 'disabled';
+				oldEventModel.checked = true;	
+			}
+			toggleTraditionalEvents(oldEventModel.checked);
+			
+			window.setInterval(cleanupEventLog, 200);
+		}
+
+		function toggleDOM2Events(toggle){
+			if(toggle){
+				document.addEventListener("invalid", handle_DOM2Event, false);
+			}
+			else {
+				document.removeEventListener("invalid", handle_DOM2Event, false);
+			}
+		}
+		function toggleTraditionalEvents(toggle){
+			var els = getElementsByTagNames.apply(document, ['input','select','button','textarea']);
+			for(var i = 0; i < els.length; i++){
+				if(toggle){
+					if(!els[i].getAttribute('oninvalid') && els[i].oninvalid != handle_traditionalEvent)
+						els[i].oninvalid = handle_traditionalEvent;
+				}
+				else {
+					if(els[i].oninvalid == handle_traditionalEvent)
+						els[i].oninvalid = null;
+				}
+			}
+		}
+		function insertErrorAfter(el, message){
+			var s = document.createElement('span');
+			s.className = "errorMsg";
+			s.appendChild(document.createTextNode(message));
+			el.parentNode.insertBefore(s, el.nextSibling);
+			setTimeout(function(){
+				s.parentNode.removeChild(s);
+			}, 4000);
+		}
+		</script>
+		<style type="text/css">
+			fieldset#eventLogBox {
+				position:fixed;
+				width:45%;
+			}
+			fieldset#eventLogBox div {
+				text-align:center;
+			}
+			fieldset#eventLogBox table{
+				width:100%;
+			}
+			span.errorMsg {
+				padding-left:1em;
+				color:red;
+				font-size:8pt;
+			}
+		</style>
+		<!-- END HEAD -->
+	</head>
+	<body>
+		<div id="testcaseDesc">
+			<p>The following tests all of the form validation controls.</p>
+		</div>
+		
+		<!-- BEGIN TEST CASE -->
+
+
+		<fieldset style="display:inline;">
+			<legend><strong><code>invalid</code> Event model options</strong></legend>
+			<div><input type="checkbox" id="dom2EventModel" onclick="toggleDOM2Events(this.checked)" checked="checked" />
+			<label for="dom2EventModel">Use DOM Level 2 event model</label>
+			<span class="error">Unsupported by this browser</span>
+			</div>
+			<div><input type="checkbox" id="oldEventModel" onclick="toggleTraditionalEvents(this.checked)" />
+			<label for="oldEventModel">Use traditional event model</label></div>
+		</fieldset>
+
+		<table width="100%">
+			<tr valign=top>
+				<td>
+					<form action="javascript:void(0)" onsubmit="return false;">
+						<div id="t" repeat="template">
+							<div style="text-align:center; ">
+								<input type="button" value="Check validity" style="font-size:13pt" onclick="if(document.forms[0].checkValidity()) alert('Form is valid!')">
+							</div>
+							<div>
+								<legend>Text input</legend>
+								<ul>
+									<li>type=text <input type="text" name="text1" value="" required> (required)</li>
+									<li>type=text <input type="text" name="text2" pattern="\d\d\d-\d\d-\d\d\d\d"> (pattern="\d\d\d-\d\d-\d\d\d\d")</li>
+									<li>type=text <input type="text" name="text3" value="(222) 222-2222" required pattern="\(\d\d\d\) \d\d\d-\d\d\d\d"> (required pattern="\(\d\d\d\) \d\d\d-\d\d\d\d")</li>
+									<li>type=email <input type="email" name="text4" required value='invalid%email.com' oninvalid="insertErrorAfter(this, 'Incorrect email (note the default UI error message is not displayed)'); if(document.getElementById('oldEventModel').checked) handle_traditionalEvent(event); return false"> (required, overriding oninvalid)</li>
+									<li>type=text <input type="text" name="text5" required maxlength="5" value="0123456789"> (required)</li>
+									<li><textarea cols="40" rows="3" name="ta6" maxlength="10">1
+2
+3</textarea> (length should be 7) maxlength=10 (QUESTION: what about when maxlength &lt; len(defaultValue))</li>
+								</ul>
+							</div>
+							
+							<fieldset>
+								<legend>Radio buttons</legend>
+								Favorite color:
+								<label><input type="radio" name="favColor" value="red" /> red</label>
+								<label><input type="radio" name="favColor" value="green" /> green</label>
+								<label><input type="radio" name="favColor" value="blue" /> blue</label>
+							</fieldset>
+							
+							<fieldset>
+								<legend>Check boxes</legend>
+								Favorite color:
+								<label><input type="checkbox" name="favFoodsBaba" value="baba ganouj" /> baba ganouj</label>
+								<label><input type="checkbox" name="favFoodsMassaman" value="massaman curry" /> massaman curry</label>
+								<label><input type="checkbox" name="favFoodsPho" value="pho" /> pho</label>
+							</fieldset>
+						</div>
+					</form>
+				</td>
+				<td width="50%">
+					<fieldset id="eventLogBox">
+					<legend><strong>Event Log</strong></legend>
+					<table cellspacing="0" cellpadding="5">
+						<thead>
+							<tr>
+								<th>#</th>
+								<th>Type</th>
+								<th>Element</th>
+								<th>Model</th>
+							</tr>
+						</thead>
+						<tbody id="eventLog"></tbody>
+		
+					</table>
+					<div id="doNote"><em>(Click the "check validity" button above to fire events)</em></div>
+				</fieldset>
+				</td>
+		  </tr>
+		</table>
+
+		<!-- END TEST CASE -->
+		
+	</body>
+</html>
