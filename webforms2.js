@@ -1084,14 +1084,23 @@ $wf2 = {
 			evt.target = evt.srcElement = this;
 		}
 		
-		//Add support for event handler set with HTML attribute
 		var oninvalidAttr = this.getAttribute('oninvalid');
 		if(oninvalidAttr && (!this.oninvalid || typeof this.oninvalid != 'function')) //in MSIE, attribute == property
 			this.oninvalid = new Function('event', oninvalidAttr);
-		
-		//Dispatch events for the old event model (extension to spec
-		if(this.oninvalid)
-			canceled = this.oninvalid(evt) === false || canceled;
+
+		try {
+			//Dispatch events for the old event model
+			if(this.oninvalid){
+				//canceled = this.oninvalid(evt) === false || canceled; 
+				canceled = this.oninvalid.apply(this, [evt]) === false || canceled; //for some reason, exceptions cannot be caught if using the method above in MSIE
+			}
+		}
+		catch(err){
+			//throw exception within setTimeout so that the current execution will not be aborted
+			setTimeout(function(){
+				throw err;
+			}, 0);
+		}
 
 		//do default action
 		if(!canceled)
