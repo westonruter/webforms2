@@ -1,53 +1,41 @@
-input.wf2_invalid, textarea.wf2_invalid, select.wf2_invalid { background-color:#FFCCCC; }
+input.wf2_invalid, textarea.wf2_invalid, select.wf2_invalid, div.wf2_errorMsg  { background-color:#FFCCCC; }
 
-.wf2_errorMsg 
-{
-	position:absolute; display:inline; border:dotted 1px red; background-color:white; padding:.25em; 
+div.wf2_errorMsg {
+	position:absolute;
+	border:dotted 1px red;
+	padding:.25em; 
 	padding-left:.5em;
-	/*padding-right:3em;*/
 	cursor:default;
-	background-color:#FFCCCC;
 	font-size:smaller;
-	opacity:.5;	
+	opacity:0.5;	
 	filter: alpha(opacity=50);
 }
-.wf2_errorMsg:hover 
-{
-	/*background-color:Black;
-	color:White;
-	opacity:.4;*/
-	opacity:1 !important;
-	z-index:1000 !important;
-}
-.wf2_firstErrorMsg 
-{
-	opacity:1;
+
+div.wf2_errorMsg:hover,
+div.wf2_firstErrorMsg {
+	opacity:1.0;
 	filter: alpha(opacity=100);
 }
 
-
-.wf2_errorMsg ol 
-{
+div.wf2_errorMsg ol {
 	list-style-position:inside;
 	margin:0;
 	padding:0;
 }
-.wf2_errorMsg ol.single 
-{
+div.wf2_errorMsg ol.single {
 	list-style:none;
 }
-.wf2_errorMsg ol.single li 
-{
+div.wf2_errorMsg ol.single li {
 	margin:0;
 	padding:0;
 }
 
-
-@namespace xh url(http://www.w3.org/1999/xhtml); /* For XHTML */
+/*
+@namespace xh url(http://www.w3.org/1999/xhtml);
 :not(xh|*)[xh|repeat="template"],
 xh|*[|repeat="template"] {
 	display: none;
-}
+}*/
 
 *[repeat="template"] {
 	display:none;

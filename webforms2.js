@@ -48,7 +48,19 @@ $wf2 = {
 			parent = document.getElementsByTagName('*')[0];
 		parent.insertBefore(style, parent.firstChild);
 		
-		// Initialize Repetition Behaviors ****************************************
+		//Seeding a form with initial values*************************************
+		//Before load events are fired, but after the entire document has been parsed and after select elements
+		//   have been filled from external data sources (if necessary), forms with data attributes are prefilled.
+		var forms = $wf2.getElementsByTagNameAndAttribute("form", "data");
+		for(var i = 0; i < forms.length; i++){
+			//[The data attribute] must be a URI or IRI that points to a well-formed XML file whose root element
+			//   is a formdata element in the http://n.whatwg.org/formdata namespace. The MIME type must be an XML
+			//   MIME type [RFC3023], preferably application/xml.
+			
+			//TODO
+		}
+		
+		//Initialize Repetition Behaviors ****************************************
 
 		//RepetitionElement interface must be implemented by all elements.
 		if(window.Element && Element.prototype){
@@ -85,7 +97,7 @@ $wf2 = {
 		$wf2.updateAddButtons();
 		$wf2.updateMoveButtons();
 		
-		// Initialize Validation Behaviors ****************************************
+		// Initialize Non-Repetition Behaviors ****************************************
 		if(document.addEventListener){
 			document.addEventListener("mousedown", $wf2.clearInvalidIndicators, false);
 			document.addEventListener("keydown", $wf2.clearInvalidIndicators, false);
@@ -94,10 +106,10 @@ $wf2 = {
 			document.attachEvent("onmousedown", $wf2.clearInvalidIndicators);
 			document.attachEvent("onkeydown", $wf2.clearInvalidIndicators);
 		}
-		$wf2.initWF2Functionality();
+		$wf2.initNonRepetitionFunctionality();
 	},
 	
-	initWF2Functionality : function(parent){
+	initNonRepetitionFunctionality : function(parent){
 		parent = (parent || document.documentElement);
 		var i,j, form, forms = parent.getElementsByTagName('form');
 		for(i = 0; form = forms[i]; i++){
@@ -702,8 +714,8 @@ $wf2 = {
 			$wf2.updateMoveButtons(this.parentNode);
 		}
 		
-		//Setup block with the Web Forms 2.0 behavior
-		$wf2.initWF2Functionality(block);
+		//Setup block with the other WF2 behavior
+		$wf2.initNonRepetitionFunctionality(block);
 		//var els = $wf2.getElementsByTagNameAndAttribute.apply(block, ["*", "autofocus"]); //ISSUE: Any form control (except hidden and output controls) can have an autofocus attribute specified. //var elName = els[i].nodeName.toLowerCase(); if(elName == 'output' || (elName == 'input' && els[i].type == 'hidden'))
 		//for(var i = 0; i < els.length; i++)
 		//	$wf2.initAutofocusElement(els[i]);
@@ -1221,10 +1233,33 @@ $wf2 = {
 						}
 						break;
 					case 'email':
+						//An e-mail address, following the format of the addr-spec  token defined in RFC 2822 section
+						//   3.4.1 [RFC2822], but excluding the CFWS  subtoken everywhere, and excluding the FWS
+						//   subtoken everywhere except in the quoted-string subtoken. UAs could, for example, offer
+						//   e-mail addresses from the user's address book. (See below for notes on IDN.)
+						//http://www.ietf.org/rfc/rfc2822
+						//addr-spec       =       local-part "@" domain
+						//local-part      =       dot-atom / quoted-string / obs-local-part
+						//domain          =       dot-atom / domain-literal / obs-domain
+						//domain-literal  =       [CFWS] "[" *([FWS] dcontent) [FWS] "]" [CFWS]
+						//dcontent        =       dtext / quoted-pair
+						//dtext           =       NO-WS-CTL /     ; Non white space controls
+						//                        %d33-90 /       ; The rest of the US-ASCII
+						//                        %d94-126        ;  characters not including "[",
+						//                                        ;  "]", or "\"
+						
 						node.validity.typeMismatch = !/^.+@.+$/.test(node.value);
 						break;
 					case 'url':
-						node.validity.typeMismatch = !/^(http|ftp):\/\/.+$/i.test(node.value);
+						//An IRI, as defined by [RFC3987] (the IRI token, defined in RFC 3987 section 2.2). UAs could,
+						//   for example, offer the user URIs from his bookmarks. (See below for notes on IDN.) The value
+						//   is called url (as opposed to iri or uri) for consistency with CSS syntax and because it is
+						//   generally felt authors are more familiar with the term "URL" than the other, more technically
+						//   correct terms.
+						//http://www.ietf.org/rfc/rfc3987
+						
+						//TODO: use http://cvs.m17n.org/~akr/abnf/ to covert 2.2 of http://www.ietf.org/rfc/rfc3987
+						node.validity.typeMismatch = !/^(https?|ftp):\/\/.+$/i.test(node.value);
 						break;
 				}
 			}
@@ -1977,7 +2012,8 @@ if(document.addEventListener){
 
 //## Execute the document initializers once the DOM has loaded ########################################
 
-//The script has been included after the DOM has loaded (perhaps via Greasemonkey), so fire immediately 
+//The script has been included after the DOM has loaded (perhaps via Greasemonkey), so fire immediately
+//NOTE: This does not work with XHTML documents in Gecko
 if(document.body){
 	$wf2.init();
 	return;

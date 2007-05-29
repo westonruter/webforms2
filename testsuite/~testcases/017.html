@@ -1,4 +1,5 @@
-﻿<html debug="true" xmlns="http://www.w3.org/1999/xhtml"><!-- debug -->
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 5//EN">
+<html debug="true" xmlns="http://www.w3.org/1999/xhtml"><!-- debug -->
 	<head>
 		<title>Form validation</title>
 		<meta name="description" content="" />
@@ -185,7 +186,7 @@
 							<div style="text-align:center; ">
 								<input type="button" value="Check validity" style="font-size:13pt" onclick="if(document.forms[0].checkValidity()) alert('Form is valid!')">
 							</div>
-							<div>
+							<fieldset>
 								<legend>Text input</legend>
 								<ul>
 									<li>type=text <input type="text" name="text1" value="" required> (required)</li>
@@ -193,11 +194,12 @@
 									<li>type=text <input type="text" name="text3" value="(222) 222-2222" required pattern="\(\d\d\d\) \d\d\d-\d\d\d\d"> (required pattern="\(\d\d\d\) \d\d\d-\d\d\d\d")</li>
 									<li>type=email <input type="email" name="text4" required value='invalid%email.com' oninvalid="insertErrorAfter(this, 'Incorrect email (note the default UI error message is not displayed)'); if(document.getElementById('oldEventModel').checked) handle_traditionalEvent(event); return false"> (required, overriding oninvalid)</li>
 									<li>type=text <input type="text" name="text5" required maxlength="5" value="0123456789"> (required)</li>
+									<li>type=url <input type="url" name="text6" required value="blob://www.google.com/"> (required)</li>
 									<li><textarea cols="40" rows="3" name="ta6" maxlength="10">1
 2
 3</textarea> (length should be 7) maxlength=10 (QUESTION: what about when maxlength &lt; len(defaultValue))</li>
 								</ul>
-							</div>
+							</fieldset>
 							
 							<fieldset>
 								<legend>Radio buttons</legend>
