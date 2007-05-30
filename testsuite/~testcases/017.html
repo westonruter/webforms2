@@ -140,6 +140,19 @@
 				s.parentNode.removeChild(s);
 			}, 4000);
 		}
+		var timeoutID = 0;
+		function checkValid(){
+			if(document.forms[0].checkValidity()){
+				document.getElementById('validMsg').style.display = 'block';
+				clearTimeout(timeoutID);
+				timeoutID = setTimeout(clearValidMsg, 3000);
+			}
+			else clearValidMsg();
+		}
+		function clearValidMsg(){
+			document.getElementById('validMsg').style.display = 'none';
+			clearTimeout(timeoutID);
+		}
 		</script>
 		<style type="text/css">
 			fieldset#eventLogBox {
@@ -156,6 +169,13 @@
 				padding-left:1em;
 				color:red;
 				font-size:8pt;
+			}
+			#validMsg {
+				background-color:lime;
+				text-align:center;
+				padding:0.5em;
+				font-weight:bold;
+				display:none;
 			}
 		</style>
 		<!-- END HEAD -->
@@ -182,23 +202,32 @@
 			<tr valign=top>
 				<td>
 					<form action="javascript:void(0)" onsubmit="return false;">
-						<div id="t" repeat="template">
-							<div style="text-align:center; ">
-								<input type="button" value="Check validity" style="font-size:13pt" onclick="if(document.forms[0].checkValidity()) alert('Form is valid!')">
-							</div>
+						<div id="t"><!-- repeat="template"-->
 							<fieldset>
 								<legend>Text input</legend>
 								<ul>
-									<li>type=text <input type="text" name="text1" value="" required> (required)</li>
+									<li>type=text <input type="text" name="text1" value="s" required> (required)</li>
 									<li>type=text <input type="text" name="text2" pattern="\d\d\d-\d\d-\d\d\d\d"> (pattern="\d\d\d-\d\d-\d\d\d\d")</li>
 									<li>type=text <input type="text" name="text3" value="(222) 222-2222" required pattern="\(\d\d\d\) \d\d\d-\d\d\d\d"> (required pattern="\(\d\d\d\) \d\d\d-\d\d\d\d")</li>
-									<li>type=email <input type="email" name="text4" required value='invalid%email.com' oninvalid="insertErrorAfter(this, 'Incorrect email (note the default UI error message is not displayed)'); if(document.getElementById('oldEventModel').checked) handle_traditionalEvent(event); return false"> (required, overriding oninvalid)</li>
-									<li>type=text <input type="text" name="text5" required maxlength="5" value="0123456789"> (required)</li>
-									<li>type=url <input type="url" name="text6" required value="blob://www.google.com/"> (required)</li>
+									<li>type=email <input type="email" name="email1" required value='invalid@email.com' oninvalid="insertErrorAfter(this, 'Incorrect email (note the default UI error message is not displayed)'); if(document.getElementById('oldEventModel').checked) handle_traditionalEvent(event); return false"> (required, overriding oninvalid)</li>
+									<li>type=text <input type="text" name="text4" required maxlength="5" value="01234"> (required)</li>
+									<li>type=url <input type="url" name="url1" required value="http://www.google.com/"> (required)</li>
 									<li><textarea cols="40" rows="3" name="ta6" maxlength="10">1
 2
 3</textarea> (length should be 7) maxlength=10 (QUESTION: what about when maxlength &lt; len(defaultValue))</li>
+									<li>type=range <input type="range" name="range1" min="-127" value="1.5" max="128"> (no min, max, or step)</li>
 								</ul>
+								<fieldset>
+									<legend>Calendar controls</legend>
+									<ul>
+										<li>type=datetime <input type="datetime" name="d1" value="2007-01-02T10:10:10.10Z"> (no min, max, or step)</li>
+										<li>type=datetime-local <input type="datetime-local" name="d2" value="2007-01-02T10:10:10.10"> (no min, max, or step)</li>
+										<li>type=date <input type="date" name="d3" value="2007-01-02"> (no min, max, or step)</li>
+										<li>type=month <input type="month" name="d4" value="2007-01"> (no min, max, or step)</li>
+										<li>type=week <input type="week" name="d5" value="2007-W02"> (no min, max, or step)</li>
+										<li>type=time <input type="time" name="d6" value="10:10:10.10"> (no min, max, or step)</li>
+									</ul>
+								</fieldset>
 							</fieldset>
 							
 							<fieldset>
@@ -222,6 +251,12 @@
 				<td width="50%">
 					<fieldset id="eventLogBox">
 					<legend><strong>Event Log</strong></legend>
+					<div style="text-align:center; ">
+						<input type="button" value="Check validity" style="font-size:13pt" onclick="checkValid()">
+					</div>
+					<div id='validMsg'>
+						Form is valid!
+					</div>
 					<table cellspacing="0" cellpadding="5">
 						<thead>
 							<tr>

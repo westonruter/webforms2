@@ -51,7 +51,7 @@ $wf2 = {
 		//Seeding a form with initial values*************************************
 		//Before load events are fired, but after the entire document has been parsed and after select elements
 		//   have been filled from external data sources (if necessary), forms with data attributes are prefilled.
-		var forms = $wf2.getElementsByTagNameAndAttribute("form", "data");
+		var forms = $wf2.getElementsByTagNameAndAttribute.apply(document, ["form", "data"]);
 		for(var i = 0; i < forms.length; i++){
 			//[The data attribute] must be a URI or IRI that points to a well-formed XML file whose root element
 			//   is a formdata element in the http://n.whatwg.org/formdata namespace. The MIME type must be an XML
@@ -1120,9 +1120,64 @@ $wf2 = {
 		return false;
 	},
 
+	//Frequently used regular expressions
+	datetimeCompleteRegExp : /^(\d\d\d\d)(-(0\d|1[0-2])(-(0\d|[1-2]\d|3[0-1])(T(0\d|1\d|2[0-4]):([0-5]\d)(:([0-5]\d)(\.(\d+))?)?(Z)?)?))$/, //RegExp from http://delete.me.uk/2005/03/iso8601.html
+	monthRegExp : /^\d\d\d\d-(0\d|1[0-2])$/,
+	weekRegExp : /^\d\d\d\d-W(0[1-9]|[1-4]\d|5[0-2])$/,
+	timeRegExp : /^(0\d|1\d|2[0-4]):[0-5]\d(:[0-5]\d(.\d+)?)?$/,
+	numberRegExp : /^-?\d+(.\d+)?(e-?\d+)?$/,
+	//numberOrAnyRegExp : /^(any|-?\d+(.\d+)?(e-?\d+)?)$/i,
+	urlRegExp : /^(https?|ftp):\/\/.+$/i,
+	emailRegExp : /^.+@.+$/i,
+	
+	//Zero points for datetime-related types
+	//TODO
+	zeroPointDatetime      : $wf2.parseISO8601("1970-01-01T00:00:00.0Z"),
+	zeroPointDatetimeLocal : $wf2.parseISO8601("1970-01-01T00:00:00.0"),
+	zeroPointDate          : $wf2.parseISO8601("1970-01-01"),
+	zeroPointMonth         : $wf2.parseISO8601("1970-01"),
+	zeroPointWeek          : $wf2.parseISO8601("1970-W01"), //TODO
+	zeroPointTime          : new Date(0), //$wf2.parseISO8601("00:00"),
+	
+	//This function is called "live" 
 	updateValidityState : function(node){
+		var minAttrNode, maxAttrNode, valueAttrNode;
+		minAttrNode = node.getAttributeNode("min");
+		maxAttrNode = node.getAttributeNode("max");
+		node.wf2Min = undefined;
+		node.wf2Max = undefined;
+		node.wf2Step = undefined;
+		valueAttrNode = node.getAttributeNode("value");
+		
+		var type = node.getAttribute('type');
+		var isTimeRelated = (type == 'datetime' || type == 'datetime-local' || type == 'time');
+		var isDateRelated = (type == 'date' || type == 'month' || type == 'week');
+		var isNumberRelated = (type == 'number' || type == 'range');
+		var doCheckPrecision = (isTimeRelated || isDateRelated || isNumberRelated);
+		var doCheckRange = (doCheckPrecision || type == 'file');
+		
+		//If a control has its type attribute changed to another type, then the user agent must reinterpret the min and
+		//   max  attributes. If an attribute has an invalid value according to the new type, then the appropriate
+		//   default must be used (and not, e.g., the default appropriate for the previous type). Control values that
+		//   no longer match the range allowed for the control must be handled as described in the error handling section.
+		if(!node.wf2PreviousType)
+			node.wf2PreviousType == type;
+		else if(type != node.wf2PreviousType){
+			throw Error("Currently unable to change the type of a control."); //TODO
+		}
+		
+		if(type == 'range'){
+			//For this type...min defaults to 0...and value defaults to the min value.
+			node.wf2Min = (minAttrNode && $wf2.numberRegExp.test(minAttrNode.value)) ? Number(minAttrNode.value) : 0;
+			if((!valueAttrNode || !valueAttrNode.specified) && node.value === '' && !node.wf2ValueProvided){ //(!valueAttrNode || !valueAttrNode.specified) && 
+				node.setAttribute('value', node.wf2Min);
+				node.value = node.wf2Min;
+				node.wf2ValueProvided = true;
+			}
+		}
+
 		//valueMissing -- The control has the required attribute set but it has not been satisfied. 
-		node.validity.valueMissing = Boolean(node.getAttributeNode('required') && (node.options ? node.selectedIndex == -1 : !node.value));
+		node.validity.valueMissing = Boolean(node.getAttributeNode('required') && (node.options ? node.selectedIndex == -1 : node.value === '')); //WRONG?
 		if(!node.validity.valueMissing){
 			if(!node.value){
 				node.validity = {
@@ -1147,32 +1202,17 @@ $wf2 = {
 					var rePattern = new RegExp(pattern);
 					node.validity.patternMismatch = (rePattern ? !rePattern.test(node.value) : false);
 				}
-
+				
 				//typeMismatch -- The data entered does not match the type of the control. For example, if the UA 
 				//   allows uninterpreted arbitrary text entry for month controls, and the user has entered SEP02, 
 				//   then this flag would be set. This code is also used when the selected file in a file upload 
-				//   control does not have an appropriate MIME type. If the control is empty, this flag must not be set. 
-				
-				//NOTE: this will not work for DATE types
-				var step,min,max;
-				if(/^-?\d+(.\d+)?(e-?\d+)?$/.test(String(node.getAttribute("step"))))
-					step = Number(node.getAttribute("step"));
-				if(/^-?\d+(.\d+)?(e-?\d+)?$/.test(String(node.getAttribute("min"))))
-					min = Number(node.getAttribute("min"));
-				if(/^-?\d+(.\d+)?(e-?\d+)?$/.test(String(node.getAttribute("max"))))
-					max = Number(node.getAttribute("max"));
-				
-				
-				var type = node.getAttribute('type');
+				//   control does not have an appropriate MIME type. If the control is empty, this flag must not be set.
+				node.validity.typeMismatch = false;
 				switch(type){
 					case 'date':
 					case 'datetime':
 					case 'datetime-local':
-						//code from http://delete.me.uk/2005/03/iso8601.html
-						var regexp = "(\d\d\d\d)(-(0\d|1[0-2])(-(0\d|[1-2]\d|3[0-1])" +
-							"(T(0\d|1\d|2[0-4]):([0-5]\d)(:([0-5]\d)(\.(\d+))?)?" +
-							"(Z)?";
-						var d = string.match(new RegExp(regexp));
+						var d = $wf2.datetimeCompleteRegExp.exec(node.value); //var d = string.match(new RegExp(regexp));
 						if(!d){
 							node.validity.typeMismatch = true;
 							break;
@@ -1189,66 +1229,55 @@ $wf2 = {
 						
 						switch(type){
 							case 'date':
-								if(d[6]) //if time field present
+								if(d[6]){ //if time field present
 									node.validity.typeMismatch = true;
+								}
 								break;
 							case 'datetime':
-								if(!d[14]) //if missing Z
+								if(!d[13]) //if missing Z
 									node.validity.typeMismatch = true;
 								break;
 							case 'datetime-local':
-								if(d[14]) //if Z provided
+								if(d[13]) //if Z provided
 									node.validity.typeMismatch = true;
 								break;
 						}
 						
-						if(node.getAttribute("step") != 'any'){
-							if(step == undefined)
-								step = 60;
-							
-							//...
-						}
+//						if(node.getAttribute("step") != 'any'){
+//							if(node.wf2Step == undefined)
+//								node.wf2Step = 60;
+//							
+//							//...
+//						}
+//						break;
+//						//node.validity.typeMismatch = !/^\d\d\d\d-(0\d|1[0-2])-(0\d|[1-2]\d|3[0-1])$/.test(node.value);
 						break;
-						//node.validity.typeMismatch = !/^\d\d\d\d-(0\d|1[0-2])-(0\d|[1-2]\d|3[0-1])$/.test(node.value);
-						//break;
 					case 'month':
-						node.validity.typeMismatch = !/^\d\d\d\d-(0\d|1[0-2])$/.test(node.value);
+						node.validity.typeMismatch = !$wf2.monthRegExp.test(node.value);
 						break;
 					case 'week':
-						node.validity.typeMismatch = !/^\d\d\d\d-W(0[1-9]|[1-4]\d|5[0-2])$/.test(node.value);
+						node.validity.typeMismatch = !$wf2.weekRegExp.test(node.value);
 						break;
 					case 'time':
-						node.validity.typeMismatch = !/^(0\d|1\d|2[0-4]):[0-5]\d(:[0-5]\d(.\d+)?)?$/.test(node.value);
+						node.validity.typeMismatch = !$wf2.timeRegExp.test(node.value);
 						break;
 					case 'number':
 					case 'range':
-						node.validity.typeMismatch = !/^-?\d+(.\d+)?(e-?\d+)?$/.test(node.value);
-						if(!node.validity.typeMismatch && node.getAttribute("step") != 'any'){
-							if(step == undefined)
-								step = 1;
-							var val = Number(node.value);
-							node.validity.stepMismatch = (val == parseInt(val) && step != parseInt(step));
-							node.validity.rangeUnderflow = (min != undefined && val < min);
-							node.validity.rangeOverflow = (max != undefined && val > max);
-						}
+						node.validity.typeMismatch = !$wf2.numberRegExp.test(node.value);
+//						if(!node.validity.typeMismatch && node.getAttribute("step") != 'any'){
+//							if(node.wf2Step == undefined)
+//								node.wf2Step = 1;
+//							var val = Number(node.value);
+//							node.validity.stepMismatch = (val == parseInt(val) && node.wf2Step != parseInt(node.wf2Step));
+//						}
 						break;
 					case 'email':
 						//An e-mail address, following the format of the addr-spec  token defined in RFC 2822 section
 						//   3.4.1 [RFC2822], but excluding the CFWS  subtoken everywhere, and excluding the FWS
 						//   subtoken everywhere except in the quoted-string subtoken. UAs could, for example, offer
 						//   e-mail addresses from the user's address book. (See below for notes on IDN.)
-						//http://www.ietf.org/rfc/rfc2822
-						//addr-spec       =       local-part "@" domain
-						//local-part      =       dot-atom / quoted-string / obs-local-part
-						//domain          =       dot-atom / domain-literal / obs-domain
-						//domain-literal  =       [CFWS] "[" *([FWS] dcontent) [FWS] "]" [CFWS]
-						//dcontent        =       dtext / quoted-pair
-						//dtext           =       NO-WS-CTL /     ; Non white space controls
-						//                        %d33-90 /       ; The rest of the US-ASCII
-						//                        %d94-126        ;  characters not including "[",
-						//                                        ;  "]", or "\"
-						
-						node.validity.typeMismatch = !/^.+@.+$/.test(node.value);
+						//http://www.ietf.org/rfc/rfc2822						
+						node.validity.typeMismatch = !$wf2.emailRegExp.test(node.value);
 						break;
 					case 'url':
 						//An IRI, as defined by [RFC3987] (the IRI token, defined in RFC 3987 section 2.2). UAs could,
@@ -1257,31 +1286,158 @@ $wf2 = {
 						//   generally felt authors are more familiar with the term "URL" than the other, more technically
 						//   correct terms.
 						//http://www.ietf.org/rfc/rfc3987
-						
-						//TODO: use http://cvs.m17n.org/~akr/abnf/ to covert 2.2 of http://www.ietf.org/rfc/rfc3987
-						node.validity.typeMismatch = !/^(https?|ftp):\/\/.+$/i.test(node.value);
+						node.validity.typeMismatch = !$wf2.urlRegExp.test(node.value);
 						break;
 				}
 			}
 		}
 		
-		
-		//rangeUnderflow -- The numeric, date, or time value of a control with a min attribute is lower than 
-		//   the minimum, or a file upload control has fewer files selected than the minimum. If the control 
-		//   is empty or if the typeMismatch flag is set, this flag must not be set. 
-		
-		//rangeOverflow -- The numeric, date, or time value of a control with a max attribute is higher than 
-		//   the maximum, or a file upload control has more files selected than the maximum. If the control 
-		//   is empty or if the typeMismatch flag is set, this flag must not be set. 
-		
-		//stepMismatch -- The value is not one of the values allowed by the step attribute, and the UA will 
-		//   not be rounding the value for submission. Empty values and values that caused the typeMismatch 
-		//   flag to be set must not cause this flag to be set. 
+		node.validity.rangeUnderflow = false;
+		node.validity.rangeOverflow = false;
+		node.validity.stepOverflow = false;
+		if(!node.validity.typeMismatch){
+			//To limit the range of values allowed by some of the above types, two new attributes are introduced, which
+			//   apply to the date-related, time-related, numeric, and file upload types: min and max
+			
+			//rangeUnderflow -- The numeric, date, or time value of a control with a min attribute is lower than 
+			//   the minimum, or a file upload control has fewer files selected than the minimum. If the control 
+			//   is empty or if the typeMismatch flag is set, this flag must not be set. 
+			//rangeOverflow -- The numeric, date, or time value of a control with a max attribute is higher than 
+			//   the maximum, or a file upload control has more files selected than the maximum. If the control 
+			//   is empty or if the typeMismatch flag is set, this flag must not be set. 
+			if(doCheckRange){
+				if(isNumberRelated){
+					//For numeric types (number  and range) the value must exactly match the number type (numberRegExp)
+					if(type == 'range'){
+						//For this type...max defaults to 100
+						node.wf2Max = (maxAttrNode && $wf2.numberRegExp.test(maxAttrNode.value)) ? Number(maxAttrNode.value) : 100;
+						//node.wf2Min is set atthe beginning of this function so that the min value can be set as the default value
+					}
+					else {
+						if(minAttrNode && $wf2.numberRegExp.test(minAttrNode.value))
+							node.wf2Min = Number(minAttrNode.value);
+						if(maxAttrNode && $wf2.numberRegExp.test(maxAttrNode.value))
+							node.wf2Max = Number(maxAttrNode.value);
+					}
+					node.validity.rangeUnderflow = (node.wf2Min != undefined && Number(node.value) < node.wf2Min);
+					node.validity.rangeOverflow = (node.wf2Max != undefined && node.value > node.wf2Max);
+				}
+				//For file types it must be a sequence of digits 0-9, treated as a base ten integer.
+				else if(type == 'file'){
+					if(minAttrNode && /^\d+$/.test(minAttrNode.value))
+						node.wf2Min = Number(minAttrNode.value);
+					if(maxAttrNode && /^\d+$/.test(maxAttrNode.value))
+						node.wf2Max = Number(maxAttrNode.value);
+					
+					//node.validity.rangeUnderflow = (node.wf2Min != undefined && parseInt(node.value) < node.wf2Min);
+					//node.validity.rangeOverflow = (node.wf2Max != undefined && parseInt(node.value) > node.wf2Max);
+				}
+				else {
+					if(maxAttrNode)
+						console.error("MAX attribute not supported for date-related controls");
+					if(minAttrNode)
+						console.error("MIN attribute not supported for date-related controls");
+					
+					//For date and time types it must match the relevant format mentioned for that type, all fields
+					//   having the right number of digits, with the right separating punctuation.
+					switch(type){
+						case 'datetime':
+							break;
+						case 'datetime-local':
+							break;
+						case 'date':
+							break;
+						case 'month':
+							break;
+						case 'week':
+							break;
+						case 'time':
+							break;
+					}
+					
+					//For date and time types it must match the relevant format mentioned for that type, all fields having the right number of digits, with the right separating punctuation.
+				}
+
+				//if(!maxAttrNode)
+				//}
+				
+				//if(isTimeRelated && node.wf2Min <= 0){
+				//	node.wf2Min = 1; //default
+				//}
+				//
+				//if(isDateRelated && node.wf2Min <= 0){
+				//	
+				//}
+				
+			}
+			//The step attribute controls the precision allowed for the date-related, time-related, and numeric types.
+			//   For the control to be valid, the control's value must be an integral number of steps from the min value,
+			//   or, if there is no min attribute, the max value, or if there is neither attribute, from the zero point.
+			if(doCheckPrecision){
+				//stepMismatch -- The value is not one of the values allowed by the step attribute, and the UA will 
+				//   not be rounding the value for submission. Empty values and values that caused the typeMismatch 
+				//   flag to be set must not cause this flag to be set.
+				
+				//The zero point for datetime  controls is 1970-01-01T00:00:00.0Z, for datetime-local is
+				//   1970-01-01T00:00:00.0, for date controls is 1970-01-01, for month controls is 1970-01, for week
+				//   controls is 1970-W01 (the week starting 1969-12-29 and containing 1970-01-01), and for time controls
+				//   is 00:00.
+				var zeroPoint; //CHANGE
+				switch(type){
+					case 'datetime':
+						//zeroPoint = 1970-01-01T00:00:00.0Z
+						break;
+					case 'datetime-local':
+						//zeroPoint = 1970-01-01T00:00:00.0
+						break;
+					case 'date':
+						//zeroPoint = 1970-01-01
+						break;
+					case 'month':
+						//zeroPoint = 1970-01
+						break;
+					case 'week':
+						//zeroPoint = 1970-W01
+						break;
+					case 'time':
+						//zeroPoint = 00:00
+						break;
+				}
+				
+				
+				var stepAttrNode = node.getAttributeNode("step");
+				if(!stepAttrNode){
+					//The step attribute [for types datetime, datetime-local, and time] ... defaulting to 60 (one minute).
+					//For time controls, the value of the step attribute is in seconds, although it may be a fractional
+					//   number as well to allow fractional times. The format of the step attribute is the number format
+					//   described above, except that the value must be greater than zero. The default value of the step
+					//   attribute for datetime, datetime-local and time controls is 60 (one minute).
+					//The step [for type date] attribute specifies the precision in days, defaulting to 1.
+					//The step [for type month] attribute specifies the precision in months, defaulting to 1.
+					//The step [for type week] attribute specifies the precision in weeks, defaulting to 1.
+					//For date controls, the value of the step attribute is in days, weeks, or months, for the date,
+					//   week, and month  types respectively. The format is a non-negative integer; one or more digits
+					//   0-9 interpreted as base ten. If the step is zero, it is interpreted as the default. The default
+					//   for the step  attribute for these control types is 1.
+					//The step [for types number and range] attribute specifies the precision, defaulting to 1.
+					node.wf2Step = isTimeRelated ? 60 : 1;
+				}
+				//the literal value 'any' may be used as the value of the step attribute. This keyword indicates that
+				//   any value may be used (within the bounds of other restrictions placed on the control).
+				else if(stepAttrNode.value == 'any')
+					node.wf2Step = 'any'; //isStepAny = true;
+				else if($wf2.numberRegExp.test(stepAttrNode.value))
+					node.wf2Step = Number(stepAttrNode.value);
+				else
+					node.wf2Step = isTimeRelated ? 60 : 1;
+			}
+		}
 		
 		//[TEXTAREA] tooLong -- The value of a control with a maxlength attribute is longer than the attribute allows, 
 		//   and the value of the control doesn't exactly match the control's default value. 
 		//[The maxlength] attribute must not affect the initial value (the DOM defaultValue attribute). It must only
 		//   affect what the user may enter and whether a validity error is flagged during validation.
+		node.validity.tooLong = false;
 		if(node.maxlength && node.value != node.defaultValue){
 			//A newline in a textarea's value must count as two code points for maxlength processing (because
 			//   newlines in textareas are submitted as U+000D U+000A). [[NOT IMPLEMENTED: This includes the
@@ -1451,11 +1607,11 @@ $wf2 = {
 		if(target.validity.typeMismatch)
 			ol.appendChild($wf2.createLI("The value is invalid for the type '" + target.getAttribute('type') + "'."));
 		if(target.validity.rangeUnderflow)
-			ol.appendChild($wf2.createLI('The value must be greater than ' + target.getAttribute('min') + "."));
+			ol.appendChild($wf2.createLI('The value must be equal to or greater than ' + target.wf2Min + "."));
 		if(target.validity.rangeOverflow)
-			ol.appendChild($wf2.createLI('The value must be less than ' + target.getAttribute('min') + "."));
+			ol.appendChild($wf2.createLI('The value must be equal to or less than ' + target.wf2Max + "."));
 		if(target.validity.stepMismatch)
-			ol.appendChild($wf2.createLI('The value has a step mismatch; it must be a value by adding multiples of ' + target.getAttribute('step') + " to " + target.getAttribute('min') + "."));
+			ol.appendChild($wf2.createLI('The value has a step mismatch; it must be a value by adding multiples of ' + target.wf2Step + " to " + target.wf2Min + "."));
 		if(target.validity.tooLong)
 			ol.appendChild($wf2.createLI('The value is too long. The field may have a maximum of ' + target.maxlength + ' characters but you supplied ' + (target.wf2ValueLength ? target.wf2ValueLength : target.value.length) + '. Note that each line-break counts as two characters.'));
 		if(target.validity.patternMismatch)
@@ -1548,7 +1704,7 @@ $wf2 = {
 	},
 
 	/*##############################################################################################
-	 # other helper functions (not made into methods)
+	 # Other helper functions (not made into methods)
 	 ##############################################################################################*/
 
 	cloneNode_customAttrs : { //FOR MSIE BUG: it cannot perceive the attributes that were actually specified
@@ -1740,21 +1896,6 @@ $wf2 = {
 		}
 	},
 	
-	/*##############################################################################################
-	 # Generic DOM query functions
-	 ##############################################################################################*/
-	
-	//this function has been replaced with getElementsByTagNameAndAttribute
-//	getElementsByProperty : function(propName, propValue){
-//		var els = [];
-//		var all = document.documentElement.getElementsByTagName('*');
-//		for(i = 0; i < all.length; i++){
-//			if(all[i][propName] == propValue)
-//				els.push(all[i]);
-//		}
-//		return els;
-//	},
-	
 	getElementsByTagNames : function(/* ... */){
 		var els,i,results = [];
 		if(document.evaluate){
@@ -1866,6 +2007,36 @@ $wf2 = {
 		var li = document.createElement('li');
 		li.appendChild(document.createTextNode(text));
 		return li;
+	},
+	
+	//Inspired by Paul Sowden <http://delete.me.uk/2005/03/iso8601.html>
+	parseISO8601 : function (string) {
+		//var regexp = "([0-9]{4})(-([0-9]{2})(-([0-9]{2})" +
+		//	"(T([0-9]{2}):([0-9]{2})(:([0-9]{2})(\.([0-9]+))?)?" +
+		//	"(Z|(([-+])([0-9]{2}):([0-9]{2})))?)?)?)?";
+		//var d = string.match(new RegExp(regexp));
+		var d = $wf2.datetimeCompleteRegExp.exec(string);
+		if(!d) return null;
+	
+		var offset = 0;
+		var date = new Date(d[1], 0, 1);
+	
+		if (d[3]) { date.setMonth(d[3] - 1); }
+		if (d[5]) { date.setDate(d[5]); }
+		if (d[7]) { date.setHours(d[7]); }
+		if (d[8]) { date.setMinutes(d[8]); }
+		if (d[10]) { date.setSeconds(d[10]); }
+		if (d[12]) { date.setMilliseconds(Number("0." + d[12]) * 1000); }
+		if (d[14]) {
+			offset = (Number(d[16]) * 60) + Number(d[17]);
+			offset *= ((d[15] == '-') ? 1 : -1);
+		}
+	
+		offset -= date.getTimezoneOffset();
+		time = (Number(date) + (offset * 60 * 1000));
+		
+		//this.setTime(Number(time));
+		return new Date(Number(time));
 	}
 };
 
