@@ -3,10 +3,10 @@ input.wf2_invalid, textarea.wf2_invalid, select.wf2_invalid, div.wf2_errorMsg  {
 div.wf2_errorMsg {
 	position:absolute;
 	border:dotted 1px red;
-	padding:.25em; 
-	padding-left:.5em;
+	padding:.25em .5em .25em .5em;
 	cursor:default;
 	font-size:smaller;
+	max-width:25%;
 	opacity:0.5;	
 	filter: alpha(opacity=50);
 }
