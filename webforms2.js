@@ -106,6 +106,23 @@ $wf2 = {
 			document.attachEvent("onmousedown", $wf2.clearInvalidIndicators);
 			document.attachEvent("onkeydown", $wf2.clearInvalidIndicators);
 		}
+		
+		//The zero point for datetime  controls is 1970-01-01T00:00:00.0Z, for datetime-local is
+		//   1970-01-01T00:00:00.0, for date controls is 1970-01-01, for month controls is 1970-01, for week
+		//   controls is 1970-W01 (the week starting 1969-12-29 and containing 1970-01-01), and for time controls
+		//   is 00:00.
+		$wf2.zeroPointDatetime      = $wf2.parseISO8601("1970-01-01T00:00:00.0Z");
+		$wf2.zeroPointDatetimeLocal = $wf2.parseISO8601("1970-01-01T00:00:00.0");
+		$wf2.zeroPointDate          = $wf2.parseISO8601("1970-01-01");
+		$wf2.zeroPointMonth         = $wf2.zeroPointDate; //$wf2.parseISO8601("1970-01");
+		$wf2.zeroPointWeek          = 1;//$wf2.parseISO8601("1970-W01"); //TODO
+		$wf2.zeroPointTime          = new Date(0); //$wf2.parseISO8601("00:00");
+		console.info("zeroPointDatetime: " + $wf2.zeroPointDatetime.toUTCString());
+		console.info("zeroPointDatetimeLocal: " + $wf2.zeroPointDatetimeLocal);
+		console.info("zeroPointDate: " + $wf2.zeroPointDate);
+		console.info("zeroPointMonth: " + $wf2.zeroPointMonth);
+		console.info("zeroPointWeek: " + $wf2.zeroPointWeek);
+		console.info("zeroPointTime: " + $wf2.zeroPointTime);
 		$wf2.initNonRepetitionFunctionality();
 	},
 	
@@ -1120,9 +1137,9 @@ $wf2 = {
 		return false;
 	},
 
-	//Frequently used regular expressions
-	datetimeCompleteRegExp : /^(\d\d\d\d)(-(0\d|1[0-2])(-(0\d|[1-2]\d|3[0-1])(T(0\d|1\d|2[0-4]):([0-5]\d)(:([0-5]\d)(\.(\d+))?)?(Z)?)?))$/, //RegExp from http://delete.me.uk/2005/03/iso8601.html
-	monthRegExp : /^\d\d\d\d-(0\d|1[0-2])$/,
+	//Frequently used regular expressions //W(?:0[1-9]|[1-4]\d|5[0-2])|
+	ISO8601RegExp : /^(\d\d\d\d)-((0\d|1[0-2])(-(0\d|[1-2]\d|3[0-1])(T(0\d|1\d|2[0-4]):([0-5]\d)(:([0-5]\d)(\.(\d+))?)?(Z)?)?)?)$/, //RegExp from http://delete.me.uk/2005/03/iso8601.html
+	//monthRegExp : /^\d\d\d\d-(0\d|1[0-2])$/,
 	weekRegExp : /^\d\d\d\d-W(0[1-9]|[1-4]\d|5[0-2])$/,
 	timeRegExp : /^(0\d|1\d|2[0-4]):[0-5]\d(:[0-5]\d(.\d+)?)?$/,
 	numberRegExp : /^-?\d+(.\d+)?(e-?\d+)?$/,
@@ -1130,14 +1147,13 @@ $wf2 = {
 	urlRegExp : /^(https?|ftp):\/\/.+$/i,
 	emailRegExp : /^.+@.+$/i,
 	
-	//Zero points for datetime-related types
-	//TODO
-	zeroPointDatetime      : $wf2.parseISO8601("1970-01-01T00:00:00.0Z"),
-	zeroPointDatetimeLocal : $wf2.parseISO8601("1970-01-01T00:00:00.0"),
-	zeroPointDate          : $wf2.parseISO8601("1970-01-01"),
-	zeroPointMonth         : $wf2.parseISO8601("1970-01"),
-	zeroPointWeek          : $wf2.parseISO8601("1970-W01"), //TODO
-	zeroPointTime          : new Date(0), //$wf2.parseISO8601("00:00"),
+	//Zero points for datetime-related types (set in init function)
+//	zeroPointDatetime      : null,
+//	zeroPointDatetimeLocal : null,
+//	zeroPointDate          : null,
+//	zeroPointMonth         : null,
+//	zeroPointWeek          : null,
+//	zeroPointTime          : null,
 	
 	//This function is called "live" 
 	updateValidityState : function(node){
@@ -1212,12 +1228,19 @@ $wf2 = {
 					case 'date':
 					case 'datetime':
 					case 'datetime-local':
-						var d = $wf2.datetimeCompleteRegExp.exec(node.value); //var d = string.match(new RegExp(regexp));
+					case 'month':
+					//case 'week':
+						var d = $wf2.ISO8601RegExp.exec(node.value); //var d = string.match(new RegExp(regexp));
 						if(!d){
 							node.validity.typeMismatch = true;
 							break;
 						}
 						
+						//if((type == 'week' && d[2].indexOf('W') !== 0) || (type != 'week' && d[2].indexOf('W') === 0)){ //RegEx validates week
+						//	node.validity.typeMismatch = true;
+						//	break;
+						//}
+
 						//Verify that the number of days in the month are valid
 						if(d[5]){
 							var date = new Date(d[1], d[3]-1, d[5]);
@@ -1228,10 +1251,13 @@ $wf2 = {
 						}
 						
 						switch(type){
-							case 'date':
-								if(d[6]){ //if time field present
+							case 'month':
+								if(d[4]) //if day of month is supplied
 									node.validity.typeMismatch = true;
-								}
+								break;
+							case 'date':
+								if(!d[4] || d[6]) //if day of month supplied but time field present
+									node.validity.typeMismatch = true;
 								break;
 							case 'datetime':
 								if(!d[13]) //if missing Z
@@ -1252,9 +1278,9 @@ $wf2 = {
 //						break;
 //						//node.validity.typeMismatch = !/^\d\d\d\d-(0\d|1[0-2])-(0\d|[1-2]\d|3[0-1])$/.test(node.value);
 						break;
-					case 'month':
-						node.validity.typeMismatch = !$wf2.monthRegExp.test(node.value);
-						break;
+//					case 'month':
+//						node.validity.typeMismatch = !$wf2.monthRegExp.test(node.value);
+//						break;
 					case 'week':
 						node.validity.typeMismatch = !$wf2.weekRegExp.test(node.value);
 						break;
@@ -1377,12 +1403,10 @@ $wf2 = {
 				//stepMismatch -- The value is not one of the values allowed by the step attribute, and the UA will 
 				//   not be rounding the value for submission. Empty values and values that caused the typeMismatch 
 				//   flag to be set must not cause this flag to be set.
+				if(minAttrNode)
+					console.error("STEP attribute not yet supported");
 				
-				//The zero point for datetime  controls is 1970-01-01T00:00:00.0Z, for datetime-local is
-				//   1970-01-01T00:00:00.0, for date controls is 1970-01-01, for month controls is 1970-01, for week
-				//   controls is 1970-W01 (the week starting 1969-12-29 and containing 1970-01-01), and for time controls
-				//   is 00:00.
-				var zeroPoint; //CHANGE
+				//var zeroPoint; //CHANGE
 				switch(type){
 					case 'datetime':
 						//zeroPoint = 1970-01-01T00:00:00.0Z
@@ -2015,7 +2039,7 @@ $wf2 = {
 		//	"(T([0-9]{2}):([0-9]{2})(:([0-9]{2})(\.([0-9]+))?)?" +
 		//	"(Z|(([-+])([0-9]{2}):([0-9]{2})))?)?)?)?";
 		//var d = string.match(new RegExp(regexp));
-		var d = $wf2.datetimeCompleteRegExp.exec(string);
+		var d = $wf2.ISO8601RegExp.exec(string);
 		if(!d) return null;
 	
 		var offset = 0;
