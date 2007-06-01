@@ -115,7 +115,7 @@ $wf2 = {
 		$wf2.zeroPointDatetimeLocal = $wf2.parseISO8601("1970-01-01T00:00:00.0");
 		$wf2.zeroPointDate          = $wf2.parseISO8601("1970-01-01");
 		$wf2.zeroPointMonth         = $wf2.zeroPointDate; //$wf2.parseISO8601("1970-01");
-		$wf2.zeroPointWeek          = 1;//$wf2.parseISO8601("1970-W01"); //TODO
+		$wf2.zeroPointWeek          = $wf2.zeroPointDate; //$wf2.parseISO8601("1970-W01"); //TODO
 		$wf2.zeroPointTime          = new Date(0); //$wf2.parseISO8601("00:00");
 		console.info("zeroPointDatetime: " + $wf2.zeroPointDatetime.toUTCString());
 		console.info("zeroPointDatetimeLocal: " + $wf2.zeroPointDatetimeLocal);
@@ -1138,10 +1138,10 @@ $wf2 = {
 	},
 
 	//Frequently used regular expressions //W(?:0[1-9]|[1-4]\d|5[0-2])|
-	ISO8601RegExp : /^(\d\d\d\d)-((0\d|1[0-2])(-(0\d|[1-2]\d|3[0-1])(T(0\d|1\d|2[0-4]):([0-5]\d)(:([0-5]\d)(\.(\d+))?)?(Z)?)?)?)$/, //RegExp from http://delete.me.uk/2005/03/iso8601.html
+	ISO8601RegExp : /^(?:(\d\d\d\d)-(W(0[1-9]|[1-4]\d|5[0-2])|(0\d|1[0-2])(-(0\d|[1-2]\d|3[0-1])(T(0\d|1\d|2[0-4]):([0-5]\d)(:([0-5]\d)(\.(\d+))?)?(Z)?)?)?)|(0\d|1\d|2[0-4]):([0-5]\d)(:([0-5]\d)(\.(\d+))?)?)$/, //RegExp from http://delete.me.uk/2005/03/iso8601.html
 	//monthRegExp : /^\d\d\d\d-(0\d|1[0-2])$/,
-	weekRegExp : /^\d\d\d\d-W(0[1-9]|[1-4]\d|5[0-2])$/,
-	timeRegExp : /^(0\d|1\d|2[0-4]):[0-5]\d(:[0-5]\d(.\d+)?)?$/,
+	//weekRegExp : /^(\d\d\d\d)-W(0[1-9]|[1-4]\d|5[0-2])$/,
+	//timeRegExp : /^(0\d|1\d|2[0-4]):([0-5]\d)(:[0-5]\d(.\d+)?)?$/,
 	numberRegExp : /^-?\d+(.\d+)?(e-?\d+)?$/,
 	//numberOrAnyRegExp : /^(any|-?\d+(.\d+)?(e-?\d+)?)$/i,
 	urlRegExp : /^(https?|ftp):\/\/.+$/i,
@@ -1224,97 +1224,40 @@ $wf2 = {
 				//   then this flag would be set. This code is also used when the selected file in a file upload 
 				//   control does not have an appropriate MIME type. If the control is empty, this flag must not be set.
 				node.validity.typeMismatch = false;
-				switch(type){
-					case 'date':
-					case 'datetime':
-					case 'datetime-local':
-					case 'month':
-					//case 'week':
-						var d = $wf2.ISO8601RegExp.exec(node.value); //var d = string.match(new RegExp(regexp));
-						if(!d){
-							node.validity.typeMismatch = true;
+				if(isDateRelated || isTimeRelated)
+					node.validity.typeMismatch = !$wf2.isValidDateTimeType(type, node.value);
+				else {
+					switch(type){
+						case 'number':
+						case 'range':
+							node.validity.typeMismatch = !$wf2.numberRegExp.test(node.value);
+		//						if(!node.validity.typeMismatch && node.getAttribute("step") != 'any'){
+		//							if(node.wf2Step == undefined)
+		//								node.wf2Step = 1;
+		//							var val = Number(node.value);
+		//							node.validity.stepMismatch = (val == parseInt(val) && node.wf2Step != parseInt(node.wf2Step));
+		//						}
 							break;
-						}
-						
-						//if((type == 'week' && d[2].indexOf('W') !== 0) || (type != 'week' && d[2].indexOf('W') === 0)){ //RegEx validates week
-						//	node.validity.typeMismatch = true;
-						//	break;
-						//}
-
-						//Verify that the number of days in the month are valid
-						if(d[5]){
-							var date = new Date(d[1], d[3]-1, d[5]);
-							if(date.getMonth() != d[3]-1){ 
-								node.validity.typeMismatch = true;
-								break;
-							}
-						}
-						
-						switch(type){
-							case 'month':
-								if(d[4]) //if day of month is supplied
-									node.validity.typeMismatch = true;
-								break;
-							case 'date':
-								if(!d[4] || d[6]) //if day of month supplied but time field present
-									node.validity.typeMismatch = true;
-								break;
-							case 'datetime':
-								if(!d[13]) //if missing Z
-									node.validity.typeMismatch = true;
-								break;
-							case 'datetime-local':
-								if(d[13]) //if Z provided
-									node.validity.typeMismatch = true;
-								break;
-						}
-						
-//						if(node.getAttribute("step") != 'any'){
-//							if(node.wf2Step == undefined)
-//								node.wf2Step = 60;
-//							
-//							//...
-//						}
-//						break;
-//						//node.validity.typeMismatch = !/^\d\d\d\d-(0\d|1[0-2])-(0\d|[1-2]\d|3[0-1])$/.test(node.value);
-						break;
-//					case 'month':
-//						node.validity.typeMismatch = !$wf2.monthRegExp.test(node.value);
-//						break;
-					case 'week':
-						node.validity.typeMismatch = !$wf2.weekRegExp.test(node.value);
-						break;
-					case 'time':
-						node.validity.typeMismatch = !$wf2.timeRegExp.test(node.value);
-						break;
-					case 'number':
-					case 'range':
-						node.validity.typeMismatch = !$wf2.numberRegExp.test(node.value);
-//						if(!node.validity.typeMismatch && node.getAttribute("step") != 'any'){
-//							if(node.wf2Step == undefined)
-//								node.wf2Step = 1;
-//							var val = Number(node.value);
-//							node.validity.stepMismatch = (val == parseInt(val) && node.wf2Step != parseInt(node.wf2Step));
-//						}
-						break;
-					case 'email':
-						//An e-mail address, following the format of the addr-spec  token defined in RFC 2822 section
-						//   3.4.1 [RFC2822], but excluding the CFWS  subtoken everywhere, and excluding the FWS
-						//   subtoken everywhere except in the quoted-string subtoken. UAs could, for example, offer
-						//   e-mail addresses from the user's address book. (See below for notes on IDN.)
-						//http://www.ietf.org/rfc/rfc2822						
-						node.validity.typeMismatch = !$wf2.emailRegExp.test(node.value);
-						break;
-					case 'url':
-						//An IRI, as defined by [RFC3987] (the IRI token, defined in RFC 3987 section 2.2). UAs could,
-						//   for example, offer the user URIs from his bookmarks. (See below for notes on IDN.) The value
-						//   is called url (as opposed to iri or uri) for consistency with CSS syntax and because it is
-						//   generally felt authors are more familiar with the term "URL" than the other, more technically
-						//   correct terms.
-						//http://www.ietf.org/rfc/rfc3987
-						node.validity.typeMismatch = !$wf2.urlRegExp.test(node.value);
-						break;
+						case 'email':
+							//An e-mail address, following the format of the addr-spec  token defined in RFC 2822 section
+							//   3.4.1 [RFC2822], but excluding the CFWS  subtoken everywhere, and excluding the FWS
+							//   subtoken everywhere except in the quoted-string subtoken. UAs could, for example, offer
+							//   e-mail addresses from the user's address book. (See below for notes on IDN.)
+							//http://www.ietf.org/rfc/rfc2822						
+							node.validity.typeMismatch = !$wf2.emailRegExp.test(node.value);
+							break;
+						case 'url':
+							//An IRI, as defined by [RFC3987] (the IRI token, defined in RFC 3987 section 2.2). UAs could,
+							//   for example, offer the user URIs from his bookmarks. (See below for notes on IDN.) The value
+							//   is called url (as opposed to iri or uri) for consistency with CSS syntax and because it is
+							//   generally felt authors are more familiar with the term "URL" than the other, more technically
+							//   correct terms.
+							//http://www.ietf.org/rfc/rfc3987
+							node.validity.typeMismatch = !$wf2.urlRegExp.test(node.value);
+							break;
+					}
 				}
+				
 			}
 		}
 		
@@ -1919,7 +1862,62 @@ $wf2 = {
 			}
 		}
 	},
-	
+
+	isValidDateTimeType : function(type, value){ //THIS NEEDS TO BE UNIFIED WITH parseISO8601
+//		switch(type){
+//			case 'date':
+//			case 'datetime':
+//			case 'datetime-local':
+//			case 'month':
+//			//case 'week':
+				
+				var d = $wf2.ISO8601RegExp.exec(value); //var d = string.match(new RegExp(regexp));
+				if(!d)
+					return false;
+				
+				//if((type == 'week' && d[2].indexOf('W') !== 0) || (type != 'week' && d[2].indexOf('W') === 0)){ //RegEx validates week
+				//	node.validity.typeMismatch = true;
+				//	break;
+				//}
+				if(type == 'week') // a week date
+					return (d[2].indexOf('W') === 0); //valid if W present
+				else if(type == 'time') // a time date
+					return !!d[15];
+				else if(type == 'month')
+					return !d[5];
+				else { //a date related value
+					//Verify that the number of days in the month are valid
+					if(d[6]){
+						var date = new Date(d[1], d[4]-1, d[6]);
+						if(date.getMonth() != d[4]-1)
+							return false;
+					}
+				
+//NOTE: make a function that creates a Date and verifies that it is one of the desired types
+//  Combine isValidDateTimeType with parseISO8601
+					//console.info(d);
+					switch(type){
+						//case 'month':
+						//	return !d[5]; //valid if day of month is not supplied
+						case 'date':
+							return (d[4] && !d[7]); //valid if day of month supplied and time field not present
+						case 'datetime':
+							return !!d[14]; //valid if Z present
+						case 'datetime-local':
+							return (d[7] && !d[14]); //valid if time present and Z not provided
+					}
+				}
+//				break;
+//			case 'month':
+//				return $wf2.monthRegExp.test(value);
+//			case 'week':
+//				return $wf2.weekRegExp.test(value);
+//			case 'time':
+//				return $wf2.timeRegExp.test(value);
+//		}
+		return false;
+	},
+
 	getElementsByTagNames : function(/* ... */){
 		var els,i,results = [];
 		if(document.evaluate){
@@ -2034,33 +2032,42 @@ $wf2 = {
 	},
 	
 	//Inspired by Paul Sowden <http://delete.me.uk/2005/03/iso8601.html>
-	parseISO8601 : function (string) {
+	parseISO8601 : function (string, type) { //THIS NEEDS TO BE UNIFIED WITH isValidDateTimeType
 		//var regexp = "([0-9]{4})(-([0-9]{2})(-([0-9]{2})" +
 		//	"(T([0-9]{2}):([0-9]{2})(:([0-9]{2})(\.([0-9]+))?)?" +
 		//	"(Z|(([-+])([0-9]{2}):([0-9]{2})))?)?)?)?";
 		//var d = string.match(new RegExp(regexp));
+		var isWeek = false;
 		var d = $wf2.ISO8601RegExp.exec(string);
-		if(!d) return null;
+		if(!d){
+			if(d = $wf2.weekRegExp.exec(string))
+				isWeek = true;
+			else return null;
+		}
 	
 		var offset = 0;
 		var date = new Date(d[1], 0, 1);
-	
-		if (d[3]) { date.setMonth(d[3] - 1); }
-		if (d[5]) { date.setDate(d[5]); }
-		if (d[7]) { date.setHours(d[7]); }
-		if (d[8]) { date.setMinutes(d[8]); }
-		if (d[10]) { date.setSeconds(d[10]); }
-		if (d[12]) { date.setMilliseconds(Number("0." + d[12]) * 1000); }
-		if (d[14]) {
-			offset = (Number(d[16]) * 60) + Number(d[17]);
-			offset *= ((d[15] == '-') ? 1 : -1);
-		}
-	
-		offset -= date.getTimezoneOffset();
-		time = (Number(date) + (offset * 60 * 1000));
 		
-		//this.setTime(Number(time));
-		return new Date(Number(time));
+		if(isWeek){
+			console.error("parseISO8601 does not yet work with dates");
+		}
+		else {
+			if (d[3]) { date.setMonth(d[3] - 1); }
+			if (d[5]) { date.setDate(d[5]); }
+			if (d[7]) { date.setHours(d[7]); }
+			if (d[8]) { date.setMinutes(d[8]); }
+			if (d[10]) { date.setSeconds(d[10]); }
+			if (d[12]) { date.setMilliseconds(Number("0." + d[12]) * 1000); }
+			if (d[14]) {
+				offset = (Number(d[16]) * 60) + Number(d[17]);
+				offset *= ((d[15] == '-') ? 1 : -1);
+			}
+		
+			offset -= date.getTimezoneOffset();
+			
+			//this.setTime(Number(time));
+			return new Date((Number(date) + (offset * 60 * 1000)));
+		}
 	}
 };
 
