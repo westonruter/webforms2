@@ -75,7 +75,7 @@ $wf2 = {
 
 			Element.prototype.repeatStart = 1;
 			Element.prototype.repeatMin   = 0;
-			Element.prototype.repeatMax   = Infinity;
+			Element.prototype.repeatMax   = Number.MAX_VALUE; //Infinity;
 			
 			Element.prototype.addRepetitionBlock        = $wf2.addRepetitionBlock;
 			Element.prototype.addRepetitionBlockByIndex = $wf2.addRepetitionBlockByIndex;
@@ -113,16 +113,16 @@ $wf2 = {
 		//   is 00:00.
 		$wf2.zeroPointDatetime      = $wf2.parseISO8601("1970-01-01T00:00:00.0Z");
 		$wf2.zeroPointDatetimeLocal = $wf2.parseISO8601("1970-01-01T00:00:00.0");
-		$wf2.zeroPointDate          = $wf2.parseISO8601("1970-01-01");
-		$wf2.zeroPointMonth         = $wf2.zeroPointDate; //$wf2.parseISO8601("1970-01");
-		$wf2.zeroPointWeek          = $wf2.zeroPointDate; //$wf2.parseISO8601("1970-W01"); //TODO
-		$wf2.zeroPointTime          = new Date(0); //$wf2.parseISO8601("00:00");
+		$wf2.zeroPointDate          = $wf2.parseISO8601("1970-01-01"); //.zeroPointDatetime; //1970-01-01 (UTC)
+		$wf2.zeroPointMonth         = $wf2.parseISO8601("1970-01"); //.zeroPointDatetime; //1970-01 (UTC)
+		$wf2.zeroPointWeek          = $wf2.parseISO8601("1970-W01"); //(UTC)
+		$wf2.zeroPointTime          = $wf2.parseISO8601("00:00"); //.zeroPointDatetime; //00:00 (UTC)
 		console.info("zeroPointDatetime: " + $wf2.zeroPointDatetime.toUTCString());
-		console.info("zeroPointDatetimeLocal: " + $wf2.zeroPointDatetimeLocal);
-		console.info("zeroPointDate: " + $wf2.zeroPointDate);
-		console.info("zeroPointMonth: " + $wf2.zeroPointMonth);
-		console.info("zeroPointWeek: " + $wf2.zeroPointWeek);
-		console.info("zeroPointTime: " + $wf2.zeroPointTime);
+		console.info("zeroPointDatetimeLocal: " + $wf2.zeroPointDatetimeLocal.toLocaleString());
+		console.info("zeroPointDate: " + $wf2.zeroPointDate.toUTCString());
+		console.info("zeroPointMonth: " + $wf2.zeroPointMonth.toUTCString());
+		console.info("zeroPointWeek: " + $wf2.zeroPointWeek.toUTCString());
+		console.info("zeroPointTime: " + $wf2.zeroPointTime.toUTCString());
 		$wf2.initNonRepetitionFunctionality();
 	},
 	
@@ -213,7 +213,7 @@ $wf2 = {
 		var _attr;
 		this.repeatStart = /^\d+$/.test(_attr = this.getAttribute('repeat-start')) ? parseInt(_attr) : 1;
 		this.repeatMin   = /^\d+$/.test(_attr = this.getAttribute('repeat-min'))   ? parseInt(_attr) : 0;
-		this.repeatMax   = /^\d+$/.test(_attr = this.getAttribute('repeat-max'))   ? parseInt(_attr) : Infinity;
+		this.repeatMax   = /^\d+$/.test(_attr = this.getAttribute('repeat-max'))   ? parseInt(_attr) : Number.MAX_VALUE; //Infinity;
 		
 		if(!this.addRepetitionBlock) this.addRepetitionBlock = function(refNode, index){
 			return $wf2.addRepetitionBlock.apply(this, [refNode, index]); //wrapper to save memory?
@@ -1138,7 +1138,6 @@ $wf2 = {
 	},
 
 	//Frequently used regular expressions //W(?:0[1-9]|[1-4]\d|5[0-2])|
-	ISO8601RegExp : /^(?:(\d\d\d\d)-(W(0[1-9]|[1-4]\d|5[0-2])|(0\d|1[0-2])(-(0\d|[1-2]\d|3[0-1])(T(0\d|1\d|2[0-4]):([0-5]\d)(:([0-5]\d)(\.(\d+))?)?(Z)?)?)?)|(0\d|1\d|2[0-4]):([0-5]\d)(:([0-5]\d)(\.(\d+))?)?)$/, //RegExp from http://delete.me.uk/2005/03/iso8601.html
 	//monthRegExp : /^\d\d\d\d-(0\d|1[0-2])$/,
 	//weekRegExp : /^(\d\d\d\d)-W(0[1-9]|[1-4]\d|5[0-2])$/,
 	//timeRegExp : /^(0\d|1\d|2[0-4]):([0-5]\d)(:[0-5]\d(.\d+)?)?$/,
@@ -1225,7 +1224,7 @@ $wf2 = {
 				//   control does not have an appropriate MIME type. If the control is empty, this flag must not be set.
 				node.validity.typeMismatch = false;
 				if(isDateRelated || isTimeRelated)
-					node.validity.typeMismatch = !$wf2.isValidDateTimeType(type, node.value);
+					node.validity.typeMismatch = ($wf2.validateDateTimeType(node.value, type) == null);
 				else {
 					switch(type){
 						case 'number':
@@ -1863,61 +1862,6 @@ $wf2 = {
 		}
 	},
 
-	isValidDateTimeType : function(type, value){ //THIS NEEDS TO BE UNIFIED WITH parseISO8601
-//		switch(type){
-//			case 'date':
-//			case 'datetime':
-//			case 'datetime-local':
-//			case 'month':
-//			//case 'week':
-				
-				var d = $wf2.ISO8601RegExp.exec(value); //var d = string.match(new RegExp(regexp));
-				if(!d)
-					return false;
-				
-				//if((type == 'week' && d[2].indexOf('W') !== 0) || (type != 'week' && d[2].indexOf('W') === 0)){ //RegEx validates week
-				//	node.validity.typeMismatch = true;
-				//	break;
-				//}
-				if(type == 'week') // a week date
-					return (d[2].indexOf('W') === 0); //valid if W present
-				else if(type == 'time') // a time date
-					return !!d[15];
-				else if(type == 'month')
-					return !d[5];
-				else { //a date related value
-					//Verify that the number of days in the month are valid
-					if(d[6]){
-						var date = new Date(d[1], d[4]-1, d[6]);
-						if(date.getMonth() != d[4]-1)
-							return false;
-					}
-				
-//NOTE: make a function that creates a Date and verifies that it is one of the desired types
-//  Combine isValidDateTimeType with parseISO8601
-					//console.info(d);
-					switch(type){
-						//case 'month':
-						//	return !d[5]; //valid if day of month is not supplied
-						case 'date':
-							return (d[4] && !d[7]); //valid if day of month supplied and time field not present
-						case 'datetime':
-							return !!d[14]; //valid if Z present
-						case 'datetime-local':
-							return (d[7] && !d[14]); //valid if time present and Z not provided
-					}
-				}
-//				break;
-//			case 'month':
-//				return $wf2.monthRegExp.test(value);
-//			case 'week':
-//				return $wf2.weekRegExp.test(value);
-//			case 'time':
-//				return $wf2.timeRegExp.test(value);
-//		}
-		return false;
-	},
-
 	getElementsByTagNames : function(/* ... */){
 		var els,i,results = [];
 		if(document.evaluate){
@@ -2031,43 +1975,117 @@ $wf2 = {
 		return li;
 	},
 	
-	//Inspired by Paul Sowden <http://delete.me.uk/2005/03/iso8601.html>
-	parseISO8601 : function (string, type) { //THIS NEEDS TO BE UNIFIED WITH isValidDateTimeType
-		//var regexp = "([0-9]{4})(-([0-9]{2})(-([0-9]{2})" +
-		//	"(T([0-9]{2}):([0-9]{2})(:([0-9]{2})(\.([0-9]+))?)?" +
-		//	"(Z|(([-+])([0-9]{2}):([0-9]{2})))?)?)?)?";
-		//var d = string.match(new RegExp(regexp));
-		var isWeek = false;
-		var d = $wf2.ISO8601RegExp.exec(string);
-		if(!d){
-			if(d = $wf2.weekRegExp.exec(string))
-				isWeek = true;
-			else return null;
-		}
-	
-		var offset = 0;
-		var date = new Date(d[1], 0, 1);
+	//Initially inspired by Paul Sowden <http://delete.me.uk/2005/03/iso8601.html>
+	ISO8601RegExp : /^(?:(\d\d\d\d)-(W(0[1-9]|[1-4]\d|5[0-2])|(0\d|1[0-2])(-(0\d|[1-2]\d|3[0-1])(T(0\d|1\d|2[0-4]):([0-5]\d)(:([0-5]\d)(\.(\d+))?)?(Z)?)?)?)|(0\d|1\d|2[0-4]):([0-5]\d)(:([0-5]\d)(\.(\d+))?)?)$/,
+	parseISO8601 : function (str, type) {
+		var d = $wf2.validateDateTimeType(str, type); //$wf2.ISO8601RegExp.exec(str);
+		if(!d)
+			return null;
 		
-		if(isWeek){
-			console.error("parseISO8601 does not yet work with dates");
+		var date = new Date(0);
+		var _timePos = 8;
+		
+		if(d[15]){ //Time
+			if(type && type != 'time') // a time date
+				return null;
+			_timePos = 15;
 		}
 		else {
-			if (d[3]) { date.setMonth(d[3] - 1); }
-			if (d[5]) { date.setDate(d[5]); }
-			if (d[7]) { date.setHours(d[7]); }
-			if (d[8]) { date.setMinutes(d[8]); }
-			if (d[10]) { date.setSeconds(d[10]); }
-			if (d[12]) { date.setMilliseconds(Number("0." + d[12]) * 1000); }
-			if (d[14]) {
-				offset = (Number(d[16]) * 60) + Number(d[17]);
-				offset *= ((d[15] == '-') ? 1 : -1);
-			}
-		
-			offset -= date.getTimezoneOffset();
+			date.setUTCFullYear(d[1]);
 			
-			//this.setTime(Number(time));
-			return new Date((Number(date) + (offset * 60 * 1000)));
+			//ISO8601 Week
+			if(d[3]){
+				if(type && type != 'week')
+					return null;
+				while(date.getUTCDay() != 1) //QUESTION: is there a more mathematecal method to this?
+					date.setUTCDate(date.getUTCDate()+1);
+				console.warn("There should be a better way to set the week day then iteration");
+				date.setUTCDate(date.getUTCDate() + (d[3]-1)*7); //set week
+				return date;
+			}
+			//Other date-related types
+			else {
+				date.setUTCMonth(d[4] - 1); //Month must be supplied for WF2
+				if(d[6])
+					date.setUTCDate(d[6]);
+			}
 		}
+
+		//Set time-related fields
+		if(d[_timePos+0]) date.setUTCHours(d[_timePos+0]);
+		if(d[_timePos+1]) date.setUTCMinutes(d[_timePos+1]);
+		if(d[_timePos+2]) date.setUTCSeconds(d[_timePos+3]);
+		if(d[_timePos+4]){
+			console.warn("Setting milliseconds not currently working because it is general fraction-of-second");
+			date.setUTCMilliseconds(d[_timePos+5] * Math.pow(10, 3-d[_timePos+5].length));
+		}
+		
+		//Set to local time if date given, hours present and no 'Z' provided
+		if(d[4] && d[_timePos+0] && !d[_timePos+6])
+			date.setUTCMinutes(date.getUTCMinutes()+date.getTimezoneOffset());
+		
+		//if(type == 'time'){
+			//console.info(type + ">" + str + '>' +  date.toUTCString() + " (ms: " + date.getMilliseconds() + ")");
+		//	console.info(type + ">" + str + '>' +  date.toString() + " (ms: " + date.getMilliseconds() + ")");
+			//console.warn(date);
+		//}
+		
+		return date;
+	},
+
+	validateDateTimeType : function(value, type){ //returns RegExp matches
+//		switch(type){
+//			case 'date':
+//			case 'datetime':
+//			case 'datetime-local':
+//			case 'month':
+//			//case 'week':
+				var isValid = false;
+				
+				var d = $wf2.ISO8601RegExp.exec(value); //var d = string.match(new RegExp(regexp));
+				if(!d || !type)
+					return d;
+				
+				//if((type == 'week' && d[2].indexOf('W') !== 0) || (type != 'week' && d[2].indexOf('W') === 0)){ //RegEx validates week
+				//	node.validity.typeMismatch = true;
+				//	break;
+				//}
+				if(type == 'week') // a week date
+					isValid = (d[2].toString().indexOf('W') === 0); //valid if W present
+				else if(type == 'time') // a time date
+					isValid = !!d[15];
+				else if(type == 'month')
+					isValid = !d[5];
+				else { //a date related value
+					//Verify that the number of days in the month are valid
+					if(d[6]){
+						var date = new Date(d[1], d[4]-1, d[6]);
+						if(date.getMonth() != d[4]-1)
+							isValid = false;
+						else switch(type){
+							//case 'month':
+							//	return !d[5]; //valid if day of month is not supplied
+							case 'date':
+								isValid = (d[4] && !d[7]); //valid if day of month supplied and time field not present
+								break;
+							case 'datetime':
+								isValid = !!d[14]; //valid if Z present
+								break;
+							case 'datetime-local':
+								isValid = (d[7] && !d[14]); //valid if time present and Z not provided
+								break;
+						}
+					}
+				}
+//				break;
+//			case 'month':
+//				return $wf2.monthRegExp.test(value);
+//			case 'week':
+//				return $wf2.weekRegExp.test(value);
+//			case 'time':
+//				return $wf2.timeRegExp.test(value);
+//		}
+		return isValid ? d : null;
 	}
 };
 
