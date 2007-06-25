@@ -1,0 +1,11 @@
+<select xmlns="http://www.w3.org/1999/xhtml">
+	<optgroup label="States">
+		<option value="MN">Minnesota</option>
+		<option value="OR">Oregon</option>
+		<option value="WA">Washington</option>
+	</optgroup>
+	<optgroup label="Provinces">
+		<option value="AB">Alberta</option>
+		<option value="BC">British Colombia</option>
+	</optgroup>
+</select>

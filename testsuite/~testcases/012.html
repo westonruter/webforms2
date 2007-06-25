@@ -52,7 +52,7 @@
 		</ul>
 
 		<div>
-			<div id="i" repeat="template" repeat-start="3" repeat-min="1" repeat-max="5" onadd="addEventLogEntry(event)" onremove="addEventLogEntry(event)">
+			<div id="i" repeat="template" repeat-start="3" repeat-min="1" repeat-max="5" onadded="addEventLogEntry(event)" onremoved="addEventLogEntry(event)">
 				#<input type="text" value="[i]" /><button type="remove">Remove</button>
 			</div>
 		</div>

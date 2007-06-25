@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<formdata xmlns="http://n.whatwg.org/formdata">
+	<clear template="i" index="1"/>
+	<field name="hello">world <![CDATA[ earth ]]> <![CDATA[ earth2 ]]></field>
+</formdata>

@@ -76,10 +76,10 @@
 		}
 		
 		function handle_DOM2Event(event){
-			addEventLogEntry(event.type, event.element, 'DOM Level 2');
+			addEventLogEntry(event.type, event.element || event.relatedNode, 'DOM Level 2');
 		}
 		function handle_traditionalEvent(event){
-			addEventLogEntry(event.type, event.element, 'traditional');
+			addEventLogEntry(event.type, event.element || event.relatedNode, 'traditional');
 		}
 
 		function toggleDOM2Events(toggle){
@@ -97,15 +97,15 @@
 		function toggleTraditionalEvents(toggle){
 			if(toggle){
 				var rt = document.getElementById('i');
-				rt.onadd = handle_traditionalEvent;
-				rt.onremove = handle_traditionalEvent;
-				rt.onmove = handle_traditionalEvent;
+				rt.onadded = handle_traditionalEvent;
+				rt.onremoved = handle_traditionalEvent;
+				rt.onmoved = handle_traditionalEvent;
 			}
 			else {
 				var rt = document.getElementById('i');
-				rt.onadd = null;
-				rt.onremove = null;
-				rt.onmove = null;
+				rt.onadded = null;
+				rt.onremoved = null;
+				rt.onmoved = null;
 			}
 		}
 		

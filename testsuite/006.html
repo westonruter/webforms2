@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 5//EN">
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
@@ -100,15 +100,15 @@
 		function toggleTraditionalEvents(toggle){
 			if(toggle){
 				var rt = document.getElementById('i');
-				rt.onadd = handle_traditionalEvent;
-				rt.onremove = handle_traditionalEvent;
-				rt.onmove = handle_traditionalEvent;
+				rt.onadded = handle_traditionalEvent;
+				rt.onremoved = handle_traditionalEvent;
+				rt.onmoved = handle_traditionalEvent;
 			}
 			else {
 				var rt = document.getElementById('i');
-				rt.onadd = null;
-				rt.onremove = null;
-				rt.onmove = null;
+				rt.onadded = null;
+				rt.onremoved = null;
+				rt.onmoved = null;
 			}
 		}
 		

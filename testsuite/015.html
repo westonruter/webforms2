@@ -2,34 +2,40 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-		<title>Test Case 2: Spec Example: Repeated rows &laquo; Repetition Model Test Suite</title>
-		<meta name="description" content="Dynamically adding table rows" />
+		<title>Test Case 15: Required Elements in Repeated Blocks &laquo; Repetition Model Test Suite</title>
+		<meta name="description" content="" />
 		<script type="text/javascript" src="../webforms2.js"></script>
 		<link rel="stylesheet" type="text/css" href="testcase.css" /><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
-		<!-- prev --><link rel="prev" href="001.html" /><!-- /prev -->
-		<!-- next --><link rel="next" href="003.html" /><!-- /next -->
+		<!-- prev --><link rel="prev" href="014.html" /><!-- /prev -->
+		<!-- next --><link rel="next" href="016.html" /><!-- /next -->
 		<link rel="home" href="index.html" />
+		
+		<script type="text/javascript">
+		
+		</script>
 		
 	</head>
 	<body>
 		<div id="testSuiteNote">
 
-			<h1>Web Forms 2.0 Test Case 2: Spec Example: Repeated rows</h1>
+			<h1>Web Forms 2.0 Test Case 15: Required Elements in Repeated Blocks</h1>
 			<p class="purpose">
 			This test case demonstrates functionality of the Web Forms 2.0 specification and tests the compliance of 
 			this cross-browser <a href="http://code.google.com/p/repetitionmodel/">Web Forms 2.0 implementation</a>.</p>
 
-			 <p>The following example <a href="http://whatwg.org/specs/web-forms/current-work/#repeatExample">from the specification</a> "shows how to use repetition templates to dynamically add rows to a form in a table": <blockquote> <p>Initially, two rows would be visible, each with two text input controls, the first row having the values "John Smith" and "2", the second row having the values "" (a blank text field) and "1". The second row is the result of the (implied) repeat-start attribute adding a repetition block when the document was loaded.</p> <p>If the "Add Row" button is pressed, a new row is added. The first such row would have the index 2 (since there are already two repetition blocks numbered 0 and 1) and so the controls would be named "name_2" and "count_2" respectively.</p> <p>If the "Delete Row" button above is pressed, the row is removed. </p> </blockquote> 
+			 <p>The following demonstrates that the repetition model code does not fail when a user-supplied event handler raises an exception.</p> 
 			
 			<div class="testSuiteNavigation">
-				<!-- prev -->&larr;&nbsp;<a href="001.html" class="prev">Spec Example: Sample Order Form</a> |<!-- /prev -->
+				<!-- prev -->&larr;&nbsp;<a href="014.html" class="prev">Exceptions in Repetition Events</a> |<!-- /prev -->
 				<a href="index.html" class="index">Test Suite Index</a>
-				<!-- next -->| <a href="003.html" class="next">Spec Example: Solar system</a>&nbsp;&rarr;<!-- /next -->
+				<!-- next -->| <a href="016.html" class="next">Autofocus on unfocusable form control</a>&nbsp;&rarr;<!-- /next -->
 			</div>
 			
 			<hr />
 		</div>
   
+
+
 
   <form action="http://software.hixie.ch/utilities/cgi/test-tools/echo" method="post" enctype="multipart/form-data">
    <table>
@@ -42,13 +48,13 @@
     </thead>
     <tbody>
      <tr repeat="0">
-      <td><input type="text" name="name_0" value="John Smith"></td>
-      <td><input type="text" name="count_0" value="2"></td>
+      <td><input type="text" name="name_0" value="John Smith" required="required"></td>
+      <td><input type="number" name="count_0" value="2"></td>
       <td><button type="remove">Delete Row</button></td>
      </tr>
      <tr repeat="template" id="row">
-      <td><input type="text" name="name_[row]" value=""></td>
-      <td><input type="text" name="count_[row]" value="1" autofocus></td>
+      <td><input type="text" name="name_[row]" value="" required="required"></td>
+      <td><input type="number" name="count_[row]" value="1" autofocus></td>
       <td><button type="remove">Delete Row</button></td>
      </tr>
     </tbody>
@@ -59,6 +65,7 @@
    </p>
   </form>
 
+		
 
 		<hr />
 		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br />

@@ -29,7 +29,7 @@
 		<!-- BEGIN TEST CASE -->
 		<p>Note that the there should be errors raised whenever repetition behavior is envoked. <span style="color:red">An event handler <code>createRuntimeException</code> purposely raises a runtime error.</span></p>
 		<ol>
-			<li id="t" repeat-start="0" repeat="template" onadd="createRuntimeException()" onremove="createRuntimeException()" onmove="createRuntimeException()">
+			<li id="t" repeat-start="0" repeat="template" onadded="createRuntimeException()" onremoved="createRuntimeException()" onmoved="createRuntimeException()">
 				<input type="text" size="3" value="[t]" />
 				<input type="move-up" />
 				<input type="move-down" />

@@ -27,6 +27,8 @@
 		var doStrip = true;
 		function addEventLogEntry(evt){
 			document.getElementById('doNote').style.display='none';
+			
+			var el = evt.element || evt.relatedNode;
 		
 			count++;
 			var tbody = document.getElementById('eventLog');
@@ -43,12 +45,12 @@
 			row.appendChild(cell);
 			
 			cell = document.createElement('td');
-			cell.appendChild(document.createTextNode(evt.element));
+			cell.appendChild(document.createTextNode(el));
 			row.appendChild(cell);
 			
-			if(!evt.element.style || !evt.element.style.backgroundColor)
-				evt.element.style.backgroundColor = colors[count % colors.length];
-			row.style.backgroundColor = evt.element.style.backgroundColor;
+			if(!el.style || !el.style.backgroundColor)
+				el.style.backgroundColor = colors[count % colors.length];
+			row.style.backgroundColor = el.style.backgroundColor;
 			
 			tbody.insertBefore(row, tbody.firstChild);
 		}
@@ -89,7 +91,7 @@
 	</head>
 	<body>
 		<div id="testcaseDesc">
-			<p>The following demonstrates the handling of repetition events handled by <code>onadd</code>, <code>onmove</code>, and <code>onremove</code>
+			<p>The following demonstrates the handling of repetition events handled by <code>onadded</code>, <code>onmoved</code>, and <code>onremoved</code>
 			HTML attributes set on a repetition template which handle their respective events. This is made possible by an <a href="http://code.google.com/p/repetitionmodel/wiki/Extensions">extension</a> to the specification, found in <a href="http://code.google.com/p/repetitionmodel/">this implementation</a>.</p>
 		</div>
 		
@@ -98,7 +100,7 @@
 		<form>
 			<p><button type="add" template="i" style="font-size:large">Add row</button></p>
 			<ul>
-				<li id="i" repeat="template" repeat-start="0" onadd="addEventLogEntry(event)" onremove="addEventLogEntry(event)" onmove="addEventLogEntry(event)">
+				<li id="i" repeat="template" repeat-start="0" onadded="addEventLogEntry(event)" onremoved="addEventLogEntry(event)" onmoved="addEventLogEntry(event)">
 					<input type="text" id="text[i]" value="Index [i]" />
 					<button type="move-down">&#x2193;</button><button type="move-up">&#x2191;</button>
 					<button type="remove">Remove</button>

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 5//EN">
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
@@ -16,11 +16,11 @@
 		
 		window.onload = function(){
 			addHandlers();
-			document.getElementById('order').onadd = function(e){
+			document.getElementById('order').onadded = function(e){
 				e.element.style.backgroundColor = colors[++addCount % colors.length];
 				addHandlers(e.element);
 			}
-			//document.getElementById('order').onmove = function(e){
+			//document.getElementById('order').onmoved = function(e){
 			//	addHandlers();
 			//}
 			document.getElementById('order').addRepetitionBlock(null);

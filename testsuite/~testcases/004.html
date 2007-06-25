@@ -12,11 +12,11 @@
 		
 		window.onload = function(){
 			addHandlers();
-			document.getElementById('order').onadd = function(e){
+			document.getElementById('order').onadded = function(e){
 				e.element.style.backgroundColor = colors[++addCount % colors.length];
 				addHandlers(e.element);
 			}
-			//document.getElementById('order').onmove = function(e){
+			//document.getElementById('order').onmoved = function(e){
 			//	addHandlers();
 			//}
 			document.getElementById('order').addRepetitionBlock(null);

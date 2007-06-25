@@ -1,0 +1,62 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 5//EN">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>Test Case 19: 0.1 &laquo; Repetition Model Test Suite</title>
+		<meta name="description" content="" />
+		<script type="text/javascript" src="../webforms2.js"></script>
+		<link rel="stylesheet" type="text/css" href="testcase.css" /><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
+		<!-- prev --><link rel="prev" href="018.html" /><!-- /prev -->
+		
+		<link rel="home" href="index.html" />
+		
+	</head>
+	<body>
+		<div id="testSuiteNote">
+
+			<h1>Web Forms 2.0 Test Case 19: 0.1</h1>
+			<p class="purpose">
+			This test case demonstrates functionality of the Web Forms 2.0 specification and tests the compliance of 
+			this cross-browser <a href="http://code.google.com/p/repetitionmodel/">Web Forms 2.0 implementation</a>.</p>
+
+			 <p>Regarding fetching data from external resources, the <a href="http://whatwg.org/specs/web-forms/current-work/#fetching-data">specification</a> states:</p> <blockquote> <p>There are two scenarios where authors may wish data to be fetched from an external file to fill forms. In the first, a select's options are replaced by options from an external file. In the second, a form's values are prefilled from an external data source.</p> <p>In both cases, the prefilling may either be full, in which case the previous contents are removed first, or incremental, in which case the fetched data is in addition to the data already in the form. </p> </blockquote> 
+			
+			<div class="testSuiteNavigation">
+				<!-- prev -->&larr;&nbsp;<a href="018.html" class="prev">Radio Buttons in Nested Repetition Blocks</a> |<!-- /prev -->
+				<a href="index.html" class="index">Test Suite Index</a>
+				
+			</div>
+			
+			<hr />
+		</div>
+  
+
+	<h1>Filling <code>select</code> elements</h1>
+	<form onsubmit="return false">
+		
+		<p>States and provinces: <select data="019-statesAndProvinces.xml"></select></p>
+		<!--<p><datalist data="019-statesAndProvinces.xml"></datalist></p>-->
+		<p>Colors: <select data="019-colors.xml">
+			<option value="#FF9900">Orange</option>
+			<option value="#FFFF00">Yellow</option>
+			<option value="#663366">Purple</option>
+		</select> (there should be 8 colors, 5 provided incrementally)</p>
+		
+		<p><button type="submit">Submit</button></p>
+	</form>
+	
+	<h1>Seeding a form with initial values</h1>
+	<form onsubmit="return false" data="019-formdata.xml">
+		<input type="text" name="hello">
+	</form>
+
+
+
+		<hr />
+		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br />
+		Version: 0.1 (2007-05) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
+		<address>
+		<a href="http://weston.ruter.net/">Weston Ruter</a>
+		</address>
+	</body>
+</html>

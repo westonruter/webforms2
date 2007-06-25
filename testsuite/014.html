@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 5//EN">
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
@@ -7,7 +7,7 @@
 		<script type="text/javascript" src="../webforms2.js"></script>
 		<link rel="stylesheet" type="text/css" href="testcase.css" /><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
 		<!-- prev --><link rel="prev" href="013.html" /><!-- /prev -->
-		
+		<!-- next --><link rel="next" href="015.html" /><!-- /next -->
 		<link rel="home" href="index.html" />
 		
 		<script type="text/javascript">
@@ -38,7 +38,7 @@
 			<div class="testSuiteNavigation">
 				<!-- prev -->&larr;&nbsp;<a href="013.html" class="prev">Repeated Photo Albums</a> |<!-- /prev -->
 				<a href="index.html" class="index">Test Suite Index</a>
-				
+				<!-- next -->| <a href="015.html" class="next">Required Elements in Repeated Blocks</a>&nbsp;&rarr;<!-- /next -->
 			</div>
 			
 			<hr />
@@ -47,7 +47,7 @@
 
 		<p>Note that the there should be errors raised whenever repetition behavior is envoked. <span style="color:red">An event handler <code>createRuntimeException</code> purposely raises a runtime error.</span></p>
 		<ol>
-			<li id="t" repeat-start="0" repeat="template" onadd="createRuntimeException()" onremove="createRuntimeException()" onmove="createRuntimeException()">
+			<li id="t" repeat-start="0" repeat="template" onadded="createRuntimeException()" onremoved="createRuntimeException()" onmoved="createRuntimeException()">
 				<input type="text" size="3" value="[t]" />
 				<input type="move-up" />
 				<input type="move-down" />

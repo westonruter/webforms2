@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 5//EN">
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
@@ -39,18 +39,24 @@
 				//throw Error("Repetition model not yet initialized; user onload called before repetition model could be initialized.");
 				return;
 			}
-			
-			
+
+			var skippedAttrs = {
+				addRepetitionBlock:1,addRepetitionBlockByIndex:1,moveRepetitionBlock:1,
+				removeRepetitionBlock:1, repetitionBlocks:1,
+				setCustomValidity:1,checkValidity:1,validity:1,validationMessage:1,willValidate:1,
+				wf2Min:1,wf2Max:1,wf2Step:1,wf2Value:1,wf2initialized:1
+			};
 			var attributeResults = {};
 			
 			var elements = block.getElementsByTagName("*");
 			for(i = 0; el = elements[i]; i++){
 				if(el.attributes)
 				for(j = 0; attr = el.attributes[j]; j++){
-					if(attr.specified && attr.name.toLowerCase() != 'type')
+					if(attr.specified && !skippedAttrs[attr.name] && attr.name.toLowerCase() != 'type')
 						attributeResults[attr.name + " (" + el.nodeName + ")"] = (attr.name == 'style' ? el.style.cssText : attr.value);
 				}
 			}
+			
 			
 			var attributeNames = [];
 			for(name in attributeResults)

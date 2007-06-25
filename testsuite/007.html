@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 5//EN">
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
@@ -98,7 +98,7 @@
 			This test case demonstrates functionality of the Web Forms 2.0 specification and tests the compliance of 
 			this cross-browser <a href="http://code.google.com/p/repetitionmodel/">Web Forms 2.0 implementation</a>.</p>
 
-			 <p>The following demonstrates the handling of repetition events handled by <code>onadd</code>, <code>onmove</code>, and <code>onremove</code> HTML attributes set on a repetition template which handle their respective events. This is made possible by an <a href="http://code.google.com/p/repetitionmodel/wiki/Extensions">extension</a> to the specification, found in <a href="http://code.google.com/p/repetitionmodel/">this implementation</a>.</p> 
+			 <p>The following demonstrates the handling of repetition events handled by <code>onadded</code>, <code>onmoved</code>, and <code>onremoved</code> HTML attributes set on a repetition template which handle their respective events. This is made possible by an <a href="http://code.google.com/p/repetitionmodel/wiki/Extensions">extension</a> to the specification, found in <a href="http://code.google.com/p/repetitionmodel/">this implementation</a>.</p> 
 			
 			<div class="testSuiteNavigation">
 				<!-- prev -->&larr;&nbsp;<a href="006.html" class="prev">Repetition Events</a> |<!-- /prev -->
@@ -114,7 +114,7 @@
 		<form>
 			<p><button type="add" template="i" style="font-size:large">Add row</button></p>
 			<ul>
-				<li id="i" repeat="template" repeat-start="0" onadd="addEventLogEntry(event)" onremove="addEventLogEntry(event)" onmove="addEventLogEntry(event)">
+				<li id="i" repeat="template" repeat-start="0" onadded="addEventLogEntry(event)" onremoved="addEventLogEntry(event)" onmoved="addEventLogEntry(event)">
 					<input type="text" id="text[i]" value="Index [i]" />
 					<button type="move-down">&#x2193;</button><button type="move-up">&#x2191;</button>
 					<button type="remove">Remove</button>
