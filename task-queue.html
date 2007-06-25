@@ -7,6 +7,18 @@
 
 
 
+
+
+
+
+
+
+  
+  
+  
+  
+  
+  
   
   
   
@@ -20,6 +32,24 @@
 
 
 
+
+
+
+
+
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   
   
   
@@ -44,7 +74,19 @@
 
 
 
+
+
+
+
+
+
 <ol>
+
+
+
+
+
+
 
 
 
@@ -58,7 +100,19 @@
 
 
 
+
+
+
+
+
+
   <li><font color="#c0c0c0"><strike>Flashing of invalid form controls is not working when there is more than one</strike>.</font></li>
+
+
+
+
+
+
 
 
 
@@ -72,9 +126,19 @@
 
 
 
+
+
+
+
+
+
   
 
-  <li>Should onadded be preferred over onadd?</li>
+  
+
+
+
+
 
 
 
@@ -88,7 +152,19 @@ hasAttribute('autofocus') when it is focusable.</strike></font></li>
 
 
 
+
+
+
+
+
+
   <li>Add DOMAttrModified handlers for repeatStart, et al</li>
+
+
+
+
+
+
 
 
 
@@ -100,7 +176,19 @@ hasAttribute('autofocus') when it is focusable.</strike></font></li>
 
 
 
+
+
+
+
+
+
   <li>We need to test the implementation in XHTML: is DOMContentLoaded fired after onload in XHTML?</li>
+
+
+
+
+
+
 
 
 
@@ -112,7 +200,19 @@ hasAttribute('autofocus') when it is focusable.</strike></font></li>
 
 
 
+
+
+
+
+
+
   <li>Upload test cases to weston.ruter.net and add redirects from repetition model test cases to these ones</li>
+
+
+
+
+
+
 
 
 
@@ -123,7 +223,19 @@ hasAttribute('autofocus') when it is focusable.</strike></font></li>
 
 
 
+
+
+
+
+
+
   <li>Note: using document.body as the test for when loaded is not good... XHTML documents will not work with this.</li>
+
+
+
+
+
+
 
 
 
@@ -131,7 +243,19 @@ hasAttribute('autofocus') when it is focusable.</strike></font></li>
 
 
 
+
+
+
+
+
+
   <li>Execute repetition model before Data attributes are prefilled</li>
+
+
+
+
+
+
 
 
 
@@ -139,7 +263,19 @@ hasAttribute('autofocus') when it is focusable.</strike></font></li>
 
 
 
+
+
+
+
+
+
   <li><font color="#c0c0c0"><strike>Positioning of error messages is incorrect in Firefox and MSIE (note offsetLeft)</strike></font>.</li>
+
+
+
+
+
+
 
 
 
@@ -151,23 +287,127 @@ exception... question: is there a submit event raised when manually
 calling submit()??</font>?<br>
 
 
+
+
+
+
+
+
   </li>
+
+
+
+
+
+
 
 
   <li>Created initWF2Functionality to initialize the validation model,
 autofocus, etc. Should the Repetition Model functions be called within
 here?</li>
 
+
+
+
+
+
+
   <li>Add support for form.data and select.data</li>
 
+
+
+
+
+
+
   <li>Use Ruby's Racc to create RegExes for URL and Email</li>
+
+
+
+
+
+
   <li>Radio buttons in repetition blocks are unselectable in MSIE.</li>
-  <li>Add range checking for date-related controls.</li>
-  <li>Add step checking for all controls</li>
+
+
+
+
+
+
+  <li style="text-decoration: line-through; color: rgb(204, 204, 204);">Add range checking for date-related controls.</li>
+
+
+
+
+
+
+  <li style="text-decoration: line-through; color: rgb(204, 204, 204);">Add step checking for all controls</li>
+
+
+
+
+
+
   <li>Can cloneNode be sped up by hacking innerHTML?</li>
 
 
+
+
+  <li style="text-decoration: line-through; color: rgb(204, 204, 204);">Event handlers on nested repetition blocks are not set</li>
+
+
+  
+  
+  <ol style="text-decoration: line-through; color: rgb(204, 204, 204);">
+
+
+    <li>cloneNode needs to be fixed. onadd et al handlers should be copied for child repetition templates</li>
+
+
+    <li>what about onclick attributes??? they are being made into DOM properties and so are not being iterated in Firefox</li>
+
+
+  
+  
+  </ol>
+
+
+
+
+  <li style="text-decoration: line-through; color: rgb(204, 204, 204);">Onadd HTML attribute handlers on any element does not work</li>
+
+
+
+  <li style="text-decoration: line-through; color: rgb(204, 204, 204);">Make onadd et al deprecated</li>
+
+
+  <li style="text-decoration: line-through;">(?:.|\n)+ ??</li>
+
+  <li>Add namespace support</li>
+
+  <li>If we use Flash, I bet we can do file uploads and also do the
+enctype XML for files... once a user selects a file, it should be
+loaded by Flash and converted into the base64 format. This format can
+then be added to the output.</li>
+  <li>Implement datalist control, and then allow prefilling.</li>
+  <li><span style="text-decoration: line-through;">Use localName uinstead of nodeName.</span>. localName not supported by MSIE</li>
+  <li>MSIE cannot appendChild an arbitrary cloned node. Unable to add OPTGROUP elements.</li>
+  <li></li>
+
+
+
+
+
+
+
+
 </ol>
+
+
+
+
+
+
 
 
 

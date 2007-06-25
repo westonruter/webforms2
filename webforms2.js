@@ -36,7 +36,7 @@ $wf2 = {
 		$wf2.isInitialized = true;  //Safari needs this here for some reason
 		
 		$wf2.createMiscFunctions();
-		var i;
+		var i,j,node;
 		
 		//Include stylesheet
 		var style = document.createElement('link');
@@ -52,7 +52,7 @@ $wf2 = {
 		//Before load events are fired, but after the entire document has been parsed and after select elements
 		//   have been filled from external data sources (if necessary), forms with data attributes are prefilled.
 		var forms = $wf2.getElementsByTagNameAndAttribute.apply(document, ["form", "data"]);
-		for(var i = 0; i < forms.length; i++){
+		for(i = 0; i < forms.length; i++){
 			//[The data attribute] must be a URI or IRI that points to a well-formed XML file whose root element
 			//   is a formdata element in the http://n.whatwg.org/formdata namespace. The MIME type must be an XML
 			//   MIME type [RFC3023], preferably application/xml.
@@ -97,7 +97,508 @@ $wf2 = {
 		$wf2.updateAddButtons();
 		$wf2.updateMoveButtons();
 		
+		//Fetching data from external resources ***********************
+		var xhr;
+		if(window.XMLHttpRequest)
+			xhr = new XMLHttpRequest();
+		else if(window.ActiveXObject){
+			try {
+				xhr = new ActiveXObject("Msxml2.XMLHTTP");
+			} catch(e){
+				try {
+					xhr = new ActiveXObject("Microsoft.XMLHTTP");
+				} catch(e){}
+			}
+		}
+		if(xhr){
+			//--Filling select elements----------
+			//If a select element or a datalist element being parsed has a data attribute, then as soon
+			//   as the element and all its children have been parsed and added to the document, the
+			//   prefilling process described here should start.
+			var select, selects = $wf2.getElementsByTagNameAndAttribute.apply(document.documentElement, ['select', 'data']);
+			//NOTE: datalist elements are not being prefilled
+			//$wf2.getElementsByTagNameAndAttribute('datalist', 'data');
+			for(i = 0; select = selects[i]; i++){
+				xhr.open("GET", select.getAttribute('data'), false);
+				xhr.send();
+				//If a select element or a datalist element has a data  attribute, it must be a URI or
+				//   IRI that points to a well-formed XML file whose root element is a select element
+				//   in the http://www.w3.org/1999/xhtml namespace. The MIME type must be an XML MIME
+				//   type [RFC3023], preferably application/xml. It should not be application/xhtml+xml
+				//   since the root element is not html.
+				//UAs must process this file if it has an XML MIME type [RFC3023], if it is a well-formed
+				//   XML file, and if the root element is the right root element in the right namespace.
+				//   If any of these conditions are not met, UAs must act as if the attribute was not
+				//   specified, although they may report the error to the user. UAs are expected to
+				//   correctly handle namespaces, so the file may use prefixes, etc.
+				if(///\bxml\b/.test(xhr.getResponseHeader('Content-Type') && 
+				   xhr.responseXML &&
+				   xhr.responseXML.documentElement &&
+				   /:?\bselect$/i.test(xhr.responseXML.documentElement.nodeName) &&
+				   xhr.responseXML.documentElement.namespaceURI == 'http://www.w3.org/1999/xhtml'
+				   )
+				{
+					var root = xhr.responseXML.documentElement;
+					//1. Unless the root element of the file has a type attribute with the exact literal
+					//   string incremental, the children of the select or datalist  element in the original
+					//   document must all be removed from the document.
+					if(root.getAttribute('type') != 'incremental'){
+						while(select.lastChild)
+							select.removeChild(select.lastChild);
+					}
+					
+					//2. The entire contents of the select element in the referenced document are imported
+					//   into the original document and appended as children of the select or datalist
+					//   element. (Even if importing into a text/html document, the newly imported nodes
+					//   will still be namespaced.)
+					//3. All nodes outside the select (such as style sheet processing instructions, whitespace
+					//   text nodes, and DOCTYPEs) are ignored, as are attributes (other than type) on the
+					//   select element.
+					try {
+						node = root.firstChild;
+						while(node){
+							if(node.nodeType == 1)
+								select.appendChild(node.cloneNode(true));
+							node = node.nextSibling;
+						}
+					}
+					catch(e){
+						console.error("MSIE cannot appendChild an arbitrary cloned node. Unable to add OPTGROUP elements. " + e.message);
+						var option, options = root.getElementsByTagName('option');
+						for(j = 0; option = options[j]; j++){
+							select.options[select.length] = new Option(option.text, option.value, option.selected);
+						}
+					}
+				}
+				
+				//[NOT IMPLEMENTED]: If a select or datalist element has its data  attribute manipulated via
+				//   the DOM, then the prefilling process must start as soon as any executing scripts have run
+				//   to completion. If the attribute is set multiple times during one execution of a script,
+				//   only the last request must take effect. If the process is started while an outstanding
+				//   prefilling request is still being attended to, the requests must all be serviced in the
+				//   order they were started.
+				
+			}
+			
+			//--Seeding a form with initial values-------
+			//Before load events are fired, but after the entire document has been parsed and after select
+			//   elements have been filled from external data sources (if necessary), forms with data attributes
+			//   are prefilled.
+			var form, forms = $wf2.getElementsByTagNameAndAttribute.apply(document.documentElement, ['form', 'data']);
+			for(i = 0; form = forms[i]; i++){
+				//If a form has a data attribute, it must be a URI or IRI that points to a well-formed XML file
+				//   whose root element is a formdata element in the http://n.whatwg.org/formdata namespace. The
+				//   MIME type must be an XML MIME type [RFC3023], preferably application/xml.
+				//UAs must process this file if these conditions are met. If any of these conditions are not met,
+				//   UAs must act as if the attribute was not specified, although they may report the error to
+				//   the user. UAs are expected to correctly handle namespaces, so the file may use prefixes, etc.
+				xhr.open("GET", form.getAttribute('data'), false);
+				xhr.send();
+				if(///\bxml\b/.test(xhr.getResponseHeader('Content-Type') && 
+				   xhr.responseXML &&
+				   xhr.responseXML.documentElement &&
+				   /:?\bformdata$/.test(xhr.responseXML.documentElement.nodeName) &&
+				   xhr.responseXML.documentElement.namespaceURI == 'http://n.whatwg.org/formdata'
+				   )
+				{
+					var root = xhr.responseXML.documentElement;
+					//1. Unless the root element has a type attribute with the exact literal string incremental,
+					//   the form must be reset to its initial values as specified in the markup.
+					if(root.getAttribute('type') != 'incremental')
+						form.reset();
+
+					//The algorithm must be processed in the order given above, meaning any clear  elements are
+					//   handled before any repeat  elements which are handled before the field elements, regardless
+					//   of the order in which the elements are given. (Note that this implies that this process
+					//   cannot be performed incrementally.)
+					
+					//clear elements in the http://n.whatwg.org/formdata namespace that are children of
+					//   the root element, have a non-empty template attribute, have no other non-namespaced
+					//   attributes (ignoring xmlns attributes), and have no content, must be processed...:
+					//The template attribute should contain the ID of an element in the document. If the
+					//   template attribute specifies an element that is not a repetition template, then
+					//   the clear element is ignored.
+					var clear, clears = root.getElementsByTagName('clear'); //getElementsByTagNameNS('http://n.whatwg.org/formdata', 'clear')
+					for(j = 0; clear = clears[j]; j++){
+						if(clear.namespaceURI != 'http://n.whatwg.org/formdata' || clear.parentNode != root)
+							continue;
+						var rt = document.getElementById(clear.getAttribute('template'));
+						if(rt && rt.repetitionType == RepetitionElement.REPETITION_TEMPLATE &&
+						   !clear.firstNode)
+						   /*Examining of non-namespaced attributes skipped*/
+						{
+							//The user must make a note of the list of repetition blocks associated with that
+							//   template that are siblings of the template, and must then go through this list,
+							//   removing each repetition block in turn.
+							while(rt.repetitionBlocks.length)
+								rt.repetititionBlocks[0].removeRepetitionBlock();
+						}
+					}
+					
+					//repeat elements in the http://n.whatwg.org/formdata namespace that are children of
+					//   the root element, have a non-empty template attribute and an index  attribute that
+					//   contains only one or more digits in the range 0-9 with an optional leading minus
+					//   sign (U+002D, "-"), have no other non-namespaced attributes (ignoring xmlns
+					//   attributes), and have no content, must be processed as follows:
+					//The template attribute should contain the ID of an element in the document. If the
+					//   template attribute specifies an element that is not a repetition template, then
+					//   the repeat element is ignored.
+					var repeat, repeats = root.getElementsByTagName('repeat');
+					for(j = 0; repeat = repeats[j]; j++){
+						if(repeat.namespaceURI != 'http://n.whatwg.org/formdata' || repeat.parentNode != root)
+							continue;
+						var rt = document.getElementById(repeat.getAttribute('template'));
+						var index = repeat.getAttribute('index');
+						if(rt && rt.repetitionType == RepetitionElement.REPETITION_TEMPLATE &&
+							/^-?\d+$/.test(index) &&
+							!repeat.firstChild)
+						   /*Examining of non-namespaced attributes skipped*/
+						{
+							//If the template attribute specifies a repetition template and that template
+							//   already has a repetition block with the index specified by the index attribute,
+							//   then the element is ignored.
+							var hasIndex;
+							for(j = 0; j < rt.repetitionBlocks.length; j++){
+								if(rt.repetitionBlocks[j].repetititionIndex == index){
+									hasIndex = true;
+									break;
+								}
+							}
+							if(!hasIndex){
+								//Otherwise, the specified template's addRepetitionBlockByIndex()  method is
+								//   called, with a null first argument and the index specified by the repeat
+								//   element's index attribute as the second.
+								rt.addRepetitionBlockByIndex(null, index);
+							}
+						}
+					}
+					
+					//field elements in the http://n.whatwg.org/formdata namespace that are children of
+					//   the root element, have a non-empty name  attribute, either an index attribute
+					//   that contains only one or more digits in the range 0-9 or no index attribute at
+					//   all, have no other non-namespaced attributes (ignoring xmlns  attributes), and
+					//   have either nothing or only text and CDATA nodes as children, must be used to
+					//   initialize controls...
+					var field, fields = root.getElementsByTagName('field');
+					for(j = 0; field = fields[j]; j++){
+						var indexAttr = field.getAttributeNode('index');
+						var name = field.getAttribute('name');
+						if(!name || (indexAttr && !/^\d+$/.test(indexAttr.value)))
+						   /*Examining of non-namespaced attributes skipped*/
+						   /*Verification of the presence of text and CDATA nodes below*/
+							continue;
+
+						//First, the form control that the field references must be identified. This is
+						//   done by walking the list of form controls associated with the form until
+						//   one is found that has a name exactly equal to the name given in the field
+						//   element's name attribute, skipping as many such matches as is specified in
+						//   the index attribute, or, if the index attribute was omitted, skipping over
+						//   any type="radio" and type="checkbox" controls that have the exact name given
+						//   but have a value that is not exactly the same as the contents of the field
+						//   element.
+						var value = '';
+						for(j = 0; node = field.childNodes[j]; j++)
+							if(node.nodeType == 3 /*text*/ || node.nodeType == 4 /*CDATA*/)
+								value += node.data;
+							else break; //only text and CDATA nodes allowed
+						
+						var control, count = 0;
+						for(j = 0; control = form.elements[j]; j++){
+							if(control.type == 'image'){
+								//For image controls, instead of using the name given by the name attribute,
+								//   the field's name is checked against two names, the first being the value
+								//   of the name attribute with the string .x appended to it, and the second
+								//   being the same but with .y appended instead. If an image control's name
+								//   is the empty string (e.g. if its name attribute is omitted) then the
+								//   names x and y must be used instead. Thus image controls are handled as
+								//   if they were two controls.
+								if(control.name ?
+									  (control.name + '.x' == name || control.name + '.y' == name)
+									: (name == 'x' || name == 'y') ){
+	
+									if(!indexAttr || ++count-1 >= indexAttr.value)	
+										break;
+								}
+							}
+							else if(control.name == name){
+								if(indexAttr){
+									if(++count-1 < indexAttr.value)	
+										continue;
+								}
+								else if((control.type == 'radio' || control.type == 'checkbox') && control.value != value)
+									continue;
+								
+								
+								break;
+							}
+						}
+						
+						//If the identified form control is a file upload control, a push button control, or
+						//   an image control, then the field element is now skipped.
+						if(!control || control.type == 'file' || control.type == 'button' || control.type == 'image')
+							break;
+						
+						//Next, if the identified form control is not a multiple-valued control (a multiple-
+						//   valued control is one that can generate more than one value on submission, such
+						//   as a <select multiple="multiple">), or if it is a multiple-valued control but it
+						//   is the first time the control has been identified by a field element in this
+						//   data file that was not ignored, then it is set to the given value (the contents
+						//   of the field  element), removing any previous values (even if these values were
+						//   the result of processing previous field elements in the same data file).
+						if(!control.getAttributeNode('multiple') || !control.wf2Prefilled){
+							//If the element cannot be given the value specified, the field element is
+							//   ignored and the control's value is left unchanged. For example, if a
+							//   checkbox has its value attribute set to green and the field element
+							//   specifies that its value should be set to blue, it won't be changed from
+							//   its current value. (The only values that would have an effect in this
+							//   example are "", which would uncheck the checkbox, and "green", which would
+							//   check the checkbox.)
+							if(control.type == 'checkbox' || control.type == 'radio'){
+								if(!value)
+									control.checked = false;
+								else if(control.value == value)
+									control.checked = true;
+								else break;
+							}
+							else if(control.nodeName.toLowerCase() == 'select'){
+								for(j = 0; j < control.length; j++){
+									if(control.options[j].value == value){
+										control.options[j].selected = true;
+										break;
+									}
+								}
+							}
+							//Another example would be a datetime control where the specified value is
+							//   outside the range allowed by the min  and max attributes. The format
+							//   must match the allowed formats for that type for the value to be set.
+							else {
+								control.value = value;
+								$wf2.updateValidityState(control);
+								if(!control.validity.valid){
+									control.value = control.defaultValue;
+									$wf2.updateValidityState(control);
+								}
+							}
+							control.wf2Prefilled = true; //TRACE
+						}
+						//Otherwise, this is a subsequent value for a multiple-valued control, and the
+						//   given value (the contents of the field element) should be added to the list of
+						//   values that the element has selected.
+						//If the element is a multiple-valued control and the control already has the given
+						//   value selected, but it can be given the value again, then that occurs. 
+						else if(control.getAttributeNode('multiple')){
+							for(j = 0; j < control.length; j++){
+								if(control.options[j].value == value && !control.options[j].selected){
+									control.options[j].selected = true;
+									break;
+								}
+							}
+						}
+						
+						//if(control){
+						//	
+						//}
+					}
+//					
+//					//REVISE!!!
+//					console.warn('revise processing of formdata.xml');
+//					for(var child, i = 0; false && (child = root.childNodes[i]); i++){
+//						//2. Child text nodes, CDATA blocks, comments, and PIs of the root element of the specified
+//						//   file must be ignored.
+//						if(child.nodeType != 1 || child.namespaceURI != 'http://n.whatwg.org/formdata')
+//							continue;
+//						
+//						switch(child.localName){
+//							case 'clear':
+//								//clear elements in the http://n.whatwg.org/formdata namespace that are children of
+//								//   the root element, have a non-empty template attribute, have no other non-namespaced
+//								//   attributes (ignoring xmlns attributes), and have no content, must be processed...:
+//								//The template attribute should contain the ID of an element in the document. If the
+//								//   template attribute specifies an element that is not a repetition template, then
+//								//   the clear element is ignored.
+//								var rt = document.getElementById(child.getAttribute('template'));
+//								if(rt && rt.repetitionType == RepetitionElement.REPETITION_TEMPLATE &&
+//								   !child.firstNode)
+//								   /*Examining of non-namespaced attributes skipped*/
+//								{
+//									//The user must make a note of the list of repetition blocks associated with that
+//									//   template that are siblings of the template, and must then go through this list,
+//									//   removing each repetition block in turn.
+//									while(rt.repetitionBlocks.length)
+//										rt.repetititionBlocks[0].removeRepetitionBlock();
+//								}
+//								break;
+//							case 'repeat':
+//								//repeat elements in the http://n.whatwg.org/formdata namespace that are children of
+//								//   the root element, have a non-empty template attribute and an index  attribute that
+//								//   contains only one or more digits in the range 0-9 with an optional leading minus
+//								//   sign (U+002D, "-"), have no other non-namespaced attributes (ignoring xmlns
+//								//   attributes), and have no content, must be processed as follows:
+//								//The template attribute should contain the ID of an element in the document. If the
+//								//   template attribute specifies an element that is not a repetition template, then
+//								//   the repeat element is ignored.
+//								var rt = document.getElementById(child.getAttribute('template'));
+//								var index = child.getAttribute('index');
+//								if(rt && rt.repetitionType == RepetitionElement.REPETITION_TEMPLATE &&
+//								    /^-?\d+$/.test(index) &&
+//									!child.firstChild)
+//								   /*Examining of non-namespaced attributes skipped*/
+//								{
+//									//If the template attribute specifies a repetition template and that template
+//									//   already has a repetition block with the index specified by the index attribute,
+//									//   then the element is ignored.
+//									var hasIndex;
+//									for(j = 0; j < rt.repetitionBlocks.length; j++){
+//										if(rt.repetitionBlocks[j].repetititionIndex == index){
+//											hasIndex = true;
+//											break;
+//										}
+//									}
+//									if(!hasIndex){
+//										//Otherwise, the specified template's addRepetitionBlockByIndex()  method is
+//										//   called, with a null first argument and the index specified by the repeat
+//										//   element's index attribute as the second.
+//										rt.addRepetitionBlockByIndex(null, index);
+//									}
+//								}
+//								break;
+//							case 'field':
+//								//field elements in the http://n.whatwg.org/formdata namespace that are children of
+//								//   the root element, have a non-empty name  attribute, either an index attribute
+//								//   that contains only one or more digits in the range 0-9 or no index attribute at
+//								//   all, have no other non-namespaced attributes (ignoring xmlns  attributes), and
+//								//   have either nothing or only text and CDATA nodes as children, must be used to
+//								//   initialize controls...
+//								var indexAttr = child.getAttributeNode('index');
+//								var name = child.getAttribute('name');
+//								if(name &&
+//								   (!indexAttr || /^\d+$/.test(indexAttr.value))) //&&
+//								   //(!child.firstChild || !child.getElementsByTagName('*').length)
+//								   /*Examining of non-namespaced attributes skipped*/
+//								   /*Verification of the presence of text and CDATA nodes below*/
+//								{
+//									//First, the form control that the field references must be identified. This is
+//									//   done by walking the list of form controls associated with the form until
+//									//   one is found that has a name exactly equal to the name given in the field
+//									//   element's name attribute, skipping as many such matches as is specified in
+//									//   the index attribute, or, if the index attribute was omitted, skipping over
+//									//   any type="radio" and type="checkbox" controls that have the exact name given
+//									//   but have a value that is not exactly the same as the contents of the field
+//									//   element.
+//									var value = '';
+//									for(j = 0; node = child.childNodes[j]; j++)
+//										if(node.nodeType == 3 /*text*/ || node.nodeType == 4 /*CDATA*/)
+//											value += node.data;
+//										else break; //only text and CDATA nodes allowed
+//									
+//									var control, count = 0;
+//									for(j = 0; control = form.elements[j]; j++){
+//										if(control.type == 'image'){
+//											//For image controls, instead of using the name given by the name attribute,
+//											//   the field's name is checked against two names, the first being the value
+//											//   of the name attribute with the string .x appended to it, and the second
+//											//   being the same but with .y appended instead. If an image control's name
+//											//   is the empty string (e.g. if its name attribute is omitted) then the
+//											//   names x and y must be used instead. Thus image controls are handled as
+//											//   if they were two controls.
+//											if(control.name ?
+//                                                  (control.name + '.x' == name || control.name + '.y' == name)
+//											    : (name == 'x' || name == 'y') ){
+//
+//												if(!indexAttr || ++count-1 >= indexAttr.value)	
+//													break;
+//											}
+//										}
+//										else if(control.name == name){
+//											if(indexAttr){
+//												if(++count-1 < indexAttr.value)	
+//													continue;
+//											}
+//											else if((control.type == 'radio' || control.type == 'checkbox') && control.value != value)
+//												continue;
+//											
+//											
+//											break;
+//										}
+//									}
+//									
+//									//If the identified form control is a file upload control, a push button control, or
+//									//   an image control, then the field element is now skipped.
+//									if(!control || control.type == 'file' || control.type == 'button' || control.type == 'image')
+//										break;
+//									
+//									//Next, if the identified form control is not a multiple-valued control (a multiple-
+//									//   valued control is one that can generate more than one value on submission, such
+//									//   as a <select multiple="multiple">), or if it is a multiple-valued control but it
+//									//   is the first time the control has been identified by a field element in this
+//									//   data file that was not ignored, then it is set to the given value (the contents
+//									//   of the field  element), removing any previous values (even if these values were
+//									//   the result of processing previous field elements in the same data file).
+//									if(!control.getAttributeNode('multiple') || !control.wf2Prefilled){
+//										//If the element cannot be given the value specified, the field element is
+//										//   ignored and the control's value is left unchanged. For example, if a
+//										//   checkbox has its value attribute set to green and the field element
+//										//   specifies that its value should be set to blue, it won't be changed from
+//										//   its current value. (The only values that would have an effect in this
+//										//   example are "", which would uncheck the checkbox, and "green", which would
+//										//   check the checkbox.)
+//										if(control.type == 'checkbox' || control.type == 'radio'){
+//											if(!value)
+//												control.checked = false;
+//											else if(control.value == value)
+//												control.checked = true;
+//											else break;
+//										}
+//										else if(control.localName.toLowerCase() == 'select'){
+//											for(j = 0; j < control.length; j++){
+//												if(control.options[j].value == value){
+//													control.options[j].selected = true;
+//													break;
+//												}
+//											}
+//										}
+//										//Another example would be a datetime control where the specified value is
+//										//   outside the range allowed by the min  and max attributes. The format
+//										//   must match the allowed formats for that type for the value to be set.
+//										else {
+//											control.value = value;
+//											$wf2.updateValidityState(control);
+//											if(!control.validity.valid){
+//												control.value = control.defaultValue;
+//												$wf2.updateValidityState(control);
+//											}
+//										}
+//										control.wf2Prefilled = true; //TRACE
+//									}
+//									//Otherwise, this is a subsequent value for a multiple-valued control, and the
+//									//   given value (the contents of the field element) should be added to the list of
+//									//   values that the element has selected.
+//									//If the element is a multiple-valued control and the control already has the given
+//									//   value selected, but it can be given the value again, then that occurs. 
+//									else if(control.getAttributeNode('multiple')){
+//										for(j = 0; j < control.length; j++){
+//											if(control.options[j].value == value && !control.options[j].selected){
+//												control.options[j].selected = true;
+//												break;
+//											}
+//										}
+//									}
+//									
+//									//if(control){
+//									//	
+//									//}
+//								}
+//								break;
+//						}
+//					}
+				}
+			}
+		}
+		
+	
 		// Initialize Non-Repetition Behaviors ****************************************
+		
+		
 		if(document.addEventListener){
 			document.addEventListener("mousedown", $wf2.clearInvalidIndicators, false);
 			document.addEventListener("keydown", $wf2.clearInvalidIndicators, false);
@@ -111,18 +612,13 @@ $wf2 = {
 		//   1970-01-01T00:00:00.0, for date controls is 1970-01-01, for month controls is 1970-01, for week
 		//   controls is 1970-W01 (the week starting 1969-12-29 and containing 1970-01-01), and for time controls
 		//   is 00:00.
-		$wf2.zeroPointDatetime      = $wf2.parseISO8601("1970-01-01T00:00:00.0Z");
-		$wf2.zeroPointDatetimeLocal = $wf2.parseISO8601("1970-01-01T00:00:00.0");
-		$wf2.zeroPointDate          = $wf2.parseISO8601("1970-01-01"); //.zeroPointDatetime; //1970-01-01 (UTC)
-		$wf2.zeroPointMonth         = $wf2.parseISO8601("1970-01"); //.zeroPointDatetime; //1970-01 (UTC)
-		$wf2.zeroPointWeek          = $wf2.parseISO8601("1970-W01"); //(UTC)
-		$wf2.zeroPointTime          = $wf2.parseISO8601("00:00"); //.zeroPointDatetime; //00:00 (UTC)
-		console.info("zeroPointDatetime: " + $wf2.zeroPointDatetime.toUTCString());
-		console.info("zeroPointDatetimeLocal: " + $wf2.zeroPointDatetimeLocal.toLocaleString());
-		console.info("zeroPointDate: " + $wf2.zeroPointDate.toUTCString());
-		console.info("zeroPointMonth: " + $wf2.zeroPointMonth.toUTCString());
-		console.info("zeroPointWeek: " + $wf2.zeroPointWeek.toUTCString());
-		console.info("zeroPointTime: " + $wf2.zeroPointTime.toUTCString());
+		$wf2.zeroPoint = {};
+		$wf2.zeroPoint.datetime          = $wf2.parseISO8601("1970-01-01T00:00:00.0Z");
+		$wf2.zeroPoint['datetime-local'] = $wf2.parseISO8601("1970-01-01T00:00:00.0");
+		$wf2.zeroPoint.date              = $wf2.zeroPoint.datetime; //parseISO8601("1970-01-01"); //.zeroPointDatetime; //1970-01-01 (UTC)
+		$wf2.zeroPoint.month             = $wf2.zeroPoint.datetime; //parseISO8601("1970-01"); //1970-01 (UTC)
+		$wf2.zeroPoint.week              = $wf2.parseISO8601("1970-W01"); //(UTC)
+		$wf2.zeroPoint.time              = $wf2.zeroPoint.datetime; //parseISO8601("00:00"); //00:00 (UTC)
 		$wf2.initNonRepetitionFunctionality();
 	},
 	
@@ -140,7 +636,7 @@ $wf2 = {
 		}
 		
 		var tagNames = ["input","select","textarea","button","fieldset"];
-		var controls = parent.getElementsByTagName([i]);
+		var control, controls = parent.getElementsByTagName([i]);
 		for(i = 0; i < tagNames.length; i++){
 			controls = parent.getElementsByTagName(tagNames[i]); 
 			for(j = 0; control = controls[j]; j++){
@@ -201,9 +697,9 @@ $wf2 = {
 
 	//## REPETITION TEMPLATE #############################################################
 	repetitionTemplate_constructor : function(){
-		if(this._initialized)
+		if(this.wf2initialized)
 			return;
-		this._initialized = true; //SAFARI needs this to be here for some reason...
+		this.wf2initialized = true; //SAFARI needs this to be here for some reason...
 		
 		this.style.display = 'none'; //This is also specified via a stylesheet
 		this.repetitionType = RepetitionElement.REPETITION_TEMPLATE;
@@ -275,7 +771,7 @@ $wf2 = {
 			this.addRepetitionBlock();
 		
 		$wf2.repetitionTemplates.push(this);
-		this._initialized = true;
+		this.wf2initialized = true;
 	},
 	
 	initRepetitionTemplates : function(parentNode){
@@ -290,7 +786,7 @@ $wf2 = {
 
 	//## REPETITION BLOCK  #############################################################
 	repetitionBlock_constructor : function(){
-		if(this._initialized)
+		if(this.wf2initialized)
 			return;
 			
 		this.style.display = ''; //This should preferrably be specified via a stylesheet
@@ -324,7 +820,7 @@ $wf2 = {
 		if(!this.moveRepetitionBlock) this.moveRepetitionBlock = function(distance){ 
 			return $wf2.moveRepetitionBlock.apply(this, [distance]); //wrapper to save memory
 		};
-		this._initialized = true;
+		this.wf2initialized = true;
 	},
 
 	initRepetitionBlocks : function(parentNode){
@@ -344,7 +840,7 @@ $wf2 = {
 	},
 	
 	repetitionButton_constructor : function(btnType){
-		if(this._initialized)
+		if(this.wf2initialized)
 			return;
 		this.htmlTemplate = $wf2.getHtmlTemplate(this); //IMPLEMENT GETTER
 		
@@ -373,7 +869,7 @@ $wf2 = {
 			this.attachEvent('onclick', $wf2.repetitionButton_click);
 		else this.onclick = $wf2.repetitionButton_click;
 		
-		this._initialized = true;
+		this.wf2initialized = true;
 	},
 
 	initRepetitionButtons : function(btnType, parentNode){
@@ -597,7 +1093,7 @@ $wf2 = {
 			};
 		}
 		block = $wf2.cloneNode(this, _processAttr);
-		block._initialized = false;
+		block.wf2initialized = false;
 		reTemplateName = null;
 		
 		//6. If this algorithm was invoked via the addRepetitionBlockByIndex()  method, the new repetition block 
@@ -762,19 +1258,19 @@ $wf2 = {
 		}
 		
 		//Add support for event handler set with HTML attribute
-		var onaddAttr = this.getAttribute('onadd') || /* deprecated */ this.getAttribute('onadded');
-		if(onaddAttr && (!this.onadd || typeof this.onadd != 'function')) //in MSIE, attribute == property
-			this.onadd = new Function('event', onaddAttr);
+		var onaddedAttr = this.getAttribute('onadded') || /* deprecated */ this.getAttribute('onadd');
+		if(onaddedAttr && (!this.onadded || typeof this.onadded != 'function')) //in MSIE, attribute == property
+			this.onadded = new Function('event', onaddedAttr);
 
 		try {
 			//Dispatch events for the old event model (extension to spec)
-			if(this.onadd){
-				//this.onadd(addEvt); 
-				this.onadd.apply(this, [addEvt]); //for some reason, exceptions cannot be caught if using the method above in MSIE
+			if(this.onadded){
+				//this.onadded(addEvt); 
+				this.onadded.apply(this, [addEvt]); //for some reason, exceptions cannot be caught if using the method above in MSIE
 			}
-			else if(this.onadded){ //deprecated
-				//this.onadded(addEvt);
-				this.onadded.apply(this, [addEvt]); 
+			else if(this.onadd){ //deprecated
+				//this.onadd(addEvt);
+				this.onadd.apply(this, [addEvt]); 
 			}
 		}
 		catch(err){
@@ -806,7 +1302,7 @@ $wf2 = {
 		$wf2.updateMoveButtons(parentNode);
 		
 		//The following loop used to appear within step #3 below; 
-		//  this caused problems because the program state was incorrect when onremove was called (repetitionBlocks was not modified)
+		//  this caused problems because the program state was incorrect when onremoved was called (repetitionBlocks was not modified)
 		if(this.repetitionTemplate != null){
 			for(var i = 0; i < this.repetitionTemplate.repetitionBlocks.length; i++){
 				if(this.repetitionTemplate.repetitionBlocks[i] == this){
@@ -832,8 +1328,8 @@ $wf2 = {
 				if(this.repetitionTemplate.dispatchEvent)
 					this.repetitionTemplate.dispatchEvent(removeEvt);
 				else if(this.repetitionTemplate.fireEvent){
-					//console.warn("fireEvent('onremove') for MSIE is not yet working");
-					//this.repetitionTemplate.fireEvent('onremove', removeEvt);
+					//console.warn("fireEvent('onremoved') for MSIE is not yet working");
+					//this.repetitionTemplate.fireEvent('onremoved', removeEvt);
 				}
 			}
 			catch(err){
@@ -843,20 +1339,20 @@ $wf2 = {
 			}
 			
 			//Add support for event handler set with HTML attribute
-			var onremoveAttr = this.repetitionTemplate.getAttribute('onremove') 
-			                   || /* deprecated */ this.repetitionTemplate.getAttribute('onremoved');
-			if(onremoveAttr && (!this.repetitionTemplate.onremove || typeof this.repetitionTemplate.onremove != 'function')) //in MSIE, attribute == property
-				this.repetitionTemplate.onremove = new Function('event', onremoveAttr);
+			var onremovedAttr = this.repetitionTemplate.getAttribute('onremoved') 
+			                   || /* deprecated */ this.repetitionTemplate.getAttribute('onremove');
+			if(onremovedAttr && (!this.repetitionTemplate.onremoved || typeof this.repetitionTemplate.onremoved != 'function')) //in MSIE, attribute == property
+				this.repetitionTemplate.onremoved = new Function('event', onremovedAttr);
 
 			try {
 				//Dispatch events for the old event model (extension to spec)
-				if(this.repetitionTemplate.onremove){
-					//this.repetitionTemplate.onremove(removeEvt);	
-					this.repetitionTemplate.onremove.apply(this, [removeEvt]); //for some reason, exceptions cannot be caught if using the method above in MSIE
+				if(this.repetitionTemplate.onremoved){
+					//this.repetitionTemplate.onremoved(removeEvt);	
+					this.repetitionTemplate.onremoved.apply(this, [removeEvt]); //for some reason, exceptions cannot be caught if using the method above in MSIE
 				}
-				else if(this.repetitionTemplate.onremoved){ //deprecated
-					//this.repetitionTemplate.onremoved(removeEvt);
-					this.repetitionTemplate.onremoved.apply(this, [removeEvt]); 
+				else if(this.repetitionTemplate.onremove){ //deprecated
+					//this.repetitionTemplate.onremove(removeEvt);
+					this.repetitionTemplate.onremove.apply(this, [removeEvt]); 
 				}
 			}
 			catch(err){
@@ -872,7 +1368,7 @@ $wf2 = {
 		//   is less than the template's repeat-min attribute and less than its repeat-max attribute, the 
 		//   template's replication behaviour is invoked (specifically, its addRepetitionBlock() method is called). 
 		if(this.repetitionTemplate != null){
-//			//BUG: The following needs to be moved before the call to onremove
+//			//BUG: The following needs to be moved before the call to onremoved
 //			var t = this.repetitionTemplate;
 //			for(var i = 0; i < t.repetitionBlocks.length; i++){
 //				if(t.repetitionBlocks[i] == this){
@@ -981,8 +1477,8 @@ $wf2 = {
 				if(this.repetitionTemplate.dispatchEvent)
 					this.repetitionTemplate.dispatchEvent(moveEvt);
 				else if(this.repetitionTemplate.fireEvent){
-					//console.warn("fireEvent('onmove') for MSIE is not yet working");
-					//this.fireEvent('onmove', moveEvt);
+					//console.warn("fireEvent('onmoved') for MSIE is not yet working");
+					//this.fireEvent('onmoved', moveEvt);
 				}
 			}
 			catch(err){
@@ -992,19 +1488,19 @@ $wf2 = {
 			}
 			
 			//Add support for event handler set with HTML attribute---------------------
-			var onmoveAttr = this.repetitionTemplate.getAttribute('onmove') 
-			                   || /* deprecated */ this.repetitionTemplate.getAttribute('onmoved');
+			var onmovedAttr = this.repetitionTemplate.getAttribute('onmoved') 
+			                   || /* deprecated */ this.repetitionTemplate.getAttribute('onmove');
 			
 			//For MSIE, onmove is already an event, and attributes are equal to properties, so attribute value can be function.
 			//  The 'event' argument must be added to the function argument list.
 			var funcMatches;
-			if(typeof onmoveAttr == 'function' && (funcMatches = onmoveAttr.toString().match(/^\s*function\s+anonymous\(\s*\)\s*\{((?:.|\n)+)\}\s*$/))){
-				this.repetitionTemplate.onmove = new Function('event', funcMatches[1]);
+			if(typeof onmovedAttr == 'function' && (funcMatches = onmovedAttr.toString().match(/^\s*function\s+anonymous\(\s*\)\s*\{((?:.|\n)+)\}\s*$/))){
+				this.repetitionTemplate.onmoved = new Function('event', funcMatches[1]);
 			}
 			
 			//If the onmove attribute has been set but the property (method) has not
-			if(onmoveAttr && !this.repetitionTemplate.onmove)
-				this.repetitionTemplate.onmove = new Function('event', onmoveAttr);
+			if(onmovedAttr && !this.repetitionTemplate.onmoved)
+				this.repetitionTemplate.onmoved = new Function('event', onmovedAttr);
 			
 			//This need not be done in MSIE since onmove is already an event, and attributes == properties
 			//if(onmoveAttr && typeof onmoveAttr != 'function' /* for MSIE */ && 
@@ -1015,13 +1511,13 @@ $wf2 = {
 
 			try {
 				//Dispatch events for the old event model (extension to spec)
-				if(this.repetitionTemplate.onmove){
-					//this.repetitionTemplate.onmove(moveEvt);
-					this.repetitionTemplate.onmove.apply(this, [moveEvt]);
-				}
-				else if(this.repetitionTemplate.onmoved){ //deprecated
+				if(this.repetitionTemplate.onmoved){
 					//this.repetitionTemplate.onmoved(moveEvt);
 					this.repetitionTemplate.onmoved.apply(this, [moveEvt]);
+				}
+				else if(this.repetitionTemplate.onmove){ //deprecated
+					//this.repetitionTemplate.onmove(moveEvt);
+					this.repetitionTemplate.onmove.apply(this, [moveEvt]);
 				}
 			}
 			catch(err){
@@ -1164,6 +1660,8 @@ $wf2 = {
 		node.wf2Step = undefined;
 		valueAttrNode = node.getAttributeNode("value");
 		
+		node.validity = $wf2.createValidityState();
+		
 		var type = node.getAttribute('type');
 		var isTimeRelated = (type == 'datetime' || type == 'datetime-local' || type == 'time');
 		var isDateRelated = (type == 'date' || type == 'month' || type == 'week');
@@ -1190,252 +1688,220 @@ $wf2 = {
 				node.wf2ValueProvided = true;
 			}
 		}
+		
+		node.wf2Value = node.value;
 
 		//valueMissing -- The control has the required attribute set but it has not been satisfied. 
 		node.validity.valueMissing = Boolean(node.getAttributeNode('required') && (node.options ? node.selectedIndex == -1 : node.value === '')); //WRONG?
-		if(!node.validity.valueMissing){
-			if(!node.value){
-				node.validity = {
-					typeMismatch    : false,
-					rangeUnderflow  : false,
-					rangeOverflow   : false,
-					stepMismatch    : false,
-					tooLong         : false,
-					patternMismatch : false,
-					valueMissing    : false,
-					customError     : false,
-					valid           : true
-				};
+		if(!node.validity.valueMissing && node.value){
+			//patternMismatch -- The value of the control with a pattern attribute doesn't match the pattern. 
+			//   If the control is empty, this flag must not be set. 
+			var pattern;
+			if(pattern = node.getAttribute('pattern')){
+				if(!/^\^/.test(pattern)) pattern = "^" + pattern;
+				if(!/\$$/.test(pattern)) pattern += "$";
+				var rePattern = new RegExp(pattern);
+				node.validity.patternMismatch = (rePattern ? !rePattern.test(node.value) : false);
 			}
+			
+			//typeMismatch -- The data entered does not match the type of the control. For example, if the UA 
+			//   allows uninterpreted arbitrary text entry for month controls, and the user has entered SEP02, 
+			//   then this flag would be set. This code is also used when the selected file in a file upload 
+			//   control does not have an appropriate MIME type. If the control is empty, this flag must not be set.
+			if(isDateRelated || isTimeRelated)
+				node.validity.typeMismatch = ((node.wf2Value = $wf2.parseISO8601(node.value, type)) == null);
 			else {
-				//patternMismatch -- The value of the control with a pattern attribute doesn't match the pattern. 
-				//   If the control is empty, this flag must not be set. 
-				var pattern;
-				if(pattern = node.getAttribute('pattern')){
-					if(!/^\^/.test(pattern)) pattern = "^" + pattern;
-					if(!/\$$/.test(pattern)) pattern += "$";
-					var rePattern = new RegExp(pattern);
-					node.validity.patternMismatch = (rePattern ? !rePattern.test(node.value) : false);
-				}
-				
-				//typeMismatch -- The data entered does not match the type of the control. For example, if the UA 
-				//   allows uninterpreted arbitrary text entry for month controls, and the user has entered SEP02, 
-				//   then this flag would be set. This code is also used when the selected file in a file upload 
-				//   control does not have an appropriate MIME type. If the control is empty, this flag must not be set.
-				node.validity.typeMismatch = false;
-				if(isDateRelated || isTimeRelated)
-					node.validity.typeMismatch = ($wf2.validateDateTimeType(node.value, type) == null);
-				else {
-					switch(type){
-						case 'number':
-						case 'range':
-							node.validity.typeMismatch = !$wf2.numberRegExp.test(node.value);
-		//						if(!node.validity.typeMismatch && node.getAttribute("step") != 'any'){
-		//							if(node.wf2Step == undefined)
-		//								node.wf2Step = 1;
-		//							var val = Number(node.value);
-		//							node.validity.stepMismatch = (val == parseInt(val) && node.wf2Step != parseInt(node.wf2Step));
-		//						}
-							break;
-						case 'email':
-							//An e-mail address, following the format of the addr-spec  token defined in RFC 2822 section
-							//   3.4.1 [RFC2822], but excluding the CFWS  subtoken everywhere, and excluding the FWS
-							//   subtoken everywhere except in the quoted-string subtoken. UAs could, for example, offer
-							//   e-mail addresses from the user's address book. (See below for notes on IDN.)
-							//http://www.ietf.org/rfc/rfc2822						
-							node.validity.typeMismatch = !$wf2.emailRegExp.test(node.value);
-							break;
-						case 'url':
-							//An IRI, as defined by [RFC3987] (the IRI token, defined in RFC 3987 section 2.2). UAs could,
-							//   for example, offer the user URIs from his bookmarks. (See below for notes on IDN.) The value
-							//   is called url (as opposed to iri or uri) for consistency with CSS syntax and because it is
-							//   generally felt authors are more familiar with the term "URL" than the other, more technically
-							//   correct terms.
-							//http://www.ietf.org/rfc/rfc3987
-							node.validity.typeMismatch = !$wf2.urlRegExp.test(node.value);
-							break;
-					}
-				}
-				
-			}
-		}
-		
-		node.validity.rangeUnderflow = false;
-		node.validity.rangeOverflow = false;
-		node.validity.stepOverflow = false;
-		if(!node.validity.typeMismatch){
-			//To limit the range of values allowed by some of the above types, two new attributes are introduced, which
-			//   apply to the date-related, time-related, numeric, and file upload types: min and max
-			
-			//rangeUnderflow -- The numeric, date, or time value of a control with a min attribute is lower than 
-			//   the minimum, or a file upload control has fewer files selected than the minimum. If the control 
-			//   is empty or if the typeMismatch flag is set, this flag must not be set. 
-			//rangeOverflow -- The numeric, date, or time value of a control with a max attribute is higher than 
-			//   the maximum, or a file upload control has more files selected than the maximum. If the control 
-			//   is empty or if the typeMismatch flag is set, this flag must not be set. 
-			if(doCheckRange){
-				if(isNumberRelated){
-					//For numeric types (number  and range) the value must exactly match the number type (numberRegExp)
-					if(type == 'range'){
-						//For this type...max defaults to 100
-						node.wf2Max = (maxAttrNode && $wf2.numberRegExp.test(maxAttrNode.value)) ? Number(maxAttrNode.value) : 100;
-						//node.wf2Min is set atthe beginning of this function so that the min value can be set as the default value
-					}
-					else {
-						if(minAttrNode && $wf2.numberRegExp.test(minAttrNode.value))
-							node.wf2Min = Number(minAttrNode.value);
-						if(maxAttrNode && $wf2.numberRegExp.test(maxAttrNode.value))
-							node.wf2Max = Number(maxAttrNode.value);
-					}
-					node.validity.rangeUnderflow = (node.wf2Min != undefined && Number(node.value) < node.wf2Min);
-					node.validity.rangeOverflow = (node.wf2Max != undefined && node.value > node.wf2Max);
-				}
-				//For file types it must be a sequence of digits 0-9, treated as a base ten integer.
-				else if(type == 'file'){
-					if(minAttrNode && /^\d+$/.test(minAttrNode.value))
-						node.wf2Min = Number(minAttrNode.value);
-					if(maxAttrNode && /^\d+$/.test(maxAttrNode.value))
-						node.wf2Max = Number(maxAttrNode.value);
-					
-					//node.validity.rangeUnderflow = (node.wf2Min != undefined && parseInt(node.value) < node.wf2Min);
-					//node.validity.rangeOverflow = (node.wf2Max != undefined && parseInt(node.value) > node.wf2Max);
-				}
-				else {
-					if(maxAttrNode)
-						console.error("MAX attribute not supported for date-related controls");
-					if(minAttrNode)
-						console.error("MIN attribute not supported for date-related controls");
-					
-					//For date and time types it must match the relevant format mentioned for that type, all fields
-					//   having the right number of digits, with the right separating punctuation.
-					switch(type){
-						case 'datetime':
-							break;
-						case 'datetime-local':
-							break;
-						case 'date':
-							break;
-						case 'month':
-							break;
-						case 'week':
-							break;
-						case 'time':
-							break;
-					}
-					
-					//For date and time types it must match the relevant format mentioned for that type, all fields having the right number of digits, with the right separating punctuation.
-				}
-
-				//if(!maxAttrNode)
-				//}
-				
-				//if(isTimeRelated && node.wf2Min <= 0){
-				//	node.wf2Min = 1; //default
-				//}
-				//
-				//if(isDateRelated && node.wf2Min <= 0){
-				//	
-				//}
-				
-			}
-			//The step attribute controls the precision allowed for the date-related, time-related, and numeric types.
-			//   For the control to be valid, the control's value must be an integral number of steps from the min value,
-			//   or, if there is no min attribute, the max value, or if there is neither attribute, from the zero point.
-			if(doCheckPrecision){
-				//stepMismatch -- The value is not one of the values allowed by the step attribute, and the UA will 
-				//   not be rounding the value for submission. Empty values and values that caused the typeMismatch 
-				//   flag to be set must not cause this flag to be set.
-				if(minAttrNode)
-					console.error("STEP attribute not yet supported");
-				
-				//var zeroPoint; //CHANGE
 				switch(type){
-					case 'datetime':
-						//zeroPoint = 1970-01-01T00:00:00.0Z
+					case 'number':
+					case 'range':
+						node.validity.typeMismatch = !$wf2.numberRegExp.test(node.value);
+	//						if(!node.validity.typeMismatch && node.getAttribute("step") != 'any'){
+	//							if(node.wf2Step == undefined)
+	//								node.wf2Step = 1;
+	//							var val = Number(node.value);
+	//							node.validity.stepMismatch = (val == parseInt(val) && node.wf2Step != parseInt(node.wf2Step));
+	//						}
 						break;
-					case 'datetime-local':
-						//zeroPoint = 1970-01-01T00:00:00.0
+					case 'email':
+						//An e-mail address, following the format of the addr-spec  token defined in RFC 2822 section
+						//   3.4.1 [RFC2822], but excluding the CFWS  subtoken everywhere, and excluding the FWS
+						//   subtoken everywhere except in the quoted-string subtoken. UAs could, for example, offer
+						//   e-mail addresses from the user's address book. (See below for notes on IDN.)
+						//http://www.ietf.org/rfc/rfc2822						
+						node.validity.typeMismatch = !$wf2.emailRegExp.test(node.value);
 						break;
-					case 'date':
-						//zeroPoint = 1970-01-01
-						break;
-					case 'month':
-						//zeroPoint = 1970-01
-						break;
-					case 'week':
-						//zeroPoint = 1970-W01
-						break;
-					case 'time':
-						//zeroPoint = 00:00
+					case 'url':
+						//An IRI, as defined by [RFC3987] (the IRI token, defined in RFC 3987 section 2.2). UAs could,
+						//   for example, offer the user URIs from his bookmarks. (See below for notes on IDN.) The value
+						//   is called url (as opposed to iri or uri) for consistency with CSS syntax and because it is
+						//   generally felt authors are more familiar with the term "URL" than the other, more technically
+						//   correct terms.
+						//http://www.ietf.org/rfc/rfc3987
+						node.validity.typeMismatch = !$wf2.urlRegExp.test(node.value);
 						break;
 				}
-				
-				
-				var stepAttrNode = node.getAttributeNode("step");
-				if(!stepAttrNode){
-					//The step attribute [for types datetime, datetime-local, and time] ... defaulting to 60 (one minute).
-					//For time controls, the value of the step attribute is in seconds, although it may be a fractional
-					//   number as well to allow fractional times. The format of the step attribute is the number format
-					//   described above, except that the value must be greater than zero. The default value of the step
-					//   attribute for datetime, datetime-local and time controls is 60 (one minute).
-					//The step [for type date] attribute specifies the precision in days, defaulting to 1.
-					//The step [for type month] attribute specifies the precision in months, defaulting to 1.
-					//The step [for type week] attribute specifies the precision in weeks, defaulting to 1.
-					//For date controls, the value of the step attribute is in days, weeks, or months, for the date,
-					//   week, and month  types respectively. The format is a non-negative integer; one or more digits
-					//   0-9 interpreted as base ten. If the step is zero, it is interpreted as the default. The default
-					//   for the step  attribute for these control types is 1.
-					//The step [for types number and range] attribute specifies the precision, defaulting to 1.
-					node.wf2Step = isTimeRelated ? 60 : 1;
-				}
-				//the literal value 'any' may be used as the value of the step attribute. This keyword indicates that
-				//   any value may be used (within the bounds of other restrictions placed on the control).
-				else if(stepAttrNode.value == 'any')
-					node.wf2Step = 'any'; //isStepAny = true;
-				else if($wf2.numberRegExp.test(stepAttrNode.value))
-					node.wf2Step = Number(stepAttrNode.value);
-				else
-					node.wf2Step = isTimeRelated ? 60 : 1;
-			}
-		}
-		
-		//[TEXTAREA] tooLong -- The value of a control with a maxlength attribute is longer than the attribute allows, 
-		//   and the value of the control doesn't exactly match the control's default value. 
-		//[The maxlength] attribute must not affect the initial value (the DOM defaultValue attribute). It must only
-		//   affect what the user may enter and whether a validity error is flagged during validation.
-		node.validity.tooLong = false;
-		if(node.maxlength && node.value != node.defaultValue){
-			//A newline in a textarea's value must count as two code points for maxlength processing (because
-			//   newlines in textareas are submitted as U+000D U+000A). [[NOT IMPLEMENTED: This includes the
-			//   implied newlines that are added for submission when the wrap attribute has the value hard.]]
-			//var matches = node.value.match(/((?<!\x0D|^)\x0A|\x0D(?!^\x0A|$))/g); //no negative lookbehind
-			var shortNewlines = 0;
-			var v = node.value;
-			node.wf2ValueLength = v.length;
-			for(var i = 1; i < v.length; i++){
-				if(v[i] === "\x0A" && v[i-1] !== "\x0D" || v[i] == "\x0D" && (v[i+1] && v[i+1] !== "\x0A"))
-					node.wf2ValueLength++;
 			}
 			
-			//The tooLong flag is used when this attribute is specified on a ... textarea control and the control
-			//   has more than the specified number of code points and the value doesn't match the control's default value.
-			node.validity.tooLong = node.wf2ValueLength > node.maxlength;
+			if(!node.validity.patternMismatch && !node.validity.typeMismatch){
+				//To limit the range of values allowed by some of the above types, two new attributes are introduced, which
+				//   apply to the date-related, time-related, numeric, and file upload types: min and max
+				
+				//rangeUnderflow -- The numeric, date, or time value of a control with a min attribute is lower than 
+				//   the minimum, or a file upload control has fewer files selected than the minimum. If the control 
+				//   is empty or if the typeMismatch flag is set, this flag must not be set. 
+				//rangeOverflow -- The numeric, date, or time value of a control with a max attribute is higher than 
+				//   the maximum, or a file upload control has more files selected than the maximum. If the control 
+				//   is empty or if the typeMismatch flag is set, this flag must not be set. 
+				if(doCheckRange){
+					if(isNumberRelated){
+						//For numeric types (number  and range) the value must exactly match the number type (numberRegExp)
+						if(type == 'range'){
+							//For this type...max defaults to 100
+							node.wf2Max = (maxAttrNode && $wf2.numberRegExp.test(maxAttrNode.value)) ? Number(maxAttrNode.value) : 100;
+							//node.wf2Min is set at the beginning of this function so that the min value can be set as the default value
+						}
+						else {
+							if(minAttrNode && $wf2.numberRegExp.test(minAttrNode.value))
+								node.wf2Min = Number(minAttrNode.value);
+							if(maxAttrNode && $wf2.numberRegExp.test(maxAttrNode.value))
+								node.wf2Max = Number(maxAttrNode.value);
+						}
+						node.validity.rangeUnderflow = (node.wf2Min != undefined && Number(node.value) < node.wf2Min);
+						node.validity.rangeOverflow  = (node.wf2Max != undefined && Number(node.value) > node.wf2Max);
+					}
+					//For file types it must be a sequence of digits 0-9, treated as a base ten integer.
+					else if(type == 'file'){
+						if(minAttrNode && /^\d+$/.test(minAttrNode.value))
+							node.wf2Min = Number(minAttrNode.value);
+						//If absent, or if the minimum value is not in exactly the expected format, there
+						//   is no minimum restriction, except for the ... file types, where the default is zero.
+						else node.wf2Min = 0;
+						if(maxAttrNode && /^\d+$/.test(maxAttrNode.value))
+							node.wf2Max = Number(maxAttrNode.value);
+						//If absent, or if the maximum value is not in exactly the expected format, there is no
+						//  maximum restriction (beyond those intrinsic to the type), except for ... the file
+						//  type, where the default is 1.
+						else node.wf2Max = 1;
+						
+						//node.validity.rangeUnderflow = (node.wf2Min != undefined && Number(node.value) < node.wf2Min);
+						//node.validity.rangeOverflow  = (node.wf2Max != undefined && Number(node.value) > node.wf2Max);
+					}
+					//Date related
+					else {
+						//For date and time types it must match the relevant format mentioned for that type, all fields
+						//   having the right number of digits, with the right separating punctuation.
+						if(minAttrNode){
+							node.wf2Min = $wf2.parseISO8601(minAttrNode.value, type);
+							node.validity.rangeUnderflow = (node.wf2Min && node.wf2Value < node.wf2Min);
+						}
+						if(maxAttrNode){
+							node.wf2Max = $wf2.parseISO8601(maxAttrNode.value, type);
+							node.validity.rangeOverflow = (node.wf2Max && node.wf2Value > node.wf2Max);
+						}
+					}
+				}
+				//The step attribute controls the precision allowed for the date-related, time-related, and numeric types.
+				if(doCheckPrecision && !node.validity.rangeUnderflow && !node.validity.rangeOverflow){
+					//stepMismatch -- The value is not one of the values allowed by the step attribute, and the UA will 
+					//   not be rounding the value for submission. Empty values and values that caused the typeMismatch 
+					//   flag to be set must not cause this flag to be set.
+					
+					var stepAttrNode = node.getAttributeNode("step");
+					if(!stepAttrNode){
+						//The step attribute [for types datetime, datetime-local, and time] ... defaulting to 60 (one minute).
+						//For time controls, the value of the step attribute is in seconds, although it may be a fractional
+						//   number as well to allow fractional times.  The default value of the step
+						//   attribute for datetime, datetime-local and time controls is 60 (one minute).
+						//The step [for type date] attribute specifies the precision in days, defaulting to 1.
+						//The step [for type month] attribute specifies the precision in months, defaulting to 1.
+						//The step [for type week] attribute specifies the precision in weeks, defaulting to 1.
+						//For date controls, the value of the step attribute is in days, weeks, or months, for the date,
+						//   week, and month  types respectively. The format is a non-negative integer; one or more digits
+						//   0-9 interpreted as base ten. If the step is zero, it is interpreted as the default. The default
+						//   for the step  attribute for these control types is 1.
+						//The step [for types number and range] attribute specifies the precision, defaulting to 1.
+						node.wf2Step = isTimeRelated ? 60 : 1;
+					}
+					//The literal value 'any' may be used as the value of the step attribute. This keyword indicates that
+					//   any value may be used (within the bounds of other restrictions placed on the control).
+					else if(stepAttrNode.value == 'any')
+						node.wf2Step = 'any'; //isStepAny = true;
+					//The format of the step attribute is the number format described above, except that
+					//   the value must be greater than zero.
+					else if($wf2.numberRegExp.test(stepAttrNode.value) && stepAttrNode.value > 0)
+						node.wf2Step = Number(stepAttrNode.value);
+					else
+						node.wf2Step = isTimeRelated ? 60 : 1;
+					
+					if(node.wf2Step != 'any'){
+						node.wf2StepDatum = null;
+						if(minAttrNode)
+							node.wf2StepDatum = node.wf2Min;
+						else if(maxAttrNode)
+							node.wf2StepDatum = node.wf2Max;
+						else
+							node.wf2StepDatum = $wf2.zeroPoint[type] ? $wf2.zeroPoint[type] : 0;
+						
+						//The zero point for datetime  controls is 1970-01-01T00:00:00.0Z, for datetime-local is
+						//   1970-01-01T00:00:00.0, for date controls is 1970-01-01, for month controls is 1970-01,
+						//   for week controls is 1970-W01 (the week starting 1969-12-29 and containing 1970-01-01),
+						//   and for time controls is 00:00.
+						var _step = node.wf2Step;
+						if(type == 'month'){
+							var month1 = node.wf2StepDatum.getUTCFullYear()*12 + node.wf2StepDatum.getUTCMonth();
+							var month2 = node.wf2Value.getUTCFullYear()*12 + node.wf2Value.getUTCMonth();
+							node.validity.stepMismatch = (month2 - month1)%_step != 0;
+						}
+						else {
+							switch(type){
+								case 'datetime':
+								case 'datetime-local':
+								case 'time':
+									_step = parseInt(_step * 1000); //for millisecond comparisons
+									break;
+								case 'date':
+									_step = parseInt(_step * 24*60*60*1000);
+									break;
+								case 'week':
+									_step = parseInt(_step * 7*24*60*60*1000);
+									break;
+							}
+
+							//For the control to be valid, the control's value must be an integral number of steps from the min value,
+							//   or, if there is no min attribute, the max value, or if there is neither attribute, from the zero point.
+							//allow decimal places to the 1,000th place
+							node.validity.stepMismatch = (Math.round((node.wf2Value - node.wf2StepDatum)*1000) % Math.round(_step*1000)) != 0;
+						}
+					}
+				}
+			}
+			
+			//[TEXTAREA] tooLong -- The value of a control with a maxlength attribute is longer than the attribute allows, 
+			//   and the value of the control doesn't exactly match the control's default value. 
+			//[The maxlength] attribute must not affect the initial value (the DOM defaultValue attribute). It must only
+			//   affect what the user may enter and whether a validity error is flagged during validation.
+			if(node.maxlength && node.value != node.defaultValue){
+				//A newline in a textarea's value must count as two code points for maxlength processing (because
+				//   newlines in textareas are submitted as U+000D U+000A). [[NOT IMPLEMENTED: This includes the
+				//   implied newlines that are added for submission when the wrap attribute has the value hard.]]
+				//var matches = node.value.match(/((?<!\x0D|^)\x0A|\x0D(?!^\x0A|$))/g); //no negative lookbehind
+				var shortNewlines = 0;
+				var v = node.value;
+				node.wf2ValueLength = v.length;
+				for(var i = 1; i < v.length; i++){
+					if(v[i] === "\x0A" && v[i-1] !== "\x0D" || v[i] == "\x0D" && (v[i+1] && v[i+1] !== "\x0A"))
+						node.wf2ValueLength++;
+				}
+				
+				//The tooLong flag is used when this attribute is specified on a ... textarea control and the control
+				//   has more than the specified number of code points and the value doesn't match the control's default value.
+				node.validity.tooLong = node.wf2ValueLength > node.maxlength;
+			}
 		}
 
 		//customError -- The control was marked invalid from script. See the definition of the setCustomValiditiy() method.
 		
-		//with(node.validity){
-		//	valid = !(typeMismatch || rangeUnderflow || rangeOverflow || tooLong || patternMismatch || valueMissing || customError);
-		//}
-		node.validity.valid = !(
-			   node.validity.typeMismatch 
-			|| node.validity.rangeUnderflow 
-			|| node.validity.rangeOverflow 
-			|| node.validity.tooLong 
-			|| node.validity.patternMismatch 
-			|| node.validity.valueMissing 
-			|| node.validity.customError
-		);
+		node.validity.valid = !$wf2.hasInvalidState(node.validity);
 		
 		//This is now done onmousedown or onkeydown, just as Opera does
 		//if(node.validity.valid){
@@ -1457,18 +1923,7 @@ $wf2 = {
 		node.validationMessage = "";
 		
 		//ValidityState interface
-		node.validity = {
-			typeMismatch    : false,
-			rangeUnderflow  : false,
-			rangeOverflow   : false,
-			stepMismatch    : false,
-			tooLong         : false,
-			patternMismatch : false,
-			valueMissing    : false,
-			customError     : false,
-			valid           : true
-		};
-		
+		node.validity = $wf2.createValidityState();
 		node.willValidate = true;
 		
 		var nodeName = node.nodeName.toLowerCase();
@@ -1540,15 +1995,30 @@ $wf2 = {
 			this.validationMessage = "";
 			this.validity.customError = false;
 		}
-		this.validity.valid = !(
-			   this.validity.typeMismatch 
-			|| this.validity.rangeUnderflow 
-			|| this.validity.rangeOverflow 
-			|| this.validity.tooLong 
-			|| this.validity.patternMismatch 
-			|| this.validity.valueMissing 
-			|| this.validity.customError
-		);
+		this.validity.valid = !$wf2.hasInvalidState(this.validity);
+	},
+	hasInvalidState : function(validity){
+		return validity.typeMismatch 
+			|| validity.rangeUnderflow 
+			|| validity.rangeOverflow
+			|| validity.stepMismatch
+			|| validity.tooLong 
+			|| validity.patternMismatch 
+			|| validity.valueMissing 
+			|| validity.customError;
+	},
+	createValidityState : function(){
+		return {
+			typeMismatch    : false,
+			rangeUnderflow  : false,
+			rangeOverflow   : false,
+			stepMismatch    : false,
+			tooLong         : false,
+			patternMismatch : false,
+			valueMissing    : false,
+			customError     : false,
+			valid           : true
+		};
 	},
 
 	//## Default action functions for invalid events ##################################################
@@ -1556,6 +2026,49 @@ $wf2 = {
 	invalidIndicators : [],
 	indicatorTimeoutId : null,
 	indicatorIntervalId : null,
+	//getStepUnits : function(type){
+	//	switch(type){
+	//		'datetime':
+	//		'datetime-local':
+	//		'time':  return ' second(s)';
+	//		'date':  return ' day(s)';
+	//		'week':  return ' week(s)';
+	//		'month': return ' month(s)';
+	//		default: ' ';
+	//	}
+	//},
+	stepUnits : {
+		'datetime' : 'second',
+		'datetime-local': 'second',
+		'time': 'second',
+		'date': 'day',
+		'week': 'week',
+		'month': 'month'
+	},
+
+	invalidMessages : {
+		valueMissing   : 'The value must be supplied.',
+		typeMismatch   : 'The value is invalid for %s type.',
+		rangeUnderflow : 'The value must be equal to or greater than %s.',
+		rangeOverflow  : 'The value must be equal to or less than %s.',
+		stepMismatch   : 'The value has a step mismatch; it must be a certain number multiples of %s from %s.',
+		tooLong        : 'The value is too long. The field may have a maximum of %s characters but you supplied %s. Note that each line-break counts as two characters.',
+		patternMismatch: 'The value does not match the pattern (regular expression) "%s".'
+	},
+	
+	valueToWF2Type : function(value, type){
+		switch(type){
+			case 'datetime':
+			case 'datetime-local':
+			case 'date':
+			case 'month':
+			case 'week':
+			case 'time':
+				return $wf2.dateToISO8601(value, type);
+			default:
+				return value;
+		}
+	},
 
 	addInvalidIndicator : function(target){
 		//show contextual help message
@@ -1566,22 +2079,24 @@ $wf2 = {
 		msg.onmousedown = function(){
 			this.parentNode.removeChild(this);
 		};
-		
+		var type = target.getAttribute('type');
+		var isDateTimeRelated = (type == 'datetime' || type == 'datetime-local' || type == 'time' || type == 'date' || type == 'month' || type == 'week');
+
 		var ol = document.createElement('ol');
 		if(target.validity.valueMissing)
-			ol.appendChild($wf2.createLI('The value must be supplied.'));
+			ol.appendChild($wf2.createLI($wf2.invalidMessages.valueMissing));
 		if(target.validity.typeMismatch)
-			ol.appendChild($wf2.createLI("The value is invalid for the type '" + target.getAttribute('type') + "'."));
+			ol.appendChild($wf2.createLI($wf2.invalidMessages.typeMismatch.replace(/%s/, type)));
 		if(target.validity.rangeUnderflow)
-			ol.appendChild($wf2.createLI('The value must be equal to or greater than ' + target.wf2Min + "."));
+			ol.appendChild($wf2.createLI($wf2.invalidMessages.rangeUnderflow.replace(/%s/, $wf2.valueToWF2Type(target.wf2Min, type))));
 		if(target.validity.rangeOverflow)
-			ol.appendChild($wf2.createLI('The value must be equal to or less than ' + target.wf2Max + "."));
+			ol.appendChild($wf2.createLI($wf2.invalidMessages.rangeOverflow.replace(/%s/, $wf2.valueToWF2Type(target.wf2Max, type))));
 		if(target.validity.stepMismatch)
-			ol.appendChild($wf2.createLI('The value has a step mismatch; it must be a value by adding multiples of ' + target.wf2Step + " to " + target.wf2Min + "."));
+			ol.appendChild($wf2.createLI($wf2.invalidMessages.stepMismatch.replace(/%s/, target.wf2Step + ($wf2.stepUnits[type] ? ' ' + $wf2.stepUnits[type] + '(s)' : '')).replace(/%s/, $wf2.valueToWF2Type(target.wf2StepDatum, type))));
 		if(target.validity.tooLong)
-			ol.appendChild($wf2.createLI('The value is too long. The field may have a maximum of ' + target.maxlength + ' characters but you supplied ' + (target.wf2ValueLength ? target.wf2ValueLength : target.value.length) + '. Note that each line-break counts as two characters.'));
+			ol.appendChild($wf2.createLI($wf2.invalidMessages.tooLong.replace(/%s/, target.maxlength).replace(/%s/, target.wf2ValueLength ? target.wf2ValueLength : target.value.length)));
 		if(target.validity.patternMismatch)
-			ol.appendChild($wf2.createLI('The value does not match the pattern (regular expression) "' + target.getAttribute('pattern') + '".'));
+			ol.appendChild($wf2.createLI($wf2.invalidMessages.patternMismatch.replace(/%s/, target.getAttribute('pattern'))));
 		if(target.validity.customError)
 			ol.appendChild($wf2.createLI(target.validationMessage));
 		
@@ -1676,44 +2191,64 @@ $wf2 = {
 	cloneNode_customAttrs : { //FOR MSIE BUG: it cannot perceive the attributes that were actually specified
 		'type':1,'template':1,'repeat':1,'repeat-template':1,'repeat-min':1,
 		'repeat-max':1,'repeat-start':1,'value':1,'class':1,'required':1,
-		'pattern':1,'form':1,'autocomplete':1,'autofocus':1,'inputmode':1
+		'pattern':1,'form':1,'autocomplete':1,'autofocus':1,'inputmode':1,
+		'max':1,'min':1,'step':1,
+		onmoved:1,onadded:1,onremoved:1, 
+		onadd:1,onremove:1,onmove:1 //deprecated
 	},
 	cloneNode_skippedAttrs : {
 		'name':1,  //due to MSIE bug, set via $wf2.createElementWithName
 		'class':1, //due to MSIE bug, set below (see http://www.alistapart.com/articles/jslogging)
 		'for':1,   //due to preceived MSIE bug, set below
 		'style':1,  //inline styles require special handling
-		onadd:1,onremove:1,onmove:1, //don't copy Repetition old model event attributes not methods
-		onmoved:1,onadded:1,onremoved:1, //deprecated
 		
 		//for MSIE, properties (or methods) == attributes
 		addRepetitionBlock:1,addRepetitionBlockByIndex:1,moveRepetitionBlock:1,
-		removeRepetitionBlock:1, repetitionBlocks:1, 
-		_initialized:1
+		removeRepetitionBlock:1, repetitionBlocks:1,
+		setCustomValidity:1,checkValidity:1,validity:1,validationMessage:1,willValidate:1,
+		wf2Min:1,wf2Max:1,wf2Step:1,wf2StepDatum:1,wf2Value:1,wf2initialized:1
+	},
+	cloneNode_rtEventHandlerAttrs : {
+		onmoved:1,onadded:1,onremoved:1, //don't copy Repetition old model event attributes not methods
+		onadd:1,onremove:1,onmove:1 //deprecated
+		//QUESTION: is this right???
 	},
 
 	//The following cloneNode algorithm was designed to handle the attribute processing that the repetition
 	//  model specifies. Gecko starts to have irratic behavior with a cloned input's value attribute and value
 	//  property when using DOM cloneNode; furthermore, various MSIE bugs prevent its use of DOM cloneNode
-	cloneNode : function (node, processAttr){
+	cloneNode : function (node, processAttr, rtNestedDepth){
+		if(!rtNestedDepth)
+			rtNestedDepth = 0;
 		var clone, i, attr, el;
 		if(node.nodeType == 1 /*Node.ELEMENT_NODE*/){
+			var isTemplate = node.getAttribute('repeat') == 'template';
+			if(isTemplate)
+				rtNestedDepth++;
 			//BROWSER BUG: MSIE does not allow the setting of the node.name, except when creating the new node
 			clone = node.name ? 
 					$wf2.createElementWithName(node.nodeName, (processAttr ? processAttr(node.name) : node.name)) 
 				  : document.createElement(node.nodeName);
 					
 			for(i = 0; attr = node.attributes[i]; i++){
-				//PROBLEM: some attributes that were specified are being skipped
-				//VALUE IS REPEATED IN MSIE WHEN VALUE ATTRIBUTE SET?
+				//MSIE ISSUE: Custom attributes specified do not have .specified property set to true?
+				//ISSUE: VALUE IS REPEATED IN MSIE WHEN VALUE ATTRIBUTE SET?
 				//if(attr.specified || node.getAttribute(attr.nodeName)) //$wf2.cloneNode_customAttrs[attr.nodeName] || 
 				//	if(window.console && console.info) console.info(node.nodeName + "@" + attr.nodeName + " -- " + attr.specified + " <font color=red>" + node.getAttribute(attr.nodeName) + "</font>(" + typeof node.getAttribute(attr.nodeName) + ")<br>");
 
-				if((attr.specified || $wf2.cloneNode_customAttrs[attr.name]) && !$wf2.cloneNode_skippedAttrs[attr.name]){
+				//MSIE needs $wf2.cloneNode_customAttrs[attr.name] test since attr.specified does not work with custom attributes
+				//If the node is a template, the repetition event handlers should only be copied
+				//   if the template is nested and is being cloned by a parent repetition template.
+				if((attr.specified || $wf2.cloneNode_customAttrs[attr.name])
+				      && !$wf2.cloneNode_skippedAttrs[attr.name] && (
+						    (!isTemplate || (rtNestedDepth > 1 || !$wf2.cloneNode_rtEventHandlerAttrs[attr.name])) // && 
+						))
+				{
 					//MSIE BUG: when button[type=add|remove|move-up|move-down], then (attr.nodeValue and attr.value == 'button') but node.getAttribute(attr.nodeName) == 'add|remove|move-up|move-down' (as desired)
 					
-					//clone and process an event handler property (attribute)
-					if((attr.name.indexOf("on") === 0) && (typeof node[attr.name] == 'function')){
+					//clone and process an event handler property (attribute);
+					//   keep event handler attributes as plain text if nested repetition template
+					if(rtNestedDepth < 2 && (attr.name.indexOf("on") === 0) && (typeof node[attr.name] == 'function')){
 						var funcBody = processAttr(node[attr.name].toString().match(/{((?:.|\n)+)}/)[1]);
 						funcBody = processAttr(funcBody);
 						clone[attr.name] = new Function('event', funcBody);
@@ -1746,7 +2281,7 @@ $wf2 = {
 				clone.disabled = false;
 			
 			//Process the inline style
-			if(node.style){
+			if(node.style.cssText){
 				//clone.setAttribute('style', processAttr(node.style.cssText));
 				clone.style.cssText = (processAttr ? processAttr(node.style.cssText) : node.style.cssText);
 			}
@@ -1756,7 +2291,7 @@ $wf2 = {
 				clone.htmlFor = (processAttr ? processAttr(node.htmlFor) : node.htmlFor);
 			
 			for(i = 0; el = node.childNodes[i]; i++)
-				clone.appendChild($wf2.cloneNode(el, processAttr));
+				clone.appendChild($wf2.cloneNode(el, processAttr, rtNestedDepth));
 		}
 		else clone = node.cloneNode(true);
 		return clone;
@@ -1978,7 +2513,7 @@ $wf2 = {
 	//Initially inspired by Paul Sowden <http://delete.me.uk/2005/03/iso8601.html>
 	ISO8601RegExp : /^(?:(\d\d\d\d)-(W(0[1-9]|[1-4]\d|5[0-2])|(0\d|1[0-2])(-(0\d|[1-2]\d|3[0-1])(T(0\d|1\d|2[0-4]):([0-5]\d)(:([0-5]\d)(\.(\d+))?)?(Z)?)?)?)|(0\d|1\d|2[0-4]):([0-5]\d)(:([0-5]\d)(\.(\d+))?)?)$/,
 	parseISO8601 : function (str, type) {
-		var d = $wf2.validateDateTimeType(str, type); //$wf2.ISO8601RegExp.exec(str);
+		var d = $wf2.validateDateTimeType(str, type);
 		if(!d)
 			return null;
 		
@@ -1997,10 +2532,7 @@ $wf2 = {
 			if(d[3]){
 				if(type && type != 'week')
 					return null;
-				while(date.getUTCDay() != 1) //QUESTION: is there a more mathematecal method to this?
-					date.setUTCDate(date.getUTCDate()+1);
-				console.warn("There should be a better way to set the week day then iteration");
-				date.setUTCDate(date.getUTCDate() + (d[3]-1)*7); //set week
+				date.setUTCDate(date.getUTCDate() + ((8 - date.getUTCDay()) % 7) + (d[3]-1)*7); //set week day and week
 				return date;
 			}
 			//Other date-related types
@@ -2015,77 +2547,81 @@ $wf2 = {
 		if(d[_timePos+0]) date.setUTCHours(d[_timePos+0]);
 		if(d[_timePos+1]) date.setUTCMinutes(d[_timePos+1]);
 		if(d[_timePos+2]) date.setUTCSeconds(d[_timePos+3]);
-		if(d[_timePos+4]){
-			console.warn("Setting milliseconds not currently working because it is general fraction-of-second");
-			date.setUTCMilliseconds(d[_timePos+5] * Math.pow(10, 3-d[_timePos+5].length));
-		}
+		if(d[_timePos+4]) date.setUTCMilliseconds(Math.round(Number(d[_timePos+4]) * 1000));
 		
 		//Set to local time if date given, hours present and no 'Z' provided
 		if(d[4] && d[_timePos+0] && !d[_timePos+6])
 			date.setUTCMinutes(date.getUTCMinutes()+date.getTimezoneOffset());
-		
-		//if(type == 'time'){
-			//console.info(type + ">" + str + '>' +  date.toUTCString() + " (ms: " + date.getMilliseconds() + ")");
-		//	console.info(type + ">" + str + '>' +  date.toString() + " (ms: " + date.getMilliseconds() + ")");
-			//console.warn(date);
-		//}
-		
+
 		return date;
 	},
 
 	validateDateTimeType : function(value, type){ //returns RegExp matches
-//		switch(type){
-//			case 'date':
-//			case 'datetime':
-//			case 'datetime-local':
-//			case 'month':
-//			//case 'week':
-				var isValid = false;
-				
-				var d = $wf2.ISO8601RegExp.exec(value); //var d = string.match(new RegExp(regexp));
-				if(!d || !type)
-					return d;
-				
-				//if((type == 'week' && d[2].indexOf('W') !== 0) || (type != 'week' && d[2].indexOf('W') === 0)){ //RegEx validates week
-				//	node.validity.typeMismatch = true;
-				//	break;
-				//}
-				if(type == 'week') // a week date
-					isValid = (d[2].toString().indexOf('W') === 0); //valid if W present
-				else if(type == 'time') // a time date
-					isValid = !!d[15];
-				else if(type == 'month')
-					isValid = !d[5];
-				else { //a date related value
-					//Verify that the number of days in the month are valid
-					if(d[6]){
-						var date = new Date(d[1], d[4]-1, d[6]);
-						if(date.getMonth() != d[4]-1)
-							isValid = false;
-						else switch(type){
-							//case 'month':
-							//	return !d[5]; //valid if day of month is not supplied
-							case 'date':
-								isValid = (d[4] && !d[7]); //valid if day of month supplied and time field not present
-								break;
-							case 'datetime':
-								isValid = !!d[14]; //valid if Z present
-								break;
-							case 'datetime-local':
-								isValid = (d[7] && !d[14]); //valid if time present and Z not provided
-								break;
-						}
-					}
+		var isValid = false;
+		
+		var d = $wf2.ISO8601RegExp.exec(value); //var d = string.match(new RegExp(regexp));
+		if(!d || !type)
+			return d;
+		
+		if(type == 'week') // a week date
+			isValid = (d[2].toString().indexOf('W') === 0); //valid if W present
+		else if(type == 'time') // a time date
+			isValid = !!d[15];
+		else if(type == 'month')
+			isValid = !d[5];
+		else { //a date related value
+			//Verify that the number of days in the month are valid
+			if(d[6]){
+				var date = new Date(d[1], d[4]-1, d[6]);
+				if(date.getMonth() != d[4]-1)
+					isValid = false;
+				else switch(type){
+					case 'date':
+						isValid = (d[4] && !d[7]); //valid if day of month supplied and time field not present
+						break;
+					case 'datetime':
+						isValid = !!d[14]; //valid if Z present
+						break;
+					case 'datetime-local':
+						isValid = (d[7] && !d[14]); //valid if time present and Z not provided
+						break;
 				}
-//				break;
-//			case 'month':
-//				return $wf2.monthRegExp.test(value);
-//			case 'week':
-//				return $wf2.weekRegExp.test(value);
-//			case 'time':
-//				return $wf2.timeRegExp.test(value);
-//		}
+			}
+		}
 		return isValid ? d : null;
+	},
+	
+	zeroPad : function(num, pad){
+		if(!pad)
+			pad = 2;
+		var str = num.toString();
+		while(str.length < pad)
+			str = '0' + str;
+		return str;
+	},
+	
+	dateToISO8601 : function(date, type){
+		var ms = '';
+		if(date.getUTCMilliseconds())
+			ms = '.' + $wf2.zeroPad(date.getUTCMilliseconds(), 3).replace(/0+$/,'');
+		switch(type){
+			case 'date':
+				return date.getUTCFullYear() + '-' + $wf2.zeroPad(date.getUTCMonth()+1) + '-' + $wf2.zeroPad(date.getUTCDate());
+			case 'datetime-local':
+				return date.getFullYear() + '-' + $wf2.zeroPad(date.getMonth()+1) + '-' + $wf2.zeroPad(date.getDate()) + 
+				       'T' + $wf2.zeroPad(date.getHours()) + ':' + $wf2.zeroPad(date.getMinutes()) + ':' + $wf2.zeroPad(date.getMinutes()) + ms + 'Z';
+			case 'month':
+				return date.getUTCFullYear() + '-' + $wf2.zeroPad(date.getUTCMonth()+1);
+			case 'week':
+				var week1 = $wf2.parseISO8601(date.getUTCFullYear() + '-W01');
+				return date.getUTCFullYear() + '-W' + $wf2.zeroPad(((date.valueOf() - week1.valueOf()) / (7*24*60*60*1000)) + 1);
+			case 'time':
+				return $wf2.zeroPad(date.getUTCHours()) + ':' + $wf2.zeroPad(date.getUTCMinutes()) + ':' + $wf2.zeroPad(date.getUTCMinutes()) + ms;
+			case 'datetime':
+			default:
+				return date.getUTCFullYear() + '-' + $wf2.zeroPad(date.getUTCMonth()+1) + '-' + $wf2.zeroPad(date.getUTCDate()) + 
+				       'T' + $wf2.zeroPad(date.getUTCHours()) + ':' + $wf2.zeroPad(date.getUTCMinutes()) + ':' + $wf2.zeroPad(date.getUTCMinutes()) + ms + 'Z';
+		}
 	}
 };
 
@@ -2319,14 +2855,14 @@ else if(document.addEventListener && ($wf2.oldRepetitionEventModelEnabled === un
 	$wf2.oldRepetitionEventModelEnabled = true;
 	(function(){
 		
-	var baseName = {
-		added : "add",
-		removed : "remove",
-		moved : "move"
+	var deprecatedAttrs = {
+		added : "onadd",
+		removed : "onremove",
+		moved : "onmove"
 	};
 	
 	function handleRepetitionEvent(evt){
-		if(!RepetitionElement.oldEventModelEnabled)
+		if(!$wf2.oldRepetitionEventModelEnabled)
 			return;
 		if(!evt.element && evt.relatedNode) //Opera uses evt.relatedNode instead of evt.element as the specification dictates
 			evt.element = evt.relatedNode;
@@ -2334,19 +2870,17 @@ else if(document.addEventListener && ($wf2.oldRepetitionEventModelEnabled === un
 			return;
 		
 		var rt = evt.element.repetitionTemplate;
-		
-		var attrName = 'on' + baseName[evt.type];
-		var attrNameDeprecated = 'on' + evt.type;
+		var attrName = 'on' + evt.type;
 		
 		//Add support for event handler set with HTML attribute
-		var handlerAttr = rt.getAttribute(attrName) || /* deprecated */ rt.getAttribute(attrNameDeprecated);
+		var handlerAttr = rt.getAttribute(attrName) || /* deprecated */ rt.getAttribute(deprecatedAttrs[evt.type]);
 		if(handlerAttr && (!rt[attrName] || typeof rt[attrName] != 'function')) //in MSIE, attribute == property
 			rt[attrName] = new Function('event', handlerAttr);
 		
 		if(evt.element.repetitionTemplate[attrName])
 			evt.element.repetitionTemplate[attrName](evt);
-		else if(evt.element.repetitionTemplate[attrNameDeprecated]) //deprecated
-			evt.element.repetitionTemplate[attrNameDeprecated](evt);
+		else if(evt.element.repetitionTemplate[deprecatedAttrs[evt.type]]) //deprecated
+			evt.element.repetitionTemplate[deprecatedAttrs[evt.type]](evt);
 	}
 	
 	document.addEventListener("added", handleRepetitionEvent, false);

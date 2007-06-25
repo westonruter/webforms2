@@ -11,10 +11,13 @@ div.wf2_errorMsg {
 	filter: alpha(opacity=50);
 }
 
-div.wf2_errorMsg:hover,
-div.wf2_firstErrorMsg {
+div.wf2_firstErrorMsg,
+div.wf2_errorMsg:hover{
 	opacity:1.0;
 	filter: alpha(opacity=100);
+}
+div.wf2_errorMsg:hover {
+	z-index:100;
 }
 
 div.wf2_errorMsg ol {
