@@ -12,7 +12,7 @@ div.wf2_errorMsg {
 }
 
 div.wf2_firstErrorMsg,
-div.wf2_errorMsg:hover{
+div.wf2_errorMsg:hover {
 	opacity:1.0;
 	filter: alpha(opacity=100);
 }
@@ -25,14 +25,11 @@ div.wf2_errorMsg ol {
 	margin:0;
 	padding:0;
 }
-div.wf2_errorMsg ol.single {
-	list-style:none;
-}
+div.wf2_errorMsg ol.single,
 div.wf2_errorMsg ol.single li {
-	margin:0;
-	padding:0;
+	list-style:none;
+	display:inline;
 }
-
 /*
 @namespace xh url(http://www.w3.org/1999/xhtml);
 :not(xh|*)[xh|repeat="template"],
