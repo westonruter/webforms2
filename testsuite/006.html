@@ -1,14 +1,15 @@
-﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 5//EN">
+﻿<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
 		<title>Test Case 6: Repetition Events &laquo; Repetition Model Test Suite</title>
-		<meta name="description" content="Demonstrating the handling of added, removed, and moved events" />
-		<script type="text/javascript" src="../webforms2.js"></script>
-		<link rel="stylesheet" type="text/css" href="testcase.css" /><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
-		<!-- prev --><link rel="prev" href="005.html" /><!-- /prev -->
-		<!-- next --><link rel="next" href="007.html" /><!-- /next -->
-		<link rel="home" href="index.html" />
+		<meta name="author" content="Weston Ruter">
+		<meta name="description" content="Demonstrating the handling of added, removed, and moved events">
+		<script type="text/javascript" src="../webforms2-p.js"></script>
+		<link rel="stylesheet" type="text/css" href="testcase.css"><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
+		<!-- prev --><link rel="prev" href="005.html"><!-- /prev -->
+		<!-- next --><link rel="next" href="007.html"><!-- /next -->
+		<link rel="home" href="./">
 		
 		<script type="text/javascript">
 		
@@ -79,10 +80,10 @@
 		}
 		
 		function handle_DOM2Event(event){
-			addEventLogEntry(event.type, event.element, 'DOM Level 2');
+			addEventLogEntry(event.type, event.element || event.relatedNode, 'DOM Level 2');
 		}
 		function handle_traditionalEvent(event){
-			addEventLogEntry(event.type, event.element, 'traditional');
+			addEventLogEntry(event.type, event.element || event.relatedNode, 'traditional');
 		}
 
 		function toggleDOM2Events(toggle){
@@ -168,11 +169,11 @@
 			
 			<div class="testSuiteNavigation">
 				<!-- prev -->&larr;&nbsp;<a href="005.html" class="prev">Repetition Index in Attributes</a> |<!-- /prev -->
-				<a href="index.html" class="index">Test Suite Index</a>
+				<a href="./" class="index">Test Suite Index</a>
 				<!-- next -->| <a href="007.html" class="next">Repetition Event Handler Attributes</a>&nbsp;&rarr;<!-- /next -->
 			</div>
 			
-			<hr />
+			<hr>
 		</div>
   
 
@@ -217,9 +218,9 @@
 		
 		
 
-		<hr />
-		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br />
-		Version: 0.1 (2007-05) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
+		<hr>
+		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br>
+		Version: 0.5 (2007-08-12) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
 		<address>
 		<a href="http://weston.ruter.net/">Weston Ruter</a>
 		</address>

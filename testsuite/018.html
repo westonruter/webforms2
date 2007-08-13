@@ -1,14 +1,15 @@
-﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 5//EN">
+﻿<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
 		<title>Test Case 18: Radio Buttons in Nested Repetition Blocks &laquo; Repetition Model Test Suite</title>
-		<meta name="description" content="" />
-		<script type="text/javascript" src="../webforms2.js"></script>
-		<link rel="stylesheet" type="text/css" href="testcase.css" /><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
-		<!-- prev --><link rel="prev" href="017.html" /><!-- /prev -->
-		<!-- next --><link rel="next" href="019.html" /><!-- /next -->
-		<link rel="home" href="index.html" />
+		<meta name="author" content="Weston Ruter">
+		<meta name="description" content="">
+		<script type="text/javascript" src="../webforms2-p.js"></script>
+		<link rel="stylesheet" type="text/css" href="testcase.css"><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
+		<!-- prev --><link rel="prev" href="017.html"><!-- /prev -->
+		<!-- next --><link rel="next" href="019.html"><!-- /next -->
+		<link rel="home" href="./">
 		
 		<script type="text/javascript">
 		
@@ -30,11 +31,11 @@
 			
 			<div class="testSuiteNavigation">
 				<!-- prev -->&larr;&nbsp;<a href="017.html" class="prev">Form validation</a> |<!-- /prev -->
-				<a href="index.html" class="index">Test Suite Index</a>
-				<!-- next -->| <a href="019.html" class="next"></a>&nbsp;&rarr;<!-- /next -->
+				<a href="./" class="index">Test Suite Index</a>
+				<!-- next -->| <a href="019.html" class="next">Prefilling form data</a>&nbsp;&rarr;<!-- /next -->
 			</div>
 			
-			<hr />
+			<hr>
 		</div>
   
 
@@ -46,15 +47,16 @@
     <li repeat="template" repeat-start="0" id="planets">
      <label> Name: <input name="planet[planets].name" required="required"/> </label><br>
 	   Class:
-           <label><input name="planet[planets].class" type="radio" value="M" /> N</label>
-           <label><input name="planet[planets].class" type="radio" value="N" /> M</label>
-     <h3> Moons </h3>
+           <label><input name="planet[planets].class" type="radio" value="M"  /> N </label>
+           <label><input name="planet[planets].class" type="radio" value="N" checked/> M </label>
+     <h3> Moons</h3>
      <ul>
       <li repeat="template" repeat-start="0" id="planet[planets].moons">
        <input name="planet[planets].moon[planet[planets].moons]"/>
 	   Class:
-           <label><input name="planet[planets].moon[planet[planets].moons].class" type="radio" value="M" /> N</label>
-           <label><input name="planet[planets].moon[planet[planets].moons].class" type="radio" value="N" /> M</label>
+           <label><input name="planet[planets].moon[planet[planets].moons].class" type="radio" value="M" checked /> N </label>
+           <label><input name="planet[planets].moon[planet[planets].moons].class" type="radio" value="N" /> M </label>
+		   <label><input name="planet[planets].inhabited" type="checkbox" checked/> inhabited </label>
        <button type="remove">Delete Moon</button>
       </li>
      </ul>
@@ -67,9 +69,9 @@
   </form>
 		
 
-		<hr />
-		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br />
-		Version: 0.1 (2007-05) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
+		<hr>
+		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br>
+		Version: 0.5 (2007-08-12) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
 		<address>
 		<a href="http://weston.ruter.net/">Weston Ruter</a>
 		</address>

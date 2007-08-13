@@ -4,7 +4,7 @@
 		<title>Radio Buttons in Nested Repetition Blocks</title>
 		<meta name="description" content="" />
 		<meta name="keywords" content="repetition, validation" />
-		<script type="text/javascript" src="../../webforms2.js"></script>
+		<script type="text/javascript" src="../../webforms2_src.js"></script>
 		<script type="text/javascript" src="firebug/firebug.js"></script>
 		
 		<!-- BEGIN HEAD -->
@@ -30,15 +30,16 @@
     <li repeat="template" repeat-start="0" id="planets">
      <label> Name: <input name="planet[planets].name" required="required"/> </label><br>
 	   Class:
-           <label><input name="planet[planets].class" type="radio" value="M" /> N</label>
-           <label><input name="planet[planets].class" type="radio" value="N" /> M</label>
-     <h3> Moons </h3>
+           <label><input name="planet[planets].class" type="radio" value="M"  /> N </label>
+           <label><input name="planet[planets].class" type="radio" value="N" checked/> M </label>
+     <h3> Moons</h3>
      <ul>
       <li repeat="template" repeat-start="0" id="planet[planets].moons">
        <input name="planet[planets].moon[planet[planets].moons]"/>
 	   Class:
-           <label><input name="planet[planets].moon[planet[planets].moons].class" type="radio" value="M" /> N</label>
-           <label><input name="planet[planets].moon[planet[planets].moons].class" type="radio" value="N" /> M</label>
+           <label><input name="planet[planets].moon[planet[planets].moons].class" type="radio" value="M" checked /> N </label>
+           <label><input name="planet[planets].moon[planet[planets].moons].class" type="radio" value="N" /> M </label>
+		   <label><input name="planet[planets].inhabited" type="checkbox" checked/> inhabited </label>
        <button type="remove">Delete Moon</button>
       </li>
      </ul>

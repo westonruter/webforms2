@@ -1,4 +1,5 @@
 
+use File::Copy;
 
 @commonVarNames = qw(
 xhr
@@ -140,7 +141,7 @@ push @commonVarNames, '(?<=2\.|\s\s)moveRepetitionBlock(?!:1)';
 	'XPathResult.ORDERED_NODE_SNAPSHOT_TYPE' => 7
 );
 
-open IN, "webforms2_src.js";
+open IN, "webforms2.js";
 $source = join "", <IN>;
 close IN;
 
@@ -157,26 +158,42 @@ $nocoms =~ s{/\*.+?\*/}{}gs; #remove all multi-line comments
 $nocoms =~ s{[ \t]+(?=\n)}{}g; #remove line terminating whitespace
 $nocoms =~ s{\n(?=\n)}{}g; #remove all empty lines
 $thisHeader = $header;
+#$thisHeader =~ s{\bwebforms.+?js\b}{webforms2.js}; #UNCOMMENT AFTER COMMIT AND COMMENT NEXT LINE
 $thisHeader =~ s{\bwebforms.+?js\b}{webforms2-nocomments.js};
 print NOCOM $thisHeader . "\n" . $nocoms;
 close NOCOM;
 
+open NOWHITE, ">webforms2-nocomments-nowhitespace.js";
+$nowhite = $nocoms;
+$nowhite =~ s{^\s+}{}gm; #remove all non-newline whitespace
+$thisHeader = $header;
+$thisHeader =~ s{\bwebforms.+?js\b}{webforms2-nocomments-nowhitespace.js};
+print NOWHITE $thisHeader . "\n" . $nowhite;
+close NOWHITE;
+
+#UNCOMMENT AFTER COMMIT AND COMMENT NEXT LINES
+#open NOWHITE, ">webforms2.js";
+#$thisHeader = $header;
+#$thisHeader =~ s{\bwebforms.+?js\b}{webforms2.js};
+#print NOWHITE $thisHeader . "\n" . $nowhite;
+#close NOWHITE;
 
 #shorten long variable names
-open SHORT, ">webforms2-shortnames-nocomments.js";
+open SHORT, ">webforms2-nocomments-nowhitespace-shortnames.js";
 $short = $nocoms;
 $count = 0;
 foreach(@commonVarNames){
 	$re = /\W/ ? $_ : '(?<!\')\b' . $_;
 	print "$re\n";
-	$short =~ s{$re\b}{sprintf('$%x', $count)}eg; #(?<!')\b$_\b
+	$short =~ s{$re\b}{sprintf('_%x', $count)}eg; #(?<!')\b$_\b
 	$count++;
 }
 foreach(keys %replacements){
 	$short =~ s{\b$_\b}{$replacements{$_}}eg;
 }
+$nowhite =~ s{^\s+}{}gm; #remove all non-newline whitespace
 $thisHeader = $header;
-$thisHeader =~ s{\bwebforms.+?js\b}{webforms2-shortnames-nocomments.js};
+$thisHeader =~ s{\bwebforms.+?js\b}{webforms2-nocomments-nowhitespace-shortnames.js};
 print SHORT $thisHeader . "\n" . $short;
 close SHORT;
 

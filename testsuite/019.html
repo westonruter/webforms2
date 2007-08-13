@@ -1,20 +1,21 @@
-﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 5//EN">
+﻿<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-		<title>Test Case 19: 0.1 &laquo; Repetition Model Test Suite</title>
-		<meta name="description" content="" />
-		<script type="text/javascript" src="../webforms2.js"></script>
-		<link rel="stylesheet" type="text/css" href="testcase.css" /><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
-		<!-- prev --><link rel="prev" href="018.html" /><!-- /prev -->
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
+		<title>Test Case 19: Prefilling form data &laquo; Repetition Model Test Suite</title>
+		<meta name="author" content="Weston Ruter">
+		<meta name="description" content="">
+		<script type="text/javascript" src="../webforms2-p.js"></script>
+		<link rel="stylesheet" type="text/css" href="testcase.css"><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
+		<!-- prev --><link rel="prev" href="018.html"><!-- /prev -->
 		
-		<link rel="home" href="index.html" />
+		<link rel="home" href="./">
 		
 	</head>
 	<body>
 		<div id="testSuiteNote">
 
-			<h1>Web Forms 2.0 Test Case 19: 0.1</h1>
+			<h1>Web Forms 2.0 Test Case 19: Prefilling form data</h1>
 			<p class="purpose">
 			This test case demonstrates functionality of the Web Forms 2.0 specification and tests the compliance of 
 			this cross-browser <a href="http://code.google.com/p/repetitionmodel/">Web Forms 2.0 implementation</a>.</p>
@@ -23,38 +24,115 @@
 			
 			<div class="testSuiteNavigation">
 				<!-- prev -->&larr;&nbsp;<a href="018.html" class="prev">Radio Buttons in Nested Repetition Blocks</a> |<!-- /prev -->
-				<a href="index.html" class="index">Test Suite Index</a>
+				<a href="./" class="index">Test Suite Index</a>
 				
 			</div>
 			
-			<hr />
+			<hr>
 		</div>
   
 
 	<h1>Filling <code>select</code> elements</h1>
-	<form onsubmit="return false">
+	<form onsubmit="return true" action="019.html">
 		
-		<p>States and provinces: <select data="019-statesAndProvinces.xml"></select></p>
+		<p>States and provinces: <select name="statesAndProvinces" data="019-statesAndProvinces.xml"></select> (3 states, 2 provinces)</p>
 		<!--<p><datalist data="019-statesAndProvinces.xml"></datalist></p>-->
-		<p>Colors: <select data="019-colors.xml">
+		<p>Colors: <select name="colors" data="019-colors.xml">
 			<option value="#FF9900">Orange</option>
 			<option value="#FFFF00">Yellow</option>
 			<option value="#663366">Purple</option>
 		</select> (there should be 8 colors, 5 provided incrementally)</p>
-		
+		<!--<p><input name="img1" type="image" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAANbY1E9YMgAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAICSURBVHjaYvz//z8DJQAggJhwiDPvnmlzc2aR0O+JGezt+AwACCCsBhxfYhn59N41FWtXIxZOLu70niRGXVwGAAQQNgNYHj96O8HaWYdJW5ubwd4/mI2Ng7sblwEAAYRhwMm1URk/vn4SUNWVYGD8+YZBXZOZm5OLzRjoCmNsBgAEEKoBN82Y7l851GLrqMjM8Oc7A8O/3wwMP54wuAQFCXNycUzGZgBAAKEYcOaKZO2/f//5FbUVgBrfMoRVcgHpNwyKGjKMXDwCan0prFboBgAEELIBzDcvXyy2cVZhYPj9GWj7H4jo/38MDJ9OMDj7O/KzsjH3oxsAEEBwA/bNNipiZf7FI6cqwcDw8x2qqp8fGORUpVn4BEXlgGHhhCwFEEAwA9gfP3hdZ+Oizcjw+wvCdjgAuuLrFQbXIH9hTm7uqcgyAAEENuD4ctcebm5mbikFYRTbV7V/Q6j88Z5BSuY7q4CQgAjQFR4wYYAAAhtw89L5ZFsnRaDtn4CW/YXrAQcisit+PGVwDgrnZ2NnnwATBQggpsNLvGYLCAmxi8tLARWg+h3FBVBXSEj/ZZWQkRcCuiIQJAQQQCyvnj5KMDTkZ2JgYmRg4FchnHv+vmEwttLmeXT3VjKQtx4ggFgk5TXebV63UfT3ijOMxOZAVlZWdiB1EMQGCCBGSrMzQIABAFR3kRM3KggZAAAAAElFTkSuQmCC"></p>-->
+
 		<p><button type="submit">Submit</button></p>
 	</form>
 	
 	<h1>Seeding a form with initial values</h1>
+	<p>The <code>formdata</code> XML file associated with the following form first
+	clears all of the existing repetition blocks. Then it adds two repetition blocks
+	with indexes 100 and 101. Then it prefills the values of these two repetition blocks.</p>
 	<form onsubmit="return false" data="019-formdata.xml">
-		<input type="text" name="hello">
+		<ol>
+			<li repeat="0">
+				<label><input type="text" name="input0" value="delete me 0" ></label>
+				<input type="remove">
+				<input type="move-down">
+				<input type="move-up">
+			</li>
+			<li repeat="1">
+				<label><input type="text" name="input1" value="delete me 1" ></label>
+				<input type="remove">
+				<input type="move-down">
+				<input type="move-up">
+			</li>
+			<li repeat="2">
+				<label><input type="text" name="input2" value="delete me 2" ></label>
+				<input type="remove">
+				<input type="move-down">
+				<input type="move-up">
+			</li>
+			<li repeat="3">
+				<label><input type="text" name="input3" value="delete me 3" ></label>
+				<input type="remove">
+				<input type="move-down">
+				<input type="move-up">
+			</li>
+			<li id='i' repeat="template" repeat-start="3" repeat-max="4">
+				<label><input type="text" name="input[i]" value="index [i]" ></label>
+				<input type="remove">
+				<input type="move-down">
+				<input type="move-up">
+			</li>
+		</ol>
+		<input type="add" template="i">
+			
+		<p><label>Only the first two <code>option</code>s of the <code>select</code> element below should be selected.
+		The last <code>option</code> has a <code>selected</code> attribute set, but as per the spec, it should be cleared:<br>
+		<select name="select" multiple="multiple">
+			<option>test</option>
+			<option>test</option>
+			<option selected>test</option>
+		</select></label>
+		</p>
+
+		<p>Last two checkboxes below should be checked (prefilling failed if only "Red" is checked):
+		<label><input type="checkbox" name="colorRed" type="" value="red" checked> Red </label>
+		<label><input type="checkbox" name="colorGreen" value="green"> Green</label>
+		<label><input type="checkbox" name="colorBlue" value="blue"> Blue</label>
+		</p>
+
+		<p>The "Evening" button should be selected (prefilling failed if "Afternoon" is checked):
+			<label><input type="radio" name="time" value="morning"> Morning</label>
+			<label><input type="radio" name="time" value="afternoon" checked> Afternoon</label>
+			<label><input type="radio" name="time" value="evening"> Evening</label>
+			<label><input type="radio" name="time" value="night"> Night</label>
+		</p>
+
+		<p><label>Datetime (should be empty since invalid <code>field</code> value provided): <input type="datetime" name="datetimeTest"></label></p>
+		<p><label>Week (should be prefilled): <input type="week" name="weekTest"></label></p>
 	</form>
 
 
+	<h1>Setting <code>data</code> DOM property dynamically</h1>
+	<p>The following script (taken from the end of the <a href="http://www.whatwg.org/specs/web-forms/current-work/#selectSeeding">Filling <code>select</code> elements</a> section) must be executed before <code>DOMContentLoaded</code>:</p>
+	<form id='dataAttrTest'>
+		<script type="text/javascript">
+		var select = document.createElement('select'); //document.createElementNS('http://www.w3.org/1999/xhtml', 'select');
+		select.data = 'data:application/xml,%3Cselect%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxhtml%22%20type%3D%22incremental%22%3E%3Coption%3Eb%3C%2Foption%3E%3C%2Fselect%3E';
+		select.name = "dynamic";
+		// at this point, select.length == 0 is guaranteed
+		var option = document.createElement('option'); //document.createElementNS('http://www.w3.org/1999/xhtml', 'option');
+		option.appendChild(document.createTextNode('a'));
+		select.appendChild(option);
+		// at this point, select.length == 1 is guaranteed
+		document.getElementById('dataAttrTest').appendChild(select);
+		</script>
+	</form>
 
-		<hr />
-		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br />
-		Version: 0.1 (2007-05) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
+
+		<hr>
+		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br>
+		Version: 0.5 (2007-08-12) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
 		<address>
 		<a href="http://weston.ruter.net/">Weston Ruter</a>
 		</address>

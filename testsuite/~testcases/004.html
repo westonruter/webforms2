@@ -3,7 +3,7 @@
 		<title>Movement Buttons and Cancelling Default Action</title>
 		<meta name="keywords" content="repetition" />
 		<script type="text/javascript" src="firebug/firebug.js"></script>
-		<script type="text/javascript" src="../../webforms2.js"></script>
+		<script type="text/javascript" src="../../webforms2_src.js"></script>
 		
 		<!-- BEGIN HEAD -->
 		<script type="text/javascript">
@@ -137,6 +137,7 @@
 					case "move-up":
 						if(btn.className.match(/onclickProperty/))
 							btn.onclick = confirmMoveUp;
+							//btn.onclick = function(e){ console.info('onclick DOM, ' + (this.onclick ? 'onclick' : '') + ',' + (this._onclick ? '_onclick' : '')); return confirmMoveUp.apply(this, [e]); };
 						if(btn.className.match(/DOM2/)){
 							if(btn.addEventListener)
 								btn.addEventListener("click", confirmMoveUp, false);
@@ -147,6 +148,7 @@
 					case "move-down":
 						if(btn.className.match(/onclickProperty/))
 							btn.onclick = confirmMoveDown;
+							//btn.onclick = function(e){ console.info('onclick DOM, ' + (this.onclick ? 'onclick' : '') + ',' + (this._onclick ? '_onclick' : '')); return confirmMoveDown.apply(this, [e]); };
 						if(btn.className.match(/DOM2/)){
 							if(btn.addEventListener)
 								btn.addEventListener("click", confirmMoveDown, false);
@@ -207,8 +209,8 @@
 								<th>onclick HTML attr. &raquo;</th>
 								<td><button type="remove" class="onclickAttribute" onclick="return confirmRemove.apply(this, [event])">Remove...</button></td>
 								<td>
-									   <button type="move-down" class="onclickAttribute" onclick="return confirmMoveDown.apply(this, [event])">&#x2193;...</button><!--
-									--><button type="move-up"   class="onclickAttribute" onclick="return confirmMoveUp.apply(this, [event])">&#x2191;...</button><br />
+									   <button type="move-down" class="onclickAttribute" onclick="/*console.info('onclick HTML attr');*/ return confirmMoveDown.apply(this, [event])">&#x2193;...</button><!--
+									--><button type="move-up"   class="onclickAttribute" onclick="/*console.info('onclick HTML attr');*/ return confirmMoveUp.apply(this, [event])">&#x2191;...</button><br />
 								</td>
 							</tr>
 							<tr>
@@ -240,7 +242,7 @@
 				</tr>
 				</tbody>
 			</table>
-			
+
 			<p>Form addition buttons (RepeatMax = 5):</p>
 			<table>
 				<tr>
@@ -256,13 +258,9 @@
 					<td><button type="add" template="order" class="onclickProperty">Add block...</button></td>
 				</tr>
 				<tr>
-					<th>DOM Event Level 2 <!--or MSIE--> click &raquo;<br />(native implementations only)</th>
+					<th>DOM Event Level 2 click &raquo;<br />(native implementations only)</th>
 					<td><button type="add" template="order" class="DOM2">Add block...</button></td>
 				</tr>
-				<!--<tr>
-					<th>all event models</th>
-					<td><button type="add" template="order" class="onclickAttribute onclickProperty DOM2">Add block...</button></td>
-				</tr>-->
 			</table>
 			<p>Other addition buttons: 
 				<button type="button" onclick="var x = prompt('How many rows would you like to add?', 3); if(!isNaN(x)) for(var i = 0; i < x; i++) document.getElementById('order').addRepetitionBlock(null)">Add X rows...</button>

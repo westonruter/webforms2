@@ -12,6 +12,11 @@ while(1){
 			$doupdate++;
 		}
 	}
+	GetAttributes("index.template.html", $attrib);
+	$doupdate++ if($attrib & ARCHIVE);
+	GetAttributes("testcase.template.html", $attrib);
+	$doupdate++ if($attrib & ARCHIVE);
+		
 	
 	if(!$doupdate){
 		sleep 1;
@@ -97,6 +102,8 @@ while(1){
 		$counter++;
 	}
 
+	SetAttributes("index.template.html", NORMAL);
+	SetAttributes("testcase.template.html", NORMAL);
 
 
 	#TEST SUITE INDEX

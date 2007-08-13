@@ -1,14 +1,15 @@
-﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 5//EN">
+﻿<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
 		<title>Test Case 4: Movement Buttons and Cancelling Default Action &laquo; Repetition Model Test Suite</title>
-		<meta name="description" content="" />
-		<script type="text/javascript" src="../webforms2.js"></script>
-		<link rel="stylesheet" type="text/css" href="testcase.css" /><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
-		<!-- prev --><link rel="prev" href="003.html" /><!-- /prev -->
-		<!-- next --><link rel="next" href="005.html" /><!-- /next -->
-		<link rel="home" href="index.html" />
+		<meta name="author" content="Weston Ruter">
+		<meta name="description" content="">
+		<script type="text/javascript" src="../webforms2-p.js"></script>
+		<link rel="stylesheet" type="text/css" href="testcase.css"><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
+		<!-- prev --><link rel="prev" href="003.html"><!-- /prev -->
+		<!-- next --><link rel="next" href="005.html"><!-- /next -->
+		<link rel="home" href="./">
 		
 		<script type="text/javascript">
 		
@@ -141,6 +142,7 @@
 					case "move-up":
 						if(btn.className.match(/onclickProperty/))
 							btn.onclick = confirmMoveUp;
+							//btn.onclick = function(e){ console.info('onclick DOM, ' + (this.onclick ? 'onclick' : '') + ',' + (this._onclick ? '_onclick' : '')); return confirmMoveUp.apply(this, [e]); };
 						if(btn.className.match(/DOM2/)){
 							if(btn.addEventListener)
 								btn.addEventListener("click", confirmMoveUp, false);
@@ -151,6 +153,7 @@
 					case "move-down":
 						if(btn.className.match(/onclickProperty/))
 							btn.onclick = confirmMoveDown;
+							//btn.onclick = function(e){ console.info('onclick DOM, ' + (this.onclick ? 'onclick' : '') + ',' + (this._onclick ? '_onclick' : '')); return confirmMoveDown.apply(this, [e]); };
 						if(btn.className.match(/DOM2/)){
 							if(btn.addEventListener)
 								btn.addEventListener("click", confirmMoveDown, false);
@@ -192,11 +195,11 @@
 			
 			<div class="testSuiteNavigation">
 				<!-- prev -->&larr;&nbsp;<a href="003.html" class="prev">Spec Example: Solar system</a> |<!-- /prev -->
-				<a href="index.html" class="index">Test Suite Index</a>
+				<a href="./" class="index">Test Suite Index</a>
 				<!-- next -->| <a href="005.html" class="next">Repetition Index in Attributes</a>&nbsp;&rarr;<!-- /next -->
 			</div>
 			
-			<hr />
+			<hr>
 		</div>
   
 
@@ -224,8 +227,8 @@
 								<th>onclick HTML attr. &raquo;</th>
 								<td><button type="remove" class="onclickAttribute" onclick="return confirmRemove.apply(this, [event])">Remove...</button></td>
 								<td>
-									   <button type="move-down" class="onclickAttribute" onclick="return confirmMoveDown.apply(this, [event])">&#x2193;...</button><!--
-									--><button type="move-up"   class="onclickAttribute" onclick="return confirmMoveUp.apply(this, [event])">&#x2191;...</button><br />
+									   <button type="move-down" class="onclickAttribute" onclick="/*console.info('onclick HTML attr');*/ return confirmMoveDown.apply(this, [event])">&#x2193;...</button><!--
+									--><button type="move-up"   class="onclickAttribute" onclick="/*console.info('onclick HTML attr');*/ return confirmMoveUp.apply(this, [event])">&#x2191;...</button><br />
 								</td>
 							</tr>
 							<tr>
@@ -257,7 +260,7 @@
 				</tr>
 				</tbody>
 			</table>
-			
+
 			<p>Form addition buttons (RepeatMax = 5):</p>
 			<table>
 				<tr>
@@ -273,13 +276,9 @@
 					<td><button type="add" template="order" class="onclickProperty">Add block...</button></td>
 				</tr>
 				<tr>
-					<th>DOM Event Level 2 <!--or MSIE--> click &raquo;<br />(native implementations only)</th>
+					<th>DOM Event Level 2 click &raquo;<br />(native implementations only)</th>
 					<td><button type="add" template="order" class="DOM2">Add block...</button></td>
 				</tr>
-				<!--<tr>
-					<th>all event models</th>
-					<td><button type="add" template="order" class="onclickAttribute onclickProperty DOM2">Add block...</button></td>
-				</tr>-->
 			</table>
 			<p>Other addition buttons: 
 				<button type="button" onclick="var x = prompt('How many rows would you like to add?', 3); if(!isNaN(x)) for(var i = 0; i < x; i++) document.getElementById('order').addRepetitionBlock(null)">Add X rows...</button>
@@ -301,9 +300,9 @@
 
 		
 
-		<hr />
-		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br />
-		Version: 0.1 (2007-05) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
+		<hr>
+		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br>
+		Version: 0.5 (2007-08-12) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
 		<address>
 		<a href="http://weston.ruter.net/">Weston Ruter</a>
 		</address>

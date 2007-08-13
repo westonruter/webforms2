@@ -3,7 +3,7 @@
 		<title>Repetition Event Handler Attributes</title>
 		<meta name="keywords" content="repetition" />
 		<meta name="description" content="Demonstrating the use of the onadd, onremove, and onmove attribute handler extensions" />
-		<script type="text/javascript" src="../../webforms2.js"></script>
+		<script type="text/javascript" src="../../webforms2_src.js"></script>
 		<script type="text/javascript" src="../firebug/firebug.js"></script>
 		
 		<!-- BEGIN HEAD -->
@@ -100,7 +100,7 @@
 		<form>
 			<p><button type="add" template="i" style="font-size:large">Add row</button></p>
 			<ul>
-				<li id="i" repeat="template" repeat-start="0" onadded="addEventLogEntry(event)" onremoved="addEventLogEntry(event)" onmoved="addEventLogEntry(event)">
+				<li id="i" repeat="template" repeat-start="0" onadd="addEventLogEntry(event)" onremove="addEventLogEntry(event)" onmove="addEventLogEntry(event)">
 					<input type="text" id="text[i]" value="Index [i]" />
 					<button type="move-down">&#x2193;</button><button type="move-up">&#x2191;</button>
 					<button type="remove">Remove</button>

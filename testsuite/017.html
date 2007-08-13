@@ -1,14 +1,15 @@
-﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 5//EN">
+﻿<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
 		<title>Test Case 17: Form validation &laquo; Repetition Model Test Suite</title>
-		<meta name="description" content="" />
-		<script type="text/javascript" src="../webforms2.js"></script>
-		<link rel="stylesheet" type="text/css" href="testcase.css" /><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
-		<!-- prev --><link rel="prev" href="016.html" /><!-- /prev -->
-		<!-- next --><link rel="next" href="018.html" /><!-- /next -->
-		<link rel="home" href="index.html" />
+		<meta name="author" content="Weston Ruter">
+		<meta name="description" content="">
+		<script type="text/javascript" src="../webforms2-p.js"></script>
+		<link rel="stylesheet" type="text/css" href="testcase.css"><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
+		<!-- prev --><link rel="prev" href="016.html"><!-- /prev -->
+		<!-- next --><link rel="next" href="018.html"><!-- /next -->
+		<link rel="home" href="./">
 		
 		<script type="text/javascript">
 		var count = 0;
@@ -200,16 +201,15 @@
 			
 			<div class="testSuiteNavigation">
 				<!-- prev -->&larr;&nbsp;<a href="016.html" class="prev">Autofocus on unfocusable form control</a> |<!-- /prev -->
-				<a href="index.html" class="index">Test Suite Index</a>
+				<a href="./" class="index">Test Suite Index</a>
 				<!-- next -->| <a href="018.html" class="next">Radio Buttons in Nested Repetition Blocks</a>&nbsp;&rarr;<!-- /next -->
 			</div>
 			
-			<hr />
+			<hr>
 		</div>
   
 
-
-
+<!--<div class="wf2_errorMsg wf2_firstErrorMsg" id="favFoods_wf2_errorMsg" style="top: 858px; left: 121px;"><ol class="single"><li>A value must be supplied or selected.</li></ol></div>-->
 		<fieldset style="display:inline;">
 			<legend><strong><code>invalid</code> Event model options</strong></legend>
 			<div><input type="checkbox" id="dom2EventModel" onclick="toggleDOM2Events(this.checked)" checked="checked" />
@@ -234,18 +234,19 @@
 									<li>type=date <input type="date" name="d3" value="2007-01-02" max="2007-12-31" min="2007-01-01"> (no step)</li>
 									<li>type=month <input type="month" name="d4" min="2006-01" value="2007-01" max="2007-12" step=2> step=2</li>
 									<li>type=week <input type="week" name="d5" value="2007-W02" max="2008-W52" min="2007-W02" step=3> step=2</li>
-									<li>type=time <input type="time" name="d6" value="10:10:10.10" max="11:00" min="09:00" step="0.1"> step=0.1</li>
+									<li>type=time <input type="time" name="d6" value="10:10:10.10" max="11:00" min="09:00" step="any"> step=any</li>
 								</ul>
 							</fieldset>
 							<fieldset>
 								<legend>Text input</legend>
 								<ul>
 									<li>type=text <input type="text" name="text1" value="s" required> (required)</li>
-									<li>type=text <input type="text" name="text2" pattern="\d\d\d-\d\d-\d\d\d\d"> (pattern="\d\d\d-\d\d-\d\d\d\d")</li>
-									<li>type=text <input type="text" name="text3" value="(222) 222-2222" required pattern="\(\d\d\d\) \d\d\d-\d\d\d\d"> (required pattern="\(\d\d\d\) \d\d\d-\d\d\d\d")</li>
+									<li>type=text <input type="text" name="text2" pattern="\d\d\d-\d\d-\d\d\d\d" title="Social security number (000-00-0000)"> (pattern="\d\d\d-\d\d-\d\d\d\d")</li>
+									<li>type=text <input type="text" name="text3" value="(222) 222-2222" required pattern="\(\d\d\d\) \d\d\d-\d\d\d\d" title="US telephone number (000) 000-0000"> (required pattern="\(\d\d\d\) \d\d\d-\d\d\d\d")</li>
 									<li>type=email <input type="email" name="email1" required value='invalid@email.com' oninvalid="insertErrorAfter(this, 'Incorrect email (note the default UI error message is not displayed)'); if(document.getElementById('oldEventModel').checked) handle_traditionalEvent(event); return false"> (required, overriding oninvalid)</li>
 									<li>type=text <input type="text" name="text4" required maxlength="5" value="01234"> (required)</li>
-									<li>type=url <input type="url" name="url1" required value="http://www.google.com/"> (required)</li>
+									<li>type=text <input type="text" name="text5" pattern=""> (pattern="")</li>
+									<li>type=url <input type="url" name="url1" required value="http://www.google.com/" pattern="http://.+"> (required pattern)</li>
 									<li><textarea cols="40" rows="3" name="ta6" maxlength="10">1
 2
 3</textarea> (length should be 7) maxlength=10 (QUESTION: what about when maxlength &lt; len(defaultValue))</li>
@@ -255,19 +256,21 @@
 							</fieldset>
 							
 							<fieldset>
-								<legend>Radio buttons</legend>
-								Favorite color:
-								<label><input type="radio" name="favColor" value="red" /> red</label>
-								<label><input type="radio" name="favColor" value="green" /> green</label>
-								<label><input type="radio" name="favColor" value="blue" /> blue</label>
-							</fieldset>
-							
-							<fieldset>
-								<legend>Check boxes</legend>
-								Favorite color:
-								<label><input type="checkbox" name="favFoodsBaba" value="baba ganouj" /> baba ganouj</label>
-								<label><input type="checkbox" name="favFoodsMassaman" value="massaman curry" /> massaman curry</label>
-								<label><input type="checkbox" name="favFoodsPho" value="pho" /> pho</label>
+								<legend>Non-input required</legend>
+								<p>Favorite color:
+								<label><input type="radio" name="favColor" value="red" required checked /> red</label>
+								<label><input type="radio" name="favColor" value="green" required /> green</label>
+								<label><input type="radio" name="favColor" value="blue" required /> blue</label></p>
+								<p>Favorite color:
+								<label><input type="checkbox" name="favFoods" value="baba ganouj" required checked /> baba ganouj</label>
+								<label><input type="checkbox" name="favFoods" value="massaman curry" required /> massaman curry</label>
+								<label><input type="checkbox" name="favFoods" value="pho" required /> pho</label></p>
+								
+								<p>Movies: <select name="movies" required multiple>
+									<option>Les Miserables</option>
+									<option>Star Wars</option>
+									<option>Count of Monte Cristo</option>
+								</select></p>
 							</fieldset>
 						</div>
 					</form>
@@ -301,9 +304,9 @@
 
 		
 
-		<hr />
-		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br />
-		Version: 0.1 (2007-05) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
+		<hr>
+		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br>
+		Version: 0.5 (2007-08-12) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
 		<address>
 		<a href="http://weston.ruter.net/">Weston Ruter</a>
 		</address>
