@@ -141,7 +141,7 @@ push @commonVarNames, '(?<=2\.|\s\s)moveRepetitionBlock(?!:1)';
 	'XPathResult.ORDERED_NODE_SNAPSHOT_TYPE' => 7
 );
 
-open IN, "webforms2.js";
+open IN, "webforms2_src.js";
 $source = join "", <IN>;
 close IN;
 
@@ -170,11 +170,11 @@ $thisHeader =~ s{\bwebforms.+?js\b}{webforms2-nocomments-nowhitespace.js};
 print NOWHITE $thisHeader . "\n" . $nowhite;
 close NOWHITE;
 
-open MAIN, ">webforms2.js";
+open MAINS, ">webforms2.js";
 $thisHeader = $header;
 $thisHeader =~ s{\bwebforms.+?js\b}{webforms2.js};
-print MAIN $thisHeader . "\n" . $nowhite;
-close MAIN;
+print MAINS $thisHeader . "\n\n" . $nowhite;
+close MAINS;
 
 #shorten long variable names
 open SHORT, ">webforms2-nocomments-nowhitespace-shortnames.js";
