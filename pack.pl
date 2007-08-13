@@ -158,7 +158,6 @@ $nocoms =~ s{/\*.+?\*/}{}gs; #remove all multi-line comments
 $nocoms =~ s{[ \t]+(?=\n)}{}g; #remove line terminating whitespace
 $nocoms =~ s{\n(?=\n)}{}g; #remove all empty lines
 $thisHeader = $header;
-#$thisHeader =~ s{\bwebforms.+?js\b}{webforms2.js}; #UNCOMMENT AFTER COMMIT AND COMMENT NEXT LINE
 $thisHeader =~ s{\bwebforms.+?js\b}{webforms2-nocomments.js};
 print NOCOM $thisHeader . "\n" . $nocoms;
 close NOCOM;
@@ -171,12 +170,11 @@ $thisHeader =~ s{\bwebforms.+?js\b}{webforms2-nocomments-nowhitespace.js};
 print NOWHITE $thisHeader . "\n" . $nowhite;
 close NOWHITE;
 
-#UNCOMMENT AFTER COMMIT AND COMMENT NEXT LINES
-#open NOWHITE, ">webforms2.js";
-#$thisHeader = $header;
-#$thisHeader =~ s{\bwebforms.+?js\b}{webforms2.js};
-#print NOWHITE $thisHeader . "\n" . $nowhite;
-#close NOWHITE;
+open MAIN, ">webforms2.js";
+$thisHeader = $header;
+$thisHeader =~ s{\bwebforms.+?js\b}{webforms2.js};
+print MAIN $thisHeader . "\n" . $nowhite;
+close MAIN;
 
 #shorten long variable names
 open SHORT, ">webforms2-nocomments-nowhitespace-shortnames.js";
