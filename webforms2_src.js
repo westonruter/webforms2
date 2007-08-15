@@ -1,6 +1,6 @@
 /*
  * Web Forms 2.0 Cross-browser Implementation <http://code.google.com/p/webforms2/>
- * Version: 0.5 (2007-08-12)
+ * Version: 0.5.1 (2007-08)
  * Copyright: 2007, Weston Ruter <http://weston.ruter.net/>
  * License: GNU General Public License, Free Software Foundation
  *          <http://creativecommons.org/licenses/GPL/2.0/>
@@ -26,7 +26,7 @@ var RepetitionElement = {
 //}
 
 $wf2 = {
-	version : '0.5',
+	version : '0.5.1',
 	isInitialized : false,
 	repetitionTemplates:[],
 	libpath : '',
@@ -469,7 +469,7 @@ $wf2 = {
 		if(parent.nodeName.toLowerCase() == 'textarea')
 			textareas.unshift(parent);
 		for(i = 0; i < textareas.length; i++)
-			textareas[i].maxlength = parseInt(textareas[i].getAttribute('maxlength'));
+			textareas[i].maxLength = parseInt(textareas[i].getAttribute('maxlength'));
 		//TODO: we must dynamically apply this behavior for new textareas (via repetition model or eventlistener)
 	},
 	
@@ -1808,7 +1808,7 @@ $wf2 = {
 			//   and the value of the control doesn't exactly match the control's default value. 
 			//[The maxlength] attribute must not affect the initial value (the DOM defaultValue attribute). It must only
 			//   affect what the user may enter and whether a validity error is flagged during validation.
-			if(node.maxlength && node.value != node.defaultValue && doMaxLengthCheck){
+			if(node.maxLength && node.value != node.defaultValue && doMaxLengthCheck){
 				//A newline in a textarea's value must count as two code points for maxlength processing (because
 				//   newlines in textareas are submitted as U+000D U+000A). [[NOT IMPLEMENTED: This includes the
 				//   implied newlines that are added for submission when the wrap attribute has the value hard.]]
@@ -1823,7 +1823,7 @@ $wf2 = {
 				
 				//The tooLong flag is used when this attribute is specified on a ... textarea control and the control
 				//   has more than the specified number of code points and the value doesn't match the control's default value.
-				node.validity.tooLong = node.wf2ValueLength > node.maxlength;
+				node.validity.tooLong = node.wf2ValueLength > node.maxLength;
 			}
 		}
 
@@ -2027,7 +2027,7 @@ $wf2 = {
 		if(target.validity.stepMismatch)
 			ol.appendChild($wf2.createLI($wf2.invalidMessages.stepMismatch.replace(/%s/, target.wf2Step + ($wf2.stepUnits[type] ? ' ' + $wf2.stepUnits[type] + '(s)' : '')).replace(/%s/, $wf2.valueToWF2Type(target.wf2StepDatum, type))));
 		if(target.validity.tooLong)
-			ol.appendChild($wf2.createLI($wf2.invalidMessages.tooLong.replace(/%s/, target.maxlength).replace(/%s/, target.wf2ValueLength ? target.wf2ValueLength : target.value.length)));
+			ol.appendChild($wf2.createLI($wf2.invalidMessages.tooLong.replace(/%s/, target.maxLength).replace(/%s/, target.wf2ValueLength ? target.wf2ValueLength : target.value.length)));
 		if(target.validity.patternMismatch)
 			ol.appendChild($wf2.createLI($wf2.invalidMessages.patternMismatch.replace(/%s/, target.title ? target.title : ' "' + target.getAttribute('pattern') + '"')));
 		if(target.validity.customError)
