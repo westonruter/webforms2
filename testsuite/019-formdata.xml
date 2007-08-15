@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<formdata xmlns="http://n.whatwg.org/formdata">
+	<clear template="i" />
+	<repeat template="i" index="100"/>
+	<repeat template="i" index="101"/>
+	<field name="input100">index <![CDATA[100]]> (pre-filled)</field>
+	<field name="input101">index 101 <![CDATA[(pre-filled)]]></field>
+	<field name="select" index="0">test</field>
+	<field name="select" index="0">test</field>
+	<field name="colorRed"></field>
+	<field name="colorGreen">green</field>
+	<field name="colorBlue">blue</field>
+	<field name="time">evening</field>
+	<field name="datetimeTest">Fridays are awesome!</field><!-- since invalid datetime, should not be prefilled -->
+	<field name="weekTest">2007-W01</field>
+</formdata>

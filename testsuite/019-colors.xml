@@ -1,0 +1,7 @@
+<select xmlns="http://www.w3.org/1999/xhtml" type="incremental">
+	<option value="#000000">Black</option>
+	<option value="#FFFFFF">White</option>
+	<option value="#FF0000">Red</option><!-- tester -->
+	<option value="#00FF00"><![CDATA[Green]]></option>
+	<option value="#0000FF">Blue</option>
+</select>
