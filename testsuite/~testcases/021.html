@@ -1,0 +1,82 @@
+﻿<!DOCTYPE HTML>
+<html debug="true" xmlns="http://www.w3.org/1999/xhtml"><!-- debug -->
+	<head>
+		<title>"required" attribute on checkboxes and radio buttons</title>
+		<meta name="description" content="" />
+		<meta name="keywords" content="repetition, validation" />
+		<script type="text/javascript" src="../../webforms2_src.js"></script>
+		<script type="text/javascript" src="firebug/firebug.js"></script>
+		
+		<!-- BEGIN HEAD -->
+		<script type="text/javascript">
+                
+		</script>
+		<style type="text/css">
+                
+		</style>
+		<!-- END HEAD -->
+	</head>
+	<body>
+		<div id="testcaseDesc">
+			<p>The specification <a href="http://www.w3.org/TR/web-forms-2/#required0">states</a>:</p>
+                        <blockquote>
+                            <p>For checkboxes, the <code>required</code>
+                            attribute shall only be satisfied when one or more of the checkboxes with
+                            that name in that form are checked.</p>
+                            <p>For radio buttons, the <code>required</code>
+                            attribute shall only be satisfied when exactly one of the radio buttons in
+                            that radio group is checked.</p>
+                        </blockquote>
+
+                        <p>
+                        Specifying a <code>required</code> attribute on a <code>checkbox</code> only makes sense when there
+                        are multiple <code>checkbox</code>es defined to be in a group by providing each with the same <code>name</code> attribute
+                        (as the quote from the specification makes reference to).
+                        In Opera 9.23 when a <code>required</code> attribute is specified on either one or all <code>radio</code> buttons in a group,
+                        the form validates if one of the buttons is checked. With regard to a group of <code>checkbox</code>es, however, when the
+                        <code>required</code> attribute is defined on one <code>checkbox</code>, that one specific <code>checkbox</code> must be
+                        checked in order for the form to validate in Opera. If the <code>required</code> attribute is defined on all <code>checkbox</code>es
+                        in the group, then the form only validates if every <code>checkbox</code> is checked. Opera's implementation, then,
+                        is faulty, since it does not make sense to present the user with a single checkbox that must always be checked,
+                        and since the specification states that UAs must apply the <code>required</code> attribute onto the entire group
+                        of checkboxes, not every single one individually.
+                        <p>
+                         
+
+                        <p>The specification does not make it clear if the <code>required</code> attribute must be specified on all of the
+                        checkboxes and radio buttons in a group.</p>
+		</div>
+		
+		<!-- BEGIN TEST CASE -->
+
+                <form action="javascript:alert('Form is valid!'); void(0)">
+                    <fieldset>
+                            <legend><code>required</code> attribute set <em>all</em> controls in a group</legend>
+                            <p>Favorite color:
+                            <label><input type="radio" name="favColor1" value="red" required /> red</label>
+                            <label><input type="radio" name="favColor1" value="green" required /> green</label>
+                            <label><input type="radio" name="favColor1" value="blue" required /> blue</label></p>
+                            <p>Favorite food:
+                            <label><input type="checkbox" name="favFoods1" value="baba ganouj" required /> baba ganouj</label>
+                            <label><input type="checkbox" name="favFoods1" value="massaman curry" required /> massaman curry</label>
+                            <label><input type="checkbox" name="favFoods1" value="pho" required /> pho</label></p>
+                    </fieldset>
+
+                    <fieldset>
+                            <legend><code>required</code> attribute set on <em>last</em> control of a group</legend>
+                            <p>Favorite color:
+                            <label><input type="radio" name="favColor2" value="red" /> red</label>
+                            <label><input type="radio" name="favColor2" value="green" /> green</label>
+                            <label><input type="radio" name="favColor2" value="blue" required /> blue (<code>required</code>)</label></p>
+                            <p>Favorite food:
+                            <label><input type="checkbox" name="favFoods2" value="baba ganouj" /> baba ganouj</label>
+                            <label><input type="checkbox" name="favFoods2" value="massaman curry" /> massaman curry</label>
+                            <label><input type="checkbox" name="favFoods2" value="pho" required /> pho (<code>required</code>)</label></p>
+                    </fieldset>
+                    <p><input type="submit" value="Submit"></p>
+                </form>
+
+		<!-- END TEST CASE -->
+
+	</body>
+</html>

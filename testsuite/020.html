@@ -1,0 +1,84 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
+		<title>Test Case 20: Creating Repetition Templates Dynamically &laquo; Web Forms 2.0 Test Suite</title>
+		<meta name="author" content="Weston Ruter">
+		<meta name="description" content="">
+		<script type="text/javascript" src="../webforms2_src.js"></script>
+		<link rel="stylesheet" type="text/css" href="testcase.css"><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
+		<!-- prev --><link rel="prev" href="019.html"><!-- /prev -->
+		<!-- next --><link rel="next" href="021.html"><!-- /next -->
+		<link rel="home" href="index.html">
+		
+	</head>
+	<body>
+		<div id="testSuiteNote">
+
+			<h1>Web Forms 2.0 Test Case 20: Creating Repetition Templates Dynamically</h1>
+			<p class="purpose">
+			This test case demonstrates functionality of the Web Forms 2.0 specification and tests the compliance of 
+			this cross-browser <a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a>.</p>
+
+			 <blockquote> </blockquote> 
+			
+			<div class="testSuiteNavigation">
+				<!-- prev -->&larr;&nbsp;<a href="019.html" class="prev">Prefilling form data</a> |<!-- /prev -->
+				<a href="index.html" class="index">Test Suite Index</a>
+				<!-- next -->| <a href="021.html" class="next">"required" attribute on checkboxes and radio buttons</a>&nbsp;&rarr;<!-- /next -->
+			</div>
+			
+			<hr>
+		</div>
+  
+
+<!--
+	<h1>DOM Attributes in Repetition Model</h1>
+	<form onsubmit="return true">
+		<table>
+			<tr id="rm" repeat="template">
+				<td><input type="text" value="[rm]"></td>
+				<td><input type="remove"></td>
+				<td><input type="move-down"><input type="move-up"></td>
+			</tr>
+		</table>
+		<input type="add" template="rm">
+	</form>
+	
+	
+	<h1>DOM Attributes in Form Validation</h1>
+	<form onsubmit="return true">
+		
+	</form>
+-->
+
+<!--
+<p><em>See test case for Opera.</em></p>
+<p><em>Remember: only construct repetition elements if inserted into the <code>document</code>. Otherwise just set the content attribute (i.e. "repeat"); we can test this with <code>el.ownerDocument != document</code>?</em></p>
+-->
+<p>The following statement, "We are quintuplits", should be repeated five times:</p>
+<div id='repeatTest1'>
+<script type="text/javascript">
+
+var div = document.createElement('div');
+div.repetitionType = RepetitionElement.REPETITION_TEMPLATE; //this envokes the setter, which sets the 'repeat' attribute
+div.repeatStart = 5;
+div.innerHTML = "We are quintuplits.";
+//div.setAttribute('repeat', 'template');
+//  note: this will  not fire a MutationEvent since it is not in the document yet;
+//        we must traverse all child elements looking for elements with the repeat attribute when a DOM node is inserted
+document.getElementById('repeatTest1').appendChild(div);
+
+</script>
+</div>
+
+
+
+		<hr>
+		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br>
+		Version: 0.5.1 (2007-09-22) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
+		<address>
+		<a href="http://weston.ruter.net/">Weston Ruter</a>
+		</address>
+	</body>
+</html>
