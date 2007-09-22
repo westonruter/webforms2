@@ -1,6 +1,6 @@
 /*
  * Web Forms 2.0 Cross-browser Implementation <http://code.google.com/p/webforms2/>
- * Version: 0.5.1 (2007-08)
+ * Version: 0.5.1 (2007-09-22)
  * Copyright: 2007, Weston Ruter <http://weston.ruter.net/>
  * License: GNU General Public License, Free Software Foundation
  *          <http://creativecommons.org/licenses/GPL/2.0/>
@@ -8,7 +8,7 @@
  * The comments contained in this code are largely quotations from the 
  * WebForms 2.0 specification: <http://whatwg.org/specs/web-forms/current-work/>
  *
- * Usage: <script type="text/javascript" src="webforms2.js"></script>
+ * Usage: <script type="text/javascript" src="webforms2_src.js"></script>
  */
 
 if(!window.$wf2){
@@ -17,26 +17,16 @@ var $wf2 = {};
 if(document.implementation && document.implementation.hasFeature && 
   !document.implementation.hasFeature('WebForms', '2.0')){
 
-//if(!window.RepetitionElement){
-var RepetitionElement = {
-	REPETITION_NONE:0,
-	REPETITION_TEMPLATE:1,
-	REPETITION_BLOCK:2
-};
-//}
-
 $wf2 = {
 	version : '0.5.1',
 	isInitialized : false,
-	repetitionTemplates:[],
 	libpath : '',
 	
-	init : function(){
+	onDOMContentLoaded : function(){
 		if($wf2.isInitialized)
 			return;
 		$wf2.isInitialized = true;  //Safari needs this here for some reason
 		
-		$wf2.createMiscFunctions();
 		var i,j,k,node;
 		
 		//Include stylesheet
@@ -61,7 +51,7 @@ $wf2 = {
 		$wf2.zeroPoint.week              = $wf2.parseISO8601("1970-W01"); //(UTC)
 		$wf2.zeroPoint.time              = $wf2.zeroPoint.datetime; //parseISO8601("00:00"); //00:00 (UTC)
 
-		//Fetching data from external resources ***********************
+		//## Fetching data from external resources ##################################
 		$wf2.xhr = null;
 		if(window.XMLHttpRequest)
 			$wf2.xhr = new XMLHttpRequest();
@@ -75,335 +65,11 @@ $wf2 = {
 			}
 		}
 		if($wf2.xhr){
-			//--Filling select elements----------
-			//If a select element or a datalist element being parsed has a data attribute, then as soon
-			//   as the element and all its children have been parsed and added to the document, the
-			//   prefilling process described here should start.
-			var select, selects = $wf2.getElementsByTagNames.apply(document.documentElement, ['select', 'datalist']); //$wf2.getElementsByTagNamesAndAttribute.apply(document.documentElement, [['select', 'datalist']]); //, 'data'
-			for(i = 0; select = selects[i]; i++){
-				//If a select element or a datalist element has a data  attribute, it must be a URI or
-				//   IRI that points to a well-formed XML file whose root element is a select element
-				//   in the http://www.w3.org/1999/xhtml namespace. The MIME type must be an XML MIME
-				//   type [RFC3023], preferably application/xml. It should not be application/xhtml+xml
-				//   since the root element is not html.
-				//UAs must process this file if it has an XML MIME type [RFC3023], if it is a well-formed
-				//   XML file, and if the root element is the right root element in the right namespace.
-				//   If any of these conditions are not met, UAs must act as if the attribute was not
-				//   specified, although they may report the error to the user. UAs are expected to
-				//   correctly handle namespaces, so the file may use prefixes, etc.
-				var xmlDoc = $wf2.loadDataURI(select);
-				if(///\bxml\b/.test(xhr.getResponseHeader('Content-Type') && 
-				   xmlDoc &&
-				   xmlDoc.documentElement &&
-				   /:?\bselect$/i.test(xmlDoc.documentElement.nodeName) &&
-				   xmlDoc.documentElement.namespaceURI == 'http://www.w3.org/1999/xhtml'
-				   )
-				{
-					var root = xmlDoc.documentElement;
-					//1. Unless the root element of the file has a type attribute with the exact literal
-					//   string incremental, the children of the select or datalist  element in the original
-					//   document must all be removed from the document.
-					if(root.getAttribute('type') != 'incremental'){
-						while(select.lastChild)
-							select.removeChild(select.lastChild);
-					}
-					
-					//2. The entire contents of the select element in the referenced document are imported
-					//   into the original document and appended as children of the select or datalist
-					//   element. (Even if importing into a text/html document, the newly imported nodes
-					//   will still be namespaced.)
-					//3. All nodes outside the select (such as style sheet processing instructions, whitespace
-					//   text nodes, and DOCTYPEs) are ignored, as are attributes (other than type) on the
-					//   select element.
-					node = root.firstChild;
-					while(node){
-						//select.appendChild(node.cloneNode(true)); //MSIE BUG: Throws "No such interface supported" exception
-						select.appendChild($wf2.cloneNode(node));
-						node = node.nextSibling;
-					}
-				}
-				
-			}
-			
-			//--Seeding a form with initial values-------
-			//Before load events are fired, but after the entire document has been parsed and after select
-			//   elements have been filled from external data sources (if necessary), forms with data attributes
-			//   are prefilled.
-			var frm, frms = document.getElementsByTagName('form'); //$wf2.getElementsByTagNamesAndAttribute.apply(document.documentElement, [['form'], 'data']);
-			for(i = 0; frm = frms[i]; i++){
-				//If a form has a data attribute, it must be a URI or IRI that points to a well-formed XML file
-				//   whose root element is a formdata element in the http://n.whatwg.org/formdata namespace. The
-				//   MIME type must be an XML MIME type [RFC3023], preferably application/xml.
-				//UAs must process this file if these conditions are met. If any of these conditions are not met,
-				//   UAs must act as if the attribute was not specified, although they may report the error to
-				//   the user. UAs are expected to correctly handle namespaces, so the file may use prefixes, etc.
-				var xmlDoc = $wf2.loadDataURI(frm);
-				if(///\bxml\b/.test(xhr.getResponseHeader('Content-Type') && 
-				   xmlDoc &&
-				   xmlDoc.documentElement &&
-				   /:?\bformdata$/.test(xmlDoc.documentElement.nodeName) &&
-				   xmlDoc.documentElement.namespaceURI == 'http://n.whatwg.org/formdata'
-				   )
-				{
-					var rt;
-					var root = xmlDoc.documentElement;
-					//1. Unless the root element has a type attribute with the exact literal string incremental,
-					//   the form must be reset to its initial values as specified in the markup.
-					if(root.getAttribute('type') != 'incremental')
-						frm.reset();
-
-					//The algorithm must be processed in the order given above, meaning any clear  elements are
-					//   handled before any repeat  elements which are handled before the field elements, regardless
-					//   of the order in which the elements are given. (Note that this implies that this process
-					//   cannot be performed incrementally.)
-					
-					//clear elements in the http://n.whatwg.org/formdata namespace that are children of
-					//   the root element, have a non-empty template attribute, have no other non-namespaced
-					//   attributes (ignoring xmlns attributes), and have no content, must be processed...:
-					//The template attribute should contain the ID of an element in the document. If the
-					//   template attribute specifies an element that is not a repetition template, then
-					//   the clear element is ignored.
-					var clr, clrs = root.getElementsByTagName('clear'); //getElementsByTagNameNS('http://n.whatwg.org/formdata', 'clr')
-					for(j = 0; clr = clrs[j]; j++){
-						if(clr.namespaceURI == 'http://n.whatwg.org/formdata' &&
-						   clr.parentNode == root &&
-						   !clr.firstChild &&
-						   (rt = document.getElementById(clr.getAttribute('template'))) &&
-						   rt.getAttribute('repeat') == 'template'
-						   /*Examining of non-namespaced attributes skipped*/
-						   )
-						{
-							//The user must make a note of the list of repetition blocks associated with that
-							//   template that are siblings of the template, and must then go through this list,
-							//   removing each repetition block in turn.
-							//Note that we cannot use rt.repetitionBlocks since the repetition behavior has
-							//   not yet been initialized.
-							var attr,node,next;
-							node = rt.parentNode.firstChild;
-							while(node){
-								if(node.nodeType == 1 && (attr = node.getAttributeNode('repeat')) && attr.value != 'template'){
-									next = node.nextSibling;
-									node.parentNode.removeChild(node);
-									node = next;
-								}
-								else node = node.nextSibling;
-							}
-						}
-					}
-					
-					//repeat elements in the http://n.whatwg.org/formdata namespace that are children of
-					//   the root element, have a non-empty template attribute and an index  attribute that
-					//   contains only one or more digits in the range 0-9 with an optional leading minus
-					//   sign (U+002D, "-"), have no other non-namespaced attributes (ignoring xmlns
-					//   attributes), and have no content, must be processed as follows:
-					//The template attribute should contain the ID of an element in the document. If the
-					//   template attribute specifies an element that is not a repetition template, then
-					//   the repeat element is ignored.
-					var index, rpt, rpts = root.getElementsByTagName('repeat');
-					for(j = 0; rpt = rpts[j]; j++){
-						if(rpt.namespaceURI == 'http://n.whatwg.org/formdata' &&
-						   rpt.parentNode == root &&
-						   !rpt.firstChild &&
-						   (rt = document.getElementById(rpt.getAttribute('template'))) &&
-						   rt.getAttribute('repeat') == 'template' &&
-						   /^-?\d+$/.test(index = rpt.getAttribute('index'))
-						   /*Examining of non-namespaced attributes skipped*/
-						   )
-						{
-							//If the template attribute specifies a repetition template and that template
-							//   already has a repetition block with the index specified by the index attribute,
-							//   then the element is ignored.
-							//for(j = 0; j < rt.repetitionBlocks.length; j++){
-							//	if(rt.repetitionBlocks[j].repetititionIndex == index){
-							//		hasIndex = true;
-							//		break;
-							//	}
-							//}
-							var hasIndex,attr,node,next;
-							node = rt.parentNode.firstChild;
-							while(node){
-								if(node.nodeType == 1 && (attr = node.getAttributeNode('repeat')) && attr.value == index){
-									hasIndex = true;
-									break;
-								}
-								node = node.nextSibling;
-							}
-							
-							if(!hasIndex){
-								//Otherwise, the specified template's addRepetitionBlockByIndex()  method is
-								//   called, with a null first argument and the index specified by the repeat
-								//   element's index attribute as the second.
-								$wf2.addRepetitionBlockByIndex.apply(rt, [null, index]);
-							}
-						}
-					}
-					
-					//field elements in the http://n.whatwg.org/formdata namespace that are children of
-					//   the root element, have a non-empty name  attribute, either an index attribute
-					//   that contains only one or more digits in the range 0-9 or no index attribute at
-					//   all, have no other non-namespaced attributes (ignoring xmlns  attributes), and
-					//   have either nothing or only text and CDATA nodes as children, must be used to
-					//   initialize controls...
-					var fld, flds = root.getElementsByTagName('field');
-					var formElements = $wf2.getFormElements.apply(frm);
-					for(j = 0; fld = flds[j]; j++){
-						var indexAttr = fld.getAttributeNode('index');
-						var name = fld.getAttribute('name');
-						if(!name || (indexAttr && !/^\d+$/.test(indexAttr.value)))
-						   /*Examining of non-namespaced attributes skipped*/
-						   /*Verification of the presence of text and CDATA nodes below*/
-							continue;
-						//First, the form control that the field references must be identified. 
-						var value = '';
-						for(k = 0; node = fld.childNodes[k]; k++){
-							if(node.nodeType == 3 /*text*/ || node.nodeType == 4 /*CDATA*/)
-								value += node.data;
-							else break; //only text and CDATA nodes allowed
-						}
-						var ctrl, count = 0;
-						for(k = 0; ctrl = formElements[k]; k++){
-							//console.info(ctrl.name + ' == ' + name)
-							if(ctrl.type == 'image'){
-								//For image controls, instead of using the name given by the name attribute,
-								//   the field's name is checked against two names, the first being the value
-								//   of the name attribute with the string .x appended to it, and the second
-								//   being the same but with .y appended instead. If an image control's name
-								//   is the empty string (e.g. if its name attribute is omitted) then the
-								//   names x and y must be used instead. Thus image controls are handled as
-								//   if they were two controls.
-								if(ctrl.name ?
-									  (ctrl.name + '.x' == name || ctrl.name + '.y' == name)
-									: (name == 'x' || name == 'y') ){
-	
-									if(!indexAttr || ++count-1 >= indexAttr.value)	
-										break;
-								}
-							}
-							//This is done by walking the list of form controls associated with the form until
-							//   one is found that has a name exactly equal to the name given in the field
-							//   element's name attribute, skipping as many such matches as is specified in
-							//   the index attribute, or, if the index attribute was omitted, skipping over
-							//   any type="radio" and type="checkbox" controls that have the exact name given
-							//   but have a value that is not exactly the same as the contents of the field element.
-							// SPECIFICATION DEFICIENCY: Note that this is not completely true. If the value of
-							//   a field element is empty, then it should not be skipped if it associated with
-							//   a radio button or checkbox. For example, the specification states four paragraphs
-							//   later, "The only values that would have an effect in this example are "", which
-							//   would uncheck the checkbox, and "green", which would check the checkbox."
-							else if(ctrl.name == name){
-								if(indexAttr){
-									if(++count-1 < indexAttr.value)	
-										continue;
-								}
-								else if((ctrl.type == 'radio' || ctrl.type == 'checkbox') &&
-										 (value && ctrl.value != value))
-									continue;
-								break;
-							}
-						}
-						
-						//If the identified form control is a file upload control, a push button control, or
-						//   an image control, then the field element is now skipped.
-						if(ctrl.type == 'file' || ctrl.type == 'button' || ctrl.type == 'image')
-							continue;
-
-						//Next, if the identified form control is not a multiple-valued control (a multiple-
-						//   valued control is one that can generate more than one value on submission, such
-						//   as a <select multiple="multiple">), or if it is a multiple-valued control but it
-						//   is the first time the control has been identified by a field element in this
-						//   data file that was not ignored, then it is set to the given value (the contents
-						//   of the field  element), removing any previous values (even if these values were
-						//   the result of processing previous field elements in the same data file).
-						if(!ctrl.getAttributeNode('multiple') || !ctrl.wf2Prefilled){
-							//If the element cannot be given the value specified, the field element is
-							//   ignored and the control's value is left unchanged. For example, if a
-							//   checkbox has its value attribute set to green and the field element
-							//   specifies that its value should be set to blue, it won't be changed from
-							//   its current value. (The only values that would have an effect in this
-							//   example are "", which would uncheck the checkbox, and "green", which would
-							//   check the checkbox.)
-							if(ctrl.type == 'checkbox' || ctrl.type == 'radio'){
-								if(!value)
-									ctrl.checked = false;
-								else if(ctrl.value == value)
-									ctrl.checked = true;
-								else break;
-							}
-							else if(ctrl.nodeName.toLowerCase() == 'select'){
-								ctrl.selectedIndex = -1;
-								for(var opt,k = 0; opt = ctrl.options[k]; k++){
-									if(opt.value ? opt.value == value : opt.text == value){
-										opt.selected = true;
-										break;
-									}
-								}
-							}
-							//Another example would be a datetime control where the specified value is
-							//   outside the range allowed by the min  and max attributes. The format
-							//   must match the allowed formats for that type for the value to be set.
-							else {
-								ctrl.value = value;
-								$wf2.updateValidityState(ctrl);
-								if(!ctrl.validity.valid){
-									ctrl.value = ctrl.defaultValue;
-									$wf2.updateValidityState(ctrl);
-								}
-							}
-							ctrl.wf2Prefilled = true; //TRACE
-						}
-						//Otherwise, this is a subsequent value for a multiple-valued control, and the
-						//   given value (the contents of the field element) should be added to the list of
-						//   values that the element has selected.
-						//If the element is a multiple-valued control and the control already has the given
-						//   value selected, but it can be given the value again, then that occurs. 
-						else if(ctrl.getAttributeNode('multiple')){
-							for(var opt,k = 0; opt = ctrl.options[k]; k++){
-								if(!opt.selected && (opt.value ? opt.value == value : opt.text == value)){
-									opt.selected = true;
-									break;
-								}
-							}
-						}
-						
-						//if(ctrl){
-						//	
-						//}
-					}
-					
-					//A formchange event is then fired on all the form controls of the form.
-					var formElements = $wf2.getFormElements.apply(frm);
-					for(j = 0; j < formElements.length; j++){
-						//onformchange();
-						//fireEvent()
-					}
-				}
-			}
+			$wf2.prefillSelectElements();
+			$wf2.prefillFormElements();
 		}
-
 
 		//Initialize Repetition Behaviors ****************************************
-
-		//RepetitionElement interface must be implemented by all elements.
-		if(window.Element && Element.prototype){
-			Element.prototype.REPETITION_NONE     = RepetitionElement.REPETITION_NONE;
-			Element.prototype.REPETITION_TEMPLATE = RepetitionElement.REPETITION_TEMPLATE;
-			Element.prototype.REPETITION_BLOCK    = RepetitionElement.REPETITION_BLOCK;
-			
-			Element.prototype.repetitionType      = RepetitionElement.REPETITION_NONE;
-			Element.prototype.repetitionIndex     = 0;
-			Element.prototype.repetitionTemplate  = null; /*readonly*/
-			Element.prototype.repetitionBlocks    = null; /*readonly*/
-
-			Element.prototype.repeatStart = 1;
-			Element.prototype.repeatMin   = 0;
-			Element.prototype.repeatMax   = Number.MAX_VALUE; //Infinity;
-			
-			Element.prototype.addRepetitionBlock        = $wf2.addRepetitionBlock;
-			Element.prototype.addRepetitionBlockByIndex = $wf2.addRepetitionBlockByIndex;
-			Element.prototype.moveRepetitionBlock       = $wf2.moveRepetitionBlock;
-			Element.prototype.removeRepetitionBlock     = $wf2.removeRepetitionBlock;
-		}
-
 		//Before load events are fired, but after the entire document has been parsed and after forms with data 
 		//   attributes are prefilled (if necessary), UAs must iterate through every node in the document, depth 
 		//   first, looking for templates so that their initial repetition blocks can be created. ... UAs should not 
@@ -419,8 +85,6 @@ $wf2 = {
 		$wf2.updateMoveButtons();
 	
 		// Initialize Non-Repetition Behaviors ****************************************
-		
-		
 		if(document.addEventListener){
 			document.addEventListener('mousedown', $wf2.clearInvalidIndicators, false);
 			document.addEventListener('keydown', $wf2.clearInvalidIndicators, false);
@@ -432,78 +96,325 @@ $wf2 = {
 		
 		$wf2.initNonRepetitionFunctionality();
 	},
-	
-	initNonRepetitionFunctionality : function(parent){
-		parent = (parent || document.documentElement);
-		var i,j, frm, frms = parent.getElementsByTagName('form');
-		for(i = 0; frm = frms[i]; i++){
-			if(frm.checkValidity)
-				continue;
-			frm.checkValidity = $wf2.formCheckValidity;
-			if(frm.addEventListener)
-				frm.addEventListener('submit', $wf2.onsubmitValidityHandler, false);
-			else
-				frm.attachEvent('onsubmit', $wf2.onsubmitValidityHandler);
-		}
-		
-		var ctrl, ctrls = $wf2.getElementsByTagNames.apply(parent, ['input','select','textarea']);//parent.getElementsByTagName([i]);
-		for(i = 0; ctrl = ctrls[i]; i++){
-			$wf2.applyValidityInterface(ctrl);
-			$wf2.updateValidityState(ctrl); //ctrl._updateValidityState();
-		}
-		
-		//Autofocus **********************************************************
-		//Authors must not set the autofocus attribute on multiple enabled elements in a document.
-		//  If multiple elements with the autofocus attribute set are inserted into a document, each one
-		//  will be processed as described above, as they are inserted. This means that during document
-		//  load, for example, the last focusable form control in document order with the attribute set
-		//  will end up with the focus.
-		var els = $wf2.getElementsByTagNamesAndAttribute.apply(document.documentElement, [['*'], 'autofocus']); //ISSUE: Any form control (except hidden and output controls) can have an autofocus attribute specified. //var elName = els[i].nodeName.toLowerCase(); if(elName == 'output' || (elName == 'input' && els[i].type == 'hidden'))
-		if(parent.getAttribute('autofocus'))
-			els.unshift(parent);
-		for(i = 0; i < els.length; i++)
-			$wf2.initAutofocusElement(els[i]);
 
-		// Maxlength for textareas ******************************************************
-		var textareas = $wf2.getElementsByTagNamesAndAttribute.apply(parent, [['textarea'], 'maxlength']);
-		if(parent.nodeName.toLowerCase() == 'textarea')
-			textareas.unshift(parent);
-		for(i = 0; i < textareas.length; i++)
-			textareas[i].maxLength = parseInt(textareas[i].getAttribute('maxlength'));
-		//TODO: we must dynamically apply this behavior for new textareas (via repetition model or eventlistener)
-	},
-	
-	initAutofocusElement : function(el){
-		//skip if already initialized
-		if(el.autofocus === false || el.autofocus === true) //(el.autofocus !== undefined) does not work due to MSIE's handling of attributes
-			return;
-		el.autofocus = true;
-		
-		//[autofocus if]the control is not disabled
-		if(el.disabled)
-			return;
 
-		//[control] is of a type normally focusable in the user's operating environment
-		//Don't focus on the control if it is not visible or nor displayed
-		var node = el;
-		while(node && node.nodeType == 1){
-			if($wf2.getElementStyle(node, 'visibility') == 'hidden' || $wf2.getElementStyle(node, 'display') == 'none')
-				return;
-			node = node.parentNode;
-		}
-
-		//Then the UA should focus the control, as if the control's focus() method was invoked.
-		//  UAs with a viewport should also scroll the document enough to make the control visible,
-		//  [[even if it is not of a type normally focusable.]] //WHAT DOES THIS MEAN?
-		el.focus(); //BUG: in Gecko this does not work within DOMNodeInserted event handler, but the following does; setTimeout(function(){el.focus();}, 0);
-	},
-	
 	/*##############################################################################################
-	 # REPETITION MODEL
+	 # Section: Fetching data from external resources
+	 ##############################################################################################*/
+
+	prefillSelectElements : function(){
+		//If a select element or a datalist element being parsed has a data attribute, then as soon
+		//   as the element and all its children have been parsed and added to the document, the
+		//   prefilling process described here should start.
+		var select, selects = $wf2.getElementsByTagNames.apply(document.documentElement, ['select', 'datalist']); //$wf2.getElementsByTagNamesAndAttribute.apply(document.documentElement, [['select', 'datalist']]); //, 'data'
+		for(var i = 0; select = selects[i]; i++){
+			//If a select element or a datalist element has a data  attribute, it must be a URI or
+			//   IRI that points to a well-formed XML file whose root element is a select element
+			//   in the http://www.w3.org/1999/xhtml namespace. The MIME type must be an XML MIME
+			//   type [RFC3023], preferably application/xml. It should not be application/xhtml+xml
+			//   since the root element is not html.
+			//UAs must process this file if it has an XML MIME type [RFC3023], if it is a well-formed
+			//   XML file, and if the root element is the right root element in the right namespace.
+			//   If any of these conditions are not met, UAs must act as if the attribute was not
+			//   specified, although they may report the error to the user. UAs are expected to
+			//   correctly handle namespaces, so the file may use prefixes, etc.
+			var xmlDoc = $wf2.loadDataURI(select);
+			if(///\bxml\b/.test(xhr.getResponseHeader('Content-Type') && 
+			   xmlDoc &&
+			   xmlDoc.documentElement &&
+			   /:?\bselect$/i.test(xmlDoc.documentElement.nodeName) &&
+			   xmlDoc.documentElement.namespaceURI == 'http://www.w3.org/1999/xhtml'
+			   )
+			{
+				var root = xmlDoc.documentElement;
+				//1. Unless the root element of the file has a type attribute with the exact literal
+				//   string incremental, the children of the select or datalist  element in the original
+				//   document must all be removed from the document.
+				if(root.getAttribute('type') != 'incremental'){
+					while(select.lastChild)
+						select.removeChild(select.lastChild);
+				}
+				
+				//2. The entire contents of the select element in the referenced document are imported
+				//   into the original document and appended as children of the select or datalist
+				//   element. (Even if importing into a text/html document, the newly imported nodes
+				//   will still be namespaced.)
+				//3. All nodes outside the select (such as style sheet processing instructions, whitespace
+				//   text nodes, and DOCTYPEs) are ignored, as are attributes (other than type) on the
+				//   select element.
+				node = root.firstChild;
+				while(node){
+					//select.appendChild(node.cloneNode(true)); //MSIE BUG: Throws "No such interface supported" exception
+					select.appendChild($wf2.cloneNode(node));
+					node = node.nextSibling;
+				}
+			}
+		}
+	},
+
+	prefillFormElements : function(){
+		//-- Seeding a form with initial values -------------------------------
+		//Before load events are fired, but after the entire document has been parsed and after select
+		//   elements have been filled from external data sources (if necessary), forms with data attributes
+		//   are prefilled.
+		var frm, frms = document.getElementsByTagName('form'); //$wf2.getElementsByTagNamesAndAttribute.apply(document.documentElement, [['form'], 'data']);
+		for(var i = 0; frm = frms[i]; i++){
+			//If a form has a data attribute, it must be a URI or IRI that points to a well-formed XML file
+			//   whose root element is a formdata element in the http://n.whatwg.org/formdata namespace. The
+			//   MIME type must be an XML MIME type [RFC3023], preferably application/xml.
+			//UAs must process this file if these conditions are met. If any of these conditions are not met,
+			//   UAs must act as if the attribute was not specified, although they may report the error to
+			//   the user. UAs are expected to correctly handle namespaces, so the file may use prefixes, etc.
+			var xmlDoc = $wf2.loadDataURI(frm);
+			if(///\bxml\b/.test(xhr.getResponseHeader('Content-Type') && 
+			   xmlDoc &&
+			   xmlDoc.documentElement &&
+			   /:?\bformdata$/.test(xmlDoc.documentElement.nodeName) &&
+			   xmlDoc.documentElement.namespaceURI == 'http://n.whatwg.org/formdata'
+			   )
+			{
+				var rt;
+				var root = xmlDoc.documentElement;
+				//1. Unless the root element has a type attribute with the exact literal string incremental,
+				//   the form must be reset to its initial values as specified in the markup.
+				if(root.getAttribute('type') != 'incremental')
+					frm.reset();
+
+				//The algorithm must be processed in the order given above, meaning any clear  elements are
+				//   handled before any repeat  elements which are handled before the field elements, regardless
+				//   of the order in which the elements are given. (Note that this implies that this process
+				//   cannot be performed incrementally.)
+				
+				//clear elements in the http://n.whatwg.org/formdata namespace that are children of
+				//   the root element, have a non-empty template attribute, have no other non-namespaced
+				//   attributes (ignoring xmlns attributes), and have no content, must be processed...:
+				//The template attribute should contain the ID of an element in the document. If the
+				//   template attribute specifies an element that is not a repetition template, then
+				//   the clear element is ignored.
+				var clr, clrs = root.getElementsByTagName('clear'); //getElementsByTagNameNS('http://n.whatwg.org/formdata', 'clr')
+				for(j = 0; clr = clrs[j]; j++){
+					if(clr.namespaceURI == 'http://n.whatwg.org/formdata' &&
+					   clr.parentNode == root &&
+					   !clr.firstChild &&
+					   (rt = document.getElementById(clr.getAttribute('template'))) &&
+					   rt.getAttribute('repeat') == 'template'
+					   /*Examining of non-namespaced attributes skipped*/
+					   )
+					{
+						//The user must make a note of the list of repetition blocks associated with that
+						//   template that are siblings of the template, and must then go through this list,
+						//   removing each repetition block in turn.
+						//Note that we cannot use rt.repetitionBlocks since the repetition behavior has
+						//   not yet been initialized.
+						var attr,node,next;
+						node = rt.parentNode.firstChild;
+						while(node){
+							if(node.nodeType == 1 && (attr = node.getAttributeNode('repeat')) && attr.value != 'template'){
+								next = node.nextSibling;
+								node.parentNode.removeChild(node);
+								node = next;
+							}
+							else node = node.nextSibling;
+						}
+					}
+				}
+				
+				//repeat elements in the http://n.whatwg.org/formdata namespace that are children of
+				//   the root element, have a non-empty template attribute and an index  attribute that
+				//   contains only one or more digits in the range 0-9 with an optional leading minus
+				//   sign (U+002D, "-"), have no other non-namespaced attributes (ignoring xmlns
+				//   attributes), and have no content, must be processed as follows:
+				//The template attribute should contain the ID of an element in the document. If the
+				//   template attribute specifies an element that is not a repetition template, then
+				//   the repeat element is ignored.
+				var index, rpt, rpts = root.getElementsByTagName('repeat');
+				for(j = 0; rpt = rpts[j]; j++){
+					if(rpt.namespaceURI == 'http://n.whatwg.org/formdata' &&
+					   rpt.parentNode == root &&
+					   !rpt.firstChild &&
+					   (rt = document.getElementById(rpt.getAttribute('template'))) &&
+					   rt.getAttribute('repeat') == 'template' &&
+					   /^-?\d+$/.test(index = rpt.getAttribute('index'))
+					   /*Examining of non-namespaced attributes skipped*/
+					   )
+					{
+						//If the template attribute specifies a repetition template and that template
+						//   already has a repetition block with the index specified by the index attribute,
+						//   then the element is ignored.
+						//for(j = 0; j < rt.repetitionBlocks.length; j++){
+						//	if(rt.repetitionBlocks[j].repetititionIndex == index){
+						//		hasIndex = true;
+						//		break;
+						//	}
+						//}
+						var hasIndex,attr,node,next;
+						node = rt.parentNode.firstChild;
+						while(node){
+							if(node.nodeType == 1 && (attr = node.getAttributeNode('repeat')) && attr.value == index){
+								hasIndex = true;
+								break;
+							}
+							node = node.nextSibling;
+						}
+						
+						if(!hasIndex){
+							//Otherwise, the specified template's addRepetitionBlockByIndex()  method is
+							//   called, with a null first argument and the index specified by the repeat
+							//   element's index attribute as the second.
+							$wf2.addRepetitionBlockByIndex.apply(rt, [null, index]);
+						}
+					}
+				}
+				
+				//field elements in the http://n.whatwg.org/formdata namespace that are children of
+				//   the root element, have a non-empty name  attribute, either an index attribute
+				//   that contains only one or more digits in the range 0-9 or no index attribute at
+				//   all, have no other non-namespaced attributes (ignoring xmlns  attributes), and
+				//   have either nothing or only text and CDATA nodes as children, must be used to
+				//   initialize controls...
+				var fld, flds = root.getElementsByTagName('field');
+				var formElements = $wf2.getFormElements.apply(frm);
+				for(j = 0; fld = flds[j]; j++){
+					var indexAttr = fld.getAttributeNode('index');
+					var name = fld.getAttribute('name');
+					if(!name || (indexAttr && !/^\d+$/.test(indexAttr.value)))
+					   /*Examining of non-namespaced attributes skipped*/
+					   /*Verification of the presence of text and CDATA nodes below*/
+						continue;
+					//First, the form control that the field references must be identified. 
+					var value = '';
+					for(k = 0; node = fld.childNodes[k]; k++){
+						if(node.nodeType == 3 /*text*/ || node.nodeType == 4 /*CDATA*/)
+							value += node.data;
+						else break; //only text and CDATA nodes allowed
+					}
+					var ctrl, count = 0;
+					for(k = 0; ctrl = formElements[k]; k++){
+						//console.info(ctrl.name + ' == ' + name)
+						if(ctrl.type == 'image'){
+							//For image controls, instead of using the name given by the name attribute,
+							//   the field's name is checked against two names, the first being the value
+							//   of the name attribute with the string .x appended to it, and the second
+							//   being the same but with .y appended instead. If an image control's name
+							//   is the empty string (e.g. if its name attribute is omitted) then the
+							//   names x and y must be used instead. Thus image controls are handled as
+							//   if they were two controls.
+							if(ctrl.name ?
+								  (ctrl.name + '.x' == name || ctrl.name + '.y' == name)
+								: (name == 'x' || name == 'y') ){
+
+								if(!indexAttr || ++count-1 >= indexAttr.value)	
+									break;
+							}
+						}
+						//This is done by walking the list of form controls associated with the form until
+						//   one is found that has a name exactly equal to the name given in the field
+						//   element's name attribute, skipping as many such matches as is specified in
+						//   the index attribute, or, if the index attribute was omitted, skipping over
+						//   any type="radio" and type="checkbox" controls that have the exact name given
+						//   but have a value that is not exactly the same as the contents of the field element.
+						// SPECIFICATION DEFICIENCY: Note that this is not completely true. If the value of
+						//   a field element is empty, then it should not be skipped if it associated with
+						//   a radio button or checkbox. For example, the specification states four paragraphs
+						//   later, "The only values that would have an effect in this example are "", which
+						//   would uncheck the checkbox, and "green", which would check the checkbox."
+						else if(ctrl.name == name){
+							if(indexAttr){
+								if(++count-1 < indexAttr.value)	
+									continue;
+							}
+							else if((ctrl.type == 'radio' || ctrl.type == 'checkbox') &&
+									 (value && ctrl.value != value))
+								continue;
+							break;
+						}
+					}
+					
+					//If the identified form control is a file upload control, a push button control, or
+					//   an image control, then the field element is now skipped.
+					if(ctrl.type == 'file' || ctrl.type == 'button' || ctrl.type == 'image')
+						continue;
+
+					//Next, if the identified form control is not a multiple-valued control (a multiple-
+					//   valued control is one that can generate more than one value on submission, such
+					//   as a <select multiple="multiple">), or if it is a multiple-valued control but it
+					//   is the first time the control has been identified by a field element in this
+					//   data file that was not ignored, then it is set to the given value (the contents
+					//   of the field  element), removing any previous values (even if these values were
+					//   the result of processing previous field elements in the same data file).
+					if(!ctrl.getAttributeNode('multiple') || !ctrl.wf2Prefilled){
+						//If the element cannot be given the value specified, the field element is
+						//   ignored and the control's value is left unchanged. For example, if a
+						//   checkbox has its value attribute set to green and the field element
+						//   specifies that its value should be set to blue, it won't be changed from
+						//   its current value. (The only values that would have an effect in this
+						//   example are "", which would uncheck the checkbox, and "green", which would
+						//   check the checkbox.)
+						if(ctrl.type == 'checkbox' || ctrl.type == 'radio'){
+							if(!value)
+								ctrl.checked = false;
+							else if(ctrl.value == value)
+								ctrl.checked = true;
+							else break;
+						}
+						else if(ctrl.nodeName.toLowerCase() == 'select'){
+							ctrl.selectedIndex = -1;
+							for(var opt,k = 0; opt = ctrl.options[k]; k++){
+								if(opt.value ? opt.value == value : opt.text == value){
+									opt.selected = true;
+									break;
+								}
+							}
+						}
+						//Another example would be a datetime control where the specified value is
+						//   outside the range allowed by the min  and max attributes. The format
+						//   must match the allowed formats for that type for the value to be set.
+						else {
+							ctrl.value = value;
+							$wf2.updateValidityState(ctrl);
+							if(!ctrl.validity.valid){
+								ctrl.value = ctrl.defaultValue;
+								$wf2.updateValidityState(ctrl);
+							}
+						}
+						ctrl.wf2Prefilled = true; //TRACE
+					}
+					//Otherwise, this is a subsequent value for a multiple-valued control, and the
+					//   given value (the contents of the field element) should be added to the list of
+					//   values that the element has selected.
+					//If the element is a multiple-valued control and the control already has the given
+					//   value selected, but it can be given the value again, then that occurs. 
+					else if(ctrl.getAttributeNode('multiple')){
+						for(var opt,k = 0; opt = ctrl.options[k]; k++){
+							if(!opt.selected && (opt.value ? opt.value == value : opt.text == value)){
+								opt.selected = true;
+								break;
+							}
+						}
+					}
+					
+					//if(ctrl){
+					//	
+					//}
+				}
+				
+				//A formchange event is then fired on all the form controls of the form.
+				var formElements = $wf2.getFormElements.apply(frm);
+				for(j = 0; j < formElements.length; j++){
+					//onformchange();
+					//fireEvent()
+				}
+			}
+		}
+	},
+
+	/*##############################################################################################
+	 # Section: Repetition Model
 	 ##############################################################################################*/
 
 	//## REPETITION TEMPLATE #############################################################
-	repetitionTemplate_constructor : function(){
+	repetitionTemplates:[],
+	constructRepetitionTemplate : function(){
 		if(this.wf2Initialized)
 			return;
 		this.wf2Initialized = true; //SAFARI needs this to be here for some reason...
@@ -599,12 +510,12 @@ $wf2 = {
 		//var repetitionTemplates = cssQuery("*[repeat=template]", parentNode);
 		var repetitionTemplates = $wf2.getElementsByTagNamesAndAttribute.apply((parentNode || document.documentElement), [['*'], 'repeat', 'template']);
 		for(var i = 0, rt; i < repetitionTemplates.length; i++)
-			$wf2.repetitionTemplate_constructor.apply(repetitionTemplates[i]);
+			$wf2.constructRepetitionTemplate.apply(repetitionTemplates[i]);
 	},
 
 
 	//## REPETITION BLOCK  #############################################################
-	repetitionBlock_constructor : function(){
+	constructRepetitionBlock : function(){
 		if(this.wf2Initialized)
 			return;
 			
@@ -646,7 +557,7 @@ $wf2 = {
 		//var repetitionBlocks = cssQuery('*[repeat]:not([repeat="template"])', parentNode); //:not([repeat="template"])
 		var repetitionBlocks = $wf2.getElementsByTagNamesAndAttribute.apply((parentNode || document.documentElement), [['*'], 'repeat', 'template', true]);
 		for(var i = 0; i < repetitionBlocks.length; i++)
-			$wf2.repetitionBlock_constructor.apply(repetitionBlocks[i]);
+			$wf2.constructRepetitionBlock.apply(repetitionBlocks[i]);
 	},
 	
 	
@@ -658,7 +569,7 @@ $wf2 = {
 		'move-down' : 'Move-down'
 	},
 	
-	repetitionButton_constructor : function(btnType){
+	constructRepetitionButton : function(btnType){
 		if(this.wf2Initialized)
 			return;
 		this.htmlTemplate = $wf2.getHtmlTemplate(this); //IMPLEMENT GETTER
@@ -682,10 +593,10 @@ $wf2 = {
 		}
 
 		if(this.addEventListener)
-			this.addEventListener('click', $wf2.repetitionButton_click, false);
+			this.addEventListener('click', $wf2.clickRepetitionButton, false);
 		else if(this.attachEvent)
-			this.attachEvent('onclick', $wf2.repetitionButton_click);
-		else this.onclick = $wf2.repetitionButton_click;
+			this.attachEvent('onclick', $wf2.clickRepetitionButton);
+		else this.onclick = $wf2.clickRepetitionButton;
 		
 		this.wf2Initialized = true;
 	},
@@ -708,10 +619,10 @@ $wf2 = {
 		//construct all buttons
 		var btns = $wf2.getElementsByTagNamesAndAttribute.apply(parent, [['button'], 'type', btnType]);
 		for(var i = 0; i < btns.length; i++)
-			$wf2.repetitionButton_constructor.apply(btns[i], [btnType]);
+			$wf2.constructRepetitionButton.apply(btns[i], [btnType]);
 	},
 
-	repetitionButton_click : function(e){
+	clickRepetitionButton : function(e){
 		if(e && e.preventDefault)
 			e.preventDefault(); //Keep default submission behavior from executing
 
@@ -743,7 +654,7 @@ $wf2 = {
 		
 		//Ensure that a user-supplied onclick handler is fired before the repetition behavior is executed
 		//  and terminate if this onclick handler returns a false value
-		//  Note that handlers defined in onclick HTML attributes are executed before repetitionButton_click
+		//  Note that handlers defined in onclick HTML attributes are executed before clickRepetitionButton
 		if(btn._onclick && btn.returnValue === undefined){ //  && !btn.getAttributeNode("onclick") //&& btn.hasAttribute && !btn.hasAttribute("onclick") //NOTE: MSIE fires this afterwards???			btn.returnValue = btn._onclick(e);
 			btn.returnValue = btn._onclick(e);
 			if(btn.returnValue !== undefined && !btn.returnValue){
@@ -801,7 +712,8 @@ $wf2 = {
 		return false;
 	},
 	
-	//## AddRepetitionBlock algorithm #############################################################	
+	//## AddRepetitionBlock algorithm #############################################################
+	
 	//Element addRepetitionBlock(in Node refNode);
 	addRepetitionBlock : function(refNode, index){ //addRepetitionBlockByIndex functionalty enabled if @index defined
 		//if(refNode && !refNode.nodeType)
@@ -1024,7 +936,7 @@ $wf2 = {
 		this.repetitionIndex++;
 		
 		//[apply constructors to the new repetition block, and to the new remove buttons, add buttons, etc]
-		$wf2.repetitionBlock_constructor.apply(block);
+		$wf2.constructRepetitionBlock.apply(block);
 		$wf2.initRepetitionTemplates(block);
 		
 		$wf2.initRepetitionButtons('add', block);
@@ -1380,11 +1292,182 @@ $wf2 = {
 			}
 		}
 	},
+	
+	//## Other helper functions for the repetition model behaviors ##############################
+	getRepetitionBlock : function(node){
+		while(node = node.parentNode){
+			if(node.repetitionType == RepetitionElement.REPETITION_BLOCK){
+				return node;
+			}
+		}
+		return null;
+	},
+
+	getHtmlTemplate : function(button){
+		var attr = button.getAttribute('template');
+		var node;
+		if(attr && (node = document.getElementById(attr)) && node.getAttribute('repeat') == 'template' /*node.repetitionType == RepetitionElement.REPETITION_TEMPLATE*/)
+			return node;
+		return null;
+	},
+	
+	updateAddButtons : function(rt){
+		//In addition, user agents must automatically disable add buttons (irrespective of the value of the 
+		//   disabled DOM attribute) when the buttons are not in a repetition block that has an associated 
+		//   template and their template attribute is either not specified or does not have an ID that points 
+		//   to a repetition template, and, when the repetition template's repeat-max attribute is less than 
+		//   or equal to the number of repetition blocks that are associated with that template and that have 
+		//   the same parent. This automatic disabling does not affect the DOM disabled attribute. It is an 
+		//   intrinsic property of these buttons.
+		
+		var repetitionTemplates = rt ? [rt] : $wf2.repetitionTemplates;
+		
+		//var btns = cssQuery("button[type=add]");
+		var btns = $wf2.getElementsByTagNamesAndAttribute.apply(document.documentElement, [['button'], 'type', 'add']);
+		for(var i = 0; i < btns.length; i++){
+			for(var t, j = 0; t = repetitionTemplates[j]; j++){
+				if(btns[i].htmlTemplate == t && t.repetitionBlocks.length >= t.repeatMax){
+					btns[i].disabled = true;
+				}
+			}
+		}
+	},
+
+	updateMoveButtons : function(parent){
+		//In addition, user agents must automatically disable move-up buttons (irrespective of the value of 
+		//   the disabled DOM attribute) when their repetition block could not be moved any higher according 
+		//   to the algorithm above, and when the buttons are not in a repetition block. Similarly, user agents 
+		//   must automatically disable move-down buttons when their repetition block could not be moved any 
+		//   lower according to the algorithm above, and when the buttons are not in a repetition block. This 
+		//   automatic disabling does not affect the DOM disabled  attribute. It is an intrinsic property of 
+		//   these buttons.
+		
+		var i;
+		var rbs = [];
+		
+		//update all move buttons if a repetition block's parent was not given
+		if(!parent){
+			var visitedParents = [];
+			//var rbs = cssQuery('*[repeat]:not([repeat="template"])');
+			//var rbs = $wf2.getElementsByProperty('repetitionType', RepetitionElement.REPETITION_BLOCK);
+			rbs = $wf2.getElementsByTagNamesAndAttribute.apply(document.documentElement, [['*'], 'repeat', 'template', true]);
+			for(i = 0; block = rbs[i]; i++){
+				//if(!visitedParents.some(function(i){return i == block.parentNode})){
+				if(!$wf2.arrayHasItem(visitedParents, block.parentNode)){
+					$wf2.updateMoveButtons(block.parentNode);
+					visitedParents.push(block.parentNode);
+				}
+			}
+			return;
+		}
+		
+		//get all of the repetition block siblings
+		var j,btn,block;
+		var child = parent.firstChild;
+		while(child){
+			if(child.repetitionType == RepetitionElement.REPETITION_BLOCK)
+				rbs.push(child);
+			child = child.nextSibling;
+		}
+		
+		//disable or enable movement buttons within each block
+		for(i = 0; block = rbs[i]; i++){
+			//var moveUpBtns = cssQuery("button[type=move-up]", block);
+			var moveUpBtns = $wf2.getElementsByTagNamesAndAttribute.apply(block, [['button'], 'type', 'move-up']);
+			for(j = 0; btn = moveUpBtns[j]; j++){
+				btn.disabled = 
+					//if the button is not in a repetition block
+					!(rb = $wf2.getRepetitionBlock(btn))
+					 ||
+					//when their repetition block could not be moved any lower
+					(i == 0);
+			}
+			//var moveDownBtns = cssQuery("button[type=move-down]", block);
+			var moveDownBtns = $wf2.getElementsByTagNamesAndAttribute.apply(block, [['button'], 'type', 'move-down']);
+			for(j = 0; btn = moveDownBtns[j]; j++){
+				btn.disabled = 
+					//if the button is not in a repetition block
+					!(rb = $wf2.getRepetitionBlock(btn))
+					 ||
+					//when their repetition block could not be moved any higher
+					(i == rbs.length-1);
+			}
+		}
+	},
 
 	/*#############################################################################################
-	 # Form Validation model
+	 # Section: Extensions to the input element
 	 ##############################################################################################*/
 	
+	initNonRepetitionFunctionality : function(parent){
+		parent = (parent || document.documentElement);
+		var i,j, frm, frms = parent.getElementsByTagName('form');
+		for(i = 0; frm = frms[i]; i++){
+			if(frm.checkValidity)
+				continue;
+			frm.checkValidity = $wf2.formCheckValidity;
+			if(frm.addEventListener)
+				frm.addEventListener('submit', $wf2.onsubmitValidityHandler, false);
+			else
+				frm.attachEvent('onsubmit', $wf2.onsubmitValidityHandler);
+		}
+		
+		var ctrl, ctrls = $wf2.getElementsByTagNames.apply(parent, ['input','select','textarea']);//parent.getElementsByTagName([i]);
+		for(i = 0; ctrl = ctrls[i]; i++){
+			$wf2.applyValidityInterface(ctrl);
+			$wf2.updateValidityState(ctrl); //ctrl._updateValidityState();
+		}
+		
+		//Autofocus **********************************************************
+		//Authors must not set the autofocus attribute on multiple enabled elements in a document.
+		//  If multiple elements with the autofocus attribute set are inserted into a document, each one
+		//  will be processed as described above, as they are inserted. This means that during document
+		//  load, for example, the last focusable form control in document order with the attribute set
+		//  will end up with the focus.
+		var els = $wf2.getElementsByTagNamesAndAttribute.apply(document.documentElement, [['*'], 'autofocus']); //ISSUE: Any form control (except hidden and output controls) can have an autofocus attribute specified. //var elName = els[i].nodeName.toLowerCase(); if(elName == 'output' || (elName == 'input' && els[i].type == 'hidden'))
+		if(parent.getAttribute('autofocus'))
+			els.unshift(parent);
+		for(i = 0; i < els.length; i++)
+			$wf2.initAutofocusElement(els[i]);
+
+		// Maxlength for textareas ******************************************************
+		var textareas = $wf2.getElementsByTagNamesAndAttribute.apply(parent, [['textarea'], 'maxlength']);
+		if(parent.nodeName.toLowerCase() == 'textarea')
+			textareas.unshift(parent);
+		for(i = 0; i < textareas.length; i++)
+			textareas[i].maxLength = parseInt(textareas[i].getAttribute('maxlength'));
+		//TODO: we must dynamically apply this behavior for new textareas (via repetition model or eventlistener)
+	},
+	
+	initAutofocusElement : function(el){
+		//skip if already initialized
+		if(el.autofocus === false || el.autofocus === true) //(el.autofocus !== undefined) does not work due to MSIE's handling of attributes
+			return;
+		el.autofocus = true;
+		
+		//[autofocus if] the control is not disabled
+		if(el.disabled)
+			return;
+
+		//[control] is of a type normally focusable in the user's operating environment
+		//Don't focus on the control if it is not visible or nor displayed
+		var node = el;
+		while(node && node.nodeType == 1){
+			if($wf2.getElementStyle(node, 'visibility') == 'hidden' || $wf2.getElementStyle(node, 'display') == 'none')
+				return;
+			node = node.parentNode;
+		}
+
+		//Then the UA should focus the control, as if the control's focus() method was invoked.
+		//  UAs with a viewport should also scroll the document enough to make the control visible,
+		//  [[even if it is not of a type normally focusable.]] //WHAT DOES THIS MEAN?
+		el.focus(); //BUG: in Gecko this does not work within DOMNodeInserted event handler, but the following does; setTimeout(function(){el.focus();}, 0);
+	},
+
+	/*#############################################################################################
+	 # Section: Form Validation model
+	 ##############################################################################################*/
+
 	formCheckValidity : function(){
 		var i, el, valid = true;
 		
@@ -1433,6 +1516,7 @@ $wf2 = {
 		}
 		return valid;
 	},
+	
 	controlCheckValidity : function(){
 		$wf2.updateValidityState(this);
 		if(this.validity.valid)
@@ -1510,7 +1594,7 @@ $wf2 = {
 	urlRegExp : /^(\w+):(\/\/)?.+$/i,
 	emailRegExp : /^\S+@\S+$/i,
 	
-	//Zero points for datetime-related types (set in init function)
+	//Zero points for datetime-related types (set in onDOMContentLoaded function)
 //	zeroPointDatetime      : null,
 //	zeroPointDatetimeLocal : null,
 //	zeroPointDate          : null,
@@ -1808,7 +1892,7 @@ $wf2 = {
 			//   and the value of the control doesn't exactly match the control's default value. 
 			//[The maxlength] attribute must not affect the initial value (the DOM defaultValue attribute). It must only
 			//   affect what the user may enter and whether a validity error is flagged during validation.
-			if(node.maxLength && node.value != node.defaultValue && doMaxLengthCheck){
+			if(node.maxLength >= 0 && node.value != node.defaultValue && doMaxLengthCheck){
 				//A newline in a textarea's value must count as two code points for maxlength processing (because
 				//   newlines in textareas are submitted as U+000D U+000A). [[NOT IMPLEMENTED: This includes the
 				//   implied newlines that are added for submission when the wrap attribute has the value hard.]]
@@ -1957,17 +2041,7 @@ $wf2 = {
 	invalidIndicators : [],
 	indicatorTimeoutId : null,
 	indicatorIntervalId : null,
-	//getStepUnits : function(type){
-	//	switch(type){
-	//		'datetime':
-	//		'datetime-local':
-	//		'time':  return ' second(s)';
-	//		'date':  return ' day(s)';
-	//		'week':  return ' week(s)';
-	//		'month': return ' month(s)';
-	//		default: ' ';
-	//	}
-	//},
+	
 	stepUnits : {
 		'datetime' : 'second',
 		'datetime-local': 'second',
@@ -2065,10 +2139,10 @@ $wf2 = {
 		
 		var top = left = 0;
 		var cur = el;
-		if(cur && cur.offsetParent) {
+		if(cur && cur.offsetParent){
 			left = cur.offsetLeft;
 			top = cur.offsetTop;
-			while (cur = cur.offsetParent) {
+			while(cur = cur.offsetParent){
 				left += cur.offsetLeft;
 				top += cur.offsetTop;
 			}
@@ -2260,22 +2334,6 @@ $wf2 = {
 		//else clone = node.cloneNode(true);
 		return clone;
 	},
-	getRepetitionBlock : function(node){
-		while(node = node.parentNode){
-			if(node.repetitionType == RepetitionElement.REPETITION_BLOCK){
-				return node;
-			}
-		}
-		return null;
-	},
-
-	getHtmlTemplate : function(button){
-		var attr = button.getAttribute('template');
-		var node;
-		if(attr && (node = document.getElementById(attr)) && node.repetitionType == RepetitionElement.REPETITION_TEMPLATE)
-			return node;
-		return null;
-	},
 	
 	getFormElements : function(){
 		var elements = [];
@@ -2288,90 +2346,6 @@ $wf2 = {
 				elements.push(allElements[i]);
 		}
 		return elements;
-	},
-
-	updateAddButtons : function(rt){
-		//In addition, user agents must automatically disable add buttons (irrespective of the value of the 
-		//   disabled DOM attribute) when the buttons are not in a repetition block that has an associated 
-		//   template and their template attribute is either not specified or does not have an ID that points 
-		//   to a repetition template, and, when the repetition template's repeat-max attribute is less than 
-		//   or equal to the number of repetition blocks that are associated with that template and that have 
-		//   the same parent. This automatic disabling does not affect the DOM disabled attribute. It is an 
-		//   intrinsic property of these buttons.
-		
-		var repetitionTemplates = rt ? [rt] : $wf2.repetitionTemplates;
-		
-		//var btns = cssQuery("button[type=add]");
-		var btns = $wf2.getElementsByTagNamesAndAttribute.apply(document.documentElement, [['button'], 'type', 'add']);
-		for(var i = 0; i < btns.length; i++){
-			for(var t, j = 0; t = repetitionTemplates[j]; j++){
-				if(btns[i].htmlTemplate == t && t.repetitionBlocks.length >= t.repeatMax){
-					btns[i].disabled = true;
-				}
-			}
-		}
-	},
-
-	updateMoveButtons : function(parent){
-		//In addition, user agents must automatically disable move-up buttons (irrespective of the value of 
-		//   the disabled DOM attribute) when their repetition block could not be moved any higher according 
-		//   to the algorithm above, and when the buttons are not in a repetition block. Similarly, user agents 
-		//   must automatically disable move-down buttons when their repetition block could not be moved any 
-		//   lower according to the algorithm above, and when the buttons are not in a repetition block. This 
-		//   automatic disabling does not affect the DOM disabled  attribute. It is an intrinsic property of 
-		//   these buttons.
-		
-		var i;
-		var rbs = [];
-		
-		//update all move buttons if a repetition block's parent was not given
-		if(!parent){
-			var visitedParents = [];
-			//var rbs = cssQuery('*[repeat]:not([repeat="template"])');
-			//var rbs = $wf2.getElementsByProperty('repetitionType', RepetitionElement.REPETITION_BLOCK);
-			rbs = $wf2.getElementsByTagNamesAndAttribute.apply(document.documentElement, [['*'], 'repeat', 'template', true]);
-			for(i = 0; block = rbs[i]; i++){
-				//if(!visitedParents.some(function(i){return i == block.parentNode})){
-				if(!$wf2.arrayHasItem(visitedParents, block.parentNode)){
-					$wf2.updateMoveButtons(block.parentNode);
-					visitedParents.push(block.parentNode);
-				}
-			}
-			return;
-		}
-		
-		//get all of the repetition block siblings
-		var j,btn,block;
-		var child = parent.firstChild;
-		while(child){
-			if(child.repetitionType == RepetitionElement.REPETITION_BLOCK)
-				rbs.push(child);
-			child = child.nextSibling;
-		}
-		
-		//disable or enable movement buttons within each block
-		for(i = 0; block = rbs[i]; i++){
-			//var moveUpBtns = cssQuery("button[type=move-up]", block);
-			var moveUpBtns = $wf2.getElementsByTagNamesAndAttribute.apply(block, [['button'], 'type', 'move-up']);
-			for(j = 0; btn = moveUpBtns[j]; j++){
-				btn.disabled = 
-					//if the button is not in a repetition block
-					!(rb = $wf2.getRepetitionBlock(btn))
-					 ||
-					//when their repetition block could not be moved any lower
-					(i == 0);
-			}
-			//var moveDownBtns = cssQuery("button[type=move-down]", block);
-			var moveDownBtns = $wf2.getElementsByTagNamesAndAttribute.apply(block, [['button'], 'type', 'move-down']);
-			for(j = 0; btn = moveDownBtns[j]; j++){
-				btn.disabled = 
-					//if the button is not in a repetition block
-					!(rb = $wf2.getRepetitionBlock(btn))
-					 ||
-					//when their repetition block could not be moved any higher
-					(i == rbs.length-1);
-			}
-		}
 	},
 	
 	loadDataURI : function(el){
@@ -2394,7 +2368,7 @@ $wf2 = {
 			}
 			else {
 				$wf2.xhr.open('GET', uri, false);
-				$wf2.xhr.send();
+				$wf2.xhr.send(null); //Note: if in Firefox and null not provided, and if Firebug is disabled, an error occurs
 				doc = $wf2.xhr.responseXML;
 			}
 		}
@@ -2430,14 +2404,14 @@ $wf2 = {
 	getElementsByTagNamesAndAttribute : function(elNames, attrName, attrValue, isNotEqual){
 		var els,el,i,j,results = [];
 		
-		//QUESTION!!! Can we exclude all nodes that are not decendents of the repetiion template?
+		//QUESTION!!! Can we exclude all nodes that are not decendents of the repetition template?
 		if(document.evaluate){
 			var attrExpr = '';
 			if(attrName)
-				attrExpr = "[@" + attrName + (attrValue ? (isNotEqual ? '!=' : '=') + '"' + attrValue + '"' : "") + "]";
+				attrExpr = '[@' + attrName + (attrValue ? (isNotEqual ? '!=' : '=') + '"' + attrValue + '"' : "") + "]";
 			var xPaths = [];
 			for(i = 0; i < elNames.length; i++)
-				xPaths.push(".//" + elNames[i] + attrExpr);
+				xPaths.push('.//' + elNames[i] + attrExpr);
 			els = document.evaluate(xPaths.join('|'), this, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null); 
 			for(i = 0; i < els.snapshotLength; i++)
 				results.push(els.snapshotItem(i));
@@ -2467,31 +2441,31 @@ $wf2 = {
 		return false;
 	},
 	
+	//Note: this function has been deemed harmful
 	getElementStyle : function(el, property) { //adapted from Danny Goodman <http://www.oreillynet.com/pub/a/javascript/excerpt/JSDHTMLCkbk_chap5/index5.html>
 		if(el.currentStyle)
 			return el.currentStyle[property];
 		else if(window.getComputedStyle)
-			return getComputedStyle(el, "").getPropertyValue(property);
+			return getComputedStyle(el, '').getPropertyValue(property);
 		else if(el.style)
 			return el.style[property];
 		else return '';
 	},
-	
-	createMiscFunctions : function(){
-		//createElement code based on Anthony Lieuallen's work <http://www.easy-reader.net/archives/2005/09/02/death-to-bad-dom-implementations/#comment-444>
-		//   The following function enables MSIE to create elements with the name attribute set, per MSDN:
-		//   The NAME attribute cannot be set at run time on elements dynamically created with the 
-		//   createElement method. To create an element with a name attribute, include the attribute 
-		//   and value when using the createElement method.
-		//   The same goes for creating radio buttons and creating defaultly checked checkboxes,
-		//   per <http://channel9.msdn.com/wiki/default.aspx/Channel9.InternetExplorerProgrammingBugs>
-		var el;
+
+	//createElement code based on Anthony Lieuallen's work <http://www.easy-reader.net/archives/2005/09/02/death-to-bad-dom-implementations/#comment-444>
+	//   The following function enables MSIE to create elements with the name attribute set, per MSDN:
+	//   The NAME attribute cannot be set at run time on elements dynamically created with the 
+	//   createElement method. To create an element with a name attribute, include the attribute 
+	//   and value when using the createElement method.
+	//   The same goes for creating radio buttons and creating defaultly checked checkboxes,
+	//   per <http://channel9.msdn.com/wiki/default.aspx/Channel9.InternetExplorerProgrammingBugs>
+	createElement : (function(){
 		try {
-			el = document.createElement('<div name="foo">'); //MSIE memory leak according to Drip
+			var el = document.createElement('<div name="foo">'); //MSIE memory leak according to Drip
 			if(el.tagName.toLowerCase() != 'div' || el.name != 'foo')
 				throw 'create element error';
 			
-			$wf2.createElement = function(tag, attrs){
+			return function(tag, attrs){
 				var html = '<' + tag;
 				for(var name in attrs)
 					html += ' ' + name + '="' + attrs[name] + '"';
@@ -2502,29 +2476,31 @@ $wf2 = {
 			};
 		}
 		catch(err){
-			$wf2.createElement = function(tag, attrs){
+			return function(tag, attrs){
 				var el = document.createElement(tag);
 				for(var name in attrs)
 					el.setAttribute(name, attrs[name]);
 				return el;
 			};
 		}
-		el = null;
-		
-		//sortNodes: sort elements in document order (from ppk)
+	})(),
+
+	//Sort elements in document order (from ppk)
+	sortNodes : (function(){
 		var n = document.documentElement.firstChild;
 		if(n.sourceIndex){
-			$wf2.sortNodes = function (a,b){
+			return function (a,b){
 				return a.sourceIndex - b.sourceIndex;
 			};
 		}
 		else if(n.compareDocumentPosition){
-			$wf2.sortNodes = function (a,b){
+			return function (a,b){
 				return 3 - (a.compareDocumentPosition(b) & 6);
 			};
 		}
-	},
+	})(),
 
+	//Shortcut to create new list items; used by default invalid event handler in listing the errors
 	createLI : function(text){
 		var li = document.createElement('li');
 		li.appendChild(document.createTextNode(text));
@@ -2644,54 +2620,62 @@ $wf2 = {
 				return date.getUTCFullYear() + '-' + $wf2.zeroPad(date.getUTCMonth()+1) + '-' + $wf2.zeroPad(date.getUTCDate()) + 
 				       'T' + $wf2.zeroPad(date.getUTCHours()) + ':' + $wf2.zeroPad(date.getUTCMinutes()) + ':' + $wf2.zeroPad(date.getUTCMinutes()) + ms + 'Z';
 		}
-	}
-};
-
-//Emulation of DOMException
-$wf2.DOMException = function(code){
-	var err = new Error('DOMException: ');
-	err.code = code;
-	err.name = 'DOMException';
+	},
 	
-	//Provide error codes and messages for the exception types that are raised by WF2
-	err.INDEX_SIZE_ERR = 1;
-	err.NOT_SUPPORTED_ERR = 9;
-	err.INVALID_STATE_ERR = 11;
-	err.SYNTAX_ERR = 12;
-	err.INVALID_MODIFICATION_ERR = 13;
-	switch(code){
-		case  1: err.message += 'INDEX_SIZE_ERR'; break;
-		case  9: err.message += 'NOT_SUPPORTED_ERR'; break;
-		case 11: err.message += 'INVALID_STATE_ERR'; break;
-		case 12: err.message += 'SYNTAX_ERR'; break;
-		case 13: err.message += 'INVALID_MODIFICATION_ERR'; break;
+	//Emulation of DOMException
+	DOMException : function(code){
+		var message = 'DOMException: ';
+		switch(code){
+			case  1: message += 'INDEX_SIZE_ERR'; break;
+			case  9: message += 'NOT_SUPPORTED_ERR'; break;
+			case 11: message += 'INVALID_STATE_ERR'; break;
+			case 12: message += 'SYNTAX_ERR'; break;
+			case 13: message += 'INVALID_MODIFICATION_ERR'; break;
+		}
+	
+		var err = new Error(message);
+		err.code = code;
+		err.name = 'DOMException';
+	
+		//Provide error codes and messages for the exception types that are raised by WF2
+		err.INDEX_SIZE_ERR = 1;
+		err.NOT_SUPPORTED_ERR = 9;
+		err.INVALID_STATE_ERR = 11;
+		err.SYNTAX_ERR = 12;
+		err.INVALID_MODIFICATION_ERR = 13;
+	
+		//with($wf2.DOMException.prototype){
+		//	INDEX_SIZE_ERR = 1;
+		//	DOMSTRING_SIZE_ERR = 2;
+		//	HIERARCHY_REQUEST_ERR = 3;
+		//	WRONG_DOCUMENT_ERR = 4;
+		//	INVALID_CHARACTER_ERR = 5;
+		//	NO_DATA_ALLOWED_ERR = 6;
+		//	NO_MODIFICATION_ALLOWED_ERR = 7;
+		//	NOT_FOUND_ERR = 8;
+		//	NOT_SUPPORTED_ERR = 9;
+		//	INUSE_ATTRIBUTE_ERR = 10;
+		//	INVALID_STATE_ERR = 11;
+		//	SYNTAX_ERR = 12;
+		//	INVALID_MODIFICATION_ERR = 13;
+		//	NAMESPACE_ERR = 14;
+		//	INVALID_ACCESS_ERR = 15;
+		//};
+	
+		return err;
 	}
-	return err;
-};
-
-//with($wf2.DOMException.prototype){
-//	INDEX_SIZE_ERR = 1;
-//	DOMSTRING_SIZE_ERR = 2;
-//	HIERARCHY_REQUEST_ERR = 3;
-//	WRONG_DOCUMENT_ERR = 4;
-//	INVALID_CHARACTER_ERR = 5;
-//	NO_DATA_ALLOWED_ERR = 6;
-//	NO_MODIFICATION_ALLOWED_ERR = 7;
-//	NOT_FOUND_ERR = 8;
-//	NOT_SUPPORTED_ERR = 9;
-//	INUSE_ATTRIBUTE_ERR = 10;
-//	INVALID_STATE_ERR = 11;
-//	SYNTAX_ERR = 12;
-//	INVALID_MODIFICATION_ERR = 13;
-//	NAMESPACE_ERR = 14;
-//	INVALID_ACCESS_ERR = 15;
-//};
-
+}; //End $wf2 = {
 
 
 /*##############################################################################################
- # RepetitionEvent
+ # Section: Repetition Model Definitions
  ##############################################################################################*/
+
+var RepetitionElement = {
+	REPETITION_NONE:0,
+	REPETITION_TEMPLATE:1,
+	REPETITION_BLOCK:2
+};
 
 var RepetitionEvent = {
 	//the following takes a UIEvent and adds the required properties for a RepetitionEvent
@@ -2740,22 +2724,33 @@ var RepetitionEvent = {
 	}
 };
 
+/*##############################################################################################
+ # Change the prototypes of HTML elements
+ ##############################################################################################*/
 
-//   Some of the following code was borrowed from Dean Edwards, John Resig, et al <http://dean.edwards.name/weblog/2006/06/again/>
-(function(){
-//Get the location of this script so that the stylesheet can be included
-var match; //get path to source directory
-//For some reason, if not using documentElement, scriptaculous fails to load if reference to
-//   webforms2 script placed beforehand in Firefox
-var scripts = document.documentElement.getElementsByTagName('script'); 
-for(var i = 0; i < scripts.length; i++){
-	if(match = scripts[i].src.match(/^(.*)webforms2[^\/]+$/))
-		$wf2.libpath = match[1];
+//RepetitionElement interface must be implemented by all elements.
+if(window.Element && Element.prototype){
+	Element.prototype.REPETITION_NONE     = RepetitionElement.REPETITION_NONE;
+	Element.prototype.REPETITION_TEMPLATE = RepetitionElement.REPETITION_TEMPLATE;
+	Element.prototype.REPETITION_BLOCK    = RepetitionElement.REPETITION_BLOCK;
+	
+	Element.prototype.repetitionType      = RepetitionElement.REPETITION_NONE;
+	Element.prototype.repetitionIndex     = 0;
+	Element.prototype.repetitionTemplate  = null; /*readonly*/
+	Element.prototype.repetitionBlocks    = null; /*readonly*/
+
+	Element.prototype.repeatStart = 1;
+	Element.prototype.repeatMin   = 0;
+	Element.prototype.repeatMax   = Number.MAX_VALUE; //Infinity;
+	
+	Element.prototype.addRepetitionBlock        = $wf2.addRepetitionBlock;
+	Element.prototype.addRepetitionBlockByIndex = $wf2.addRepetitionBlockByIndex;
+	Element.prototype.moveRepetitionBlock       = $wf2.moveRepetitionBlock;
+	Element.prototype.removeRepetitionBlock     = $wf2.removeRepetitionBlock;
 }
 
-
 /*##############################################################################################
- # Initializing Web Forms 2.0 in the document
+ # Set mutation event handlers to automatically add WF2 behaviors
  ##############################################################################################*/
 
 //When a form control is inserted into a document, the UA must check to see if it has [the autofocus]
@@ -2790,47 +2785,61 @@ if(document.addEventListener){
 	}, false);
 }
 
-//## Execute the document initializers once the DOM has loaded ########################################
+/*##################################################################################
+ # Execute WF2 code onDOMContentLoaded
+ # Some of the following code was borrowed from Dean Edwards, John Resig, et al <http://dean.edwards.name/weblog/2006/06/again/>
+ ##################################################################################*/
+
+(function(){
+//Get the path to the library base directory
+var match;
+//For some reason, if not using documentElement, scriptaculous fails to load if reference to
+//   webforms2 script placed beforehand in Firefox
+var scripts = document.documentElement.getElementsByTagName('script'); 
+for(var i = 0; i < scripts.length; i++){
+	if(match = scripts[i].src.match(/^(.*)webforms2[^\/]+$/))
+		$wf2.libpath = match[1];
+}
 
 //The script has been included after the DOM has loaded (perhaps via Greasemonkey), so fire immediately
 //NOTE: This does not work with XHTML documents in Gecko
 if(document.body){
-	$wf2.init();
+	$wf2.onDOMContentLoaded();
 	return;
 }
 
 var eventSet = 0;
 if(document.addEventListener){
-	//onDOMload for Gecko and Opera
+	//for Gecko and Opera
 	document.addEventListener('DOMContentLoaded', function(){
-		$wf2.init();
+		$wf2.onDOMContentLoaded();
 	}, false);
 
 	//for other browsers which do not support DOMContentLoaded use the following as a fallback to be called hopefully before all other onload handlers
 	window.addEventListener('load', function(){
-		$wf2.init();
+		$wf2.onDOMContentLoaded();
 	}, false);
 	
 	eventSet = 1;
 }
 
-//onDOMload for Safari
+//for Safari
 if (/WebKit/i.test(navigator.userAgent)) { //sniff
 	var _timer = setInterval(function() {
 		if (/loaded|complete/.test(document.readyState)) {
 			clearInterval(_timer);
 			delete _timer;
-			$wf2.init();
+			$wf2.onDOMContentLoaded();
 		}
 	}, 10);
 	eventSet = 1;
 }
-//onDOMload for Internet Explorer (formerly using conditional comments) //sniff
+//for Internet Explorer (formerly using conditional comments) //sniff
 else if(/MSIE/i.test(navigator.userAgent) && !document.addEventListener && window.attachEvent){
 	//This following attached onload handler will attempt to be the first onload handler to be called and thus
 	//  initiate the repetition model as early as possible if the DOMContentLoaded substitute fails.
 	window.attachEvent('onload', function(){
-		$wf2.init();
+		$wf2.onDOMContentLoaded();
 	});
 	
 	//Dean Edward's first solution: http://dean.edwards.name/weblog/2005/09/busted/
@@ -2844,7 +2853,7 @@ else if(/MSIE/i.test(navigator.userAgent) && !document.addEventListener && windo
 	script.onreadystatechange = function(){
 		if(this.readyState == 'complete'){
 			this.parentNode.removeChild(this);
-			$wf2.init();
+			$wf2.onDOMContentLoaded();
 			
 			//See issue #3 <http://code.google.com/p/repetitionmodel/issues/detail?id=3>
 			//Sometimes cssQuery doesn't find all repetition templates from here within this DOMContentLoaded substitute
@@ -2861,16 +2870,16 @@ if(!eventSet){
 	if(window.onload){ //if(window.onload != RepetitionElement._init_document)
 		var oldonload = window.onload;
 		window.onload = function(){
-			$wf2.init();
+			$wf2.onDOMContentLoaded();
 			oldonload();
 		};
 	}
 	else window.onload = function(){
-		$wf2.init();
+		$wf2.onDOMContentLoaded();
 	};
 }
 })();
-} //End If(!window.RepetitionElement...
+} //End If(!document.implementation...
 
 /*##############################################################################################
  # Extensions for existing Web Forms 2.0 Implementations
