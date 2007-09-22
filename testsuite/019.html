@@ -5,11 +5,26 @@
 		<title>Test Case 19: Prefilling form data &laquo; Web Forms 2.0 Test Suite</title>
 		<meta name="author" content="Weston Ruter">
 		<meta name="description" content="">
-		<script type="text/javascript" src="../webforms2-p.js"></script>
+		<script type="text/javascript" src="../webforms2_src.js"></script>
 		<link rel="stylesheet" type="text/css" href="testcase.css"><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
 		<!-- prev --><link rel="prev" href="018.html"><!-- /prev -->
-		
+		<!-- next --><link rel="next" href="020.html"><!-- /next -->
 		<link rel="home" href="index.html">
+		
+		<script type="text/javascript">
+		//$wf2.getElementsByTagNamesAndAttribute.apply(document.documentElement, [['option','input'], 'value']);
+		window.filledContainers = 0;
+		</script>
+		<style type="text/css">
+		.failure {
+			background-color:#FFCCCC;
+			padding:.4ex;
+		}
+		.success {
+			background-color:#99FF99;
+			padding:.4ex;
+		}
+		</style>
 		
 	</head>
 	<body>
@@ -25,7 +40,7 @@
 			<div class="testSuiteNavigation">
 				<!-- prev -->&larr;&nbsp;<a href="018.html" class="prev">Radio Buttons in Nested Repetition Blocks</a> |<!-- /prev -->
 				<a href="index.html" class="index">Test Suite Index</a>
-				
+				<!-- next -->| <a href="020.html" class="next">Creating Repetition Templates Dynamically</a>&nbsp;&rarr;<!-- /next -->
 			</div>
 			
 			<hr>
@@ -112,27 +127,277 @@
 		<p><label>Week (should be prefilled): <input type="week" name="weekTest"></label></p>
 	</form>
 
+	<!-- ########################################### -->
+	<h1>Setting <code>data</code> DOM property dynamically on <code>select</code> elements</h1>
 
-	<h1>Setting <code>data</code> DOM property dynamically</h1>
-	<p>The following script (taken from the end of the <a href="http://www.whatwg.org/specs/web-forms/current-work/#selectSeeding">Filling <code>select</code> elements</a> section) must be executed before <code>DOMContentLoaded</code>:</p>
-	<form id='dataAttrTest'>
+	<p>The following tests are adapted from an example in the <a href="http://www.whatwg.org/specs/web-forms/current-work/#selectSeeding">Filling <code>select</code> elements</a> section.
+	The eight following <code>select</code> elements should have exactly the same contents.<!-- The following
+	<code>data</code> attributes are set dynamically <em>after</em> the page has loaded. The setting
+	of the attribute is first detected by DOM2 MutationEvents and secondly by JavaScript 1.6 Setters, thus they are not
+	supported by Internet Explorer.--> Note that only the first four will work in Internet Explorer 7.</p>
+
+	<ol id='dynamicDataOnSelectTests'>
+		<li id='selectContainer1'>
+			<span class='result'><em>Loading...</em></span>
+			Before onload, <code>data</code> DOM attribute set on statically created element:
+			<select></select>
+		</li>
+		<script type="text/javascript">
+		var select = document.getElementById('selectContainer1').getElementsByTagName('select')[0];
+		select.data = 'data:application/xml,%3Cselect%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxhtml%22%20type%3D%22incremental%22%3E%3Coption%3Eb%3C%2Foption%3E%3C%2Fselect%3E';
+		var option = document.createElement('option'); //document.createElementNS('http://www.w3.org/1999/xhtml', 'option');
+		option.appendChild(document.createTextNode('a'));
+		select.appendChild(option);
+		// at this point, select.length == 1 is guaranteed
+		</script>
+
+		<li id='selectContainer2'>
+			<span class='result'><em>Loading...</em></span>
+			Before onload, <code>data</code> content attribute set on statically created element:
+			<select></select>
+		</li>
+		<script type="text/javascript">
+		var select = document.getElementById('selectContainer2').getElementsByTagName('select')[0];
+		select.setAttribute('data', 'data:application/xml,%3Cselect%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxhtml%22%20type%3D%22incremental%22%3E%3Coption%3Eb%3C%2Foption%3E%3C%2Fselect%3E');
+		var option = document.createElement('option'); //document.createElementNS('http://www.w3.org/1999/xhtml', 'option');
+		option.appendChild(document.createTextNode('a'));
+		select.appendChild(option);
+		// at this point, select.length == 1 is guaranteed
+		</script>
+
+		<li id='selectContainer3'>
+			<span class='result'><em>Loading...</em></span>
+			Before onload, <code>select</code> element dynamically created; <code>data</code> DOM attribute set:
+		</li>
 		<script type="text/javascript">
 		var select = document.createElement('select'); //document.createElementNS('http://www.w3.org/1999/xhtml', 'select');
 		select.data = 'data:application/xml,%3Cselect%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxhtml%22%20type%3D%22incremental%22%3E%3Coption%3Eb%3C%2Foption%3E%3C%2Fselect%3E';
-		select.name = "dynamic";
 		// at this point, select.length == 0 is guaranteed
 		var option = document.createElement('option'); //document.createElementNS('http://www.w3.org/1999/xhtml', 'option');
 		option.appendChild(document.createTextNode('a'));
 		select.appendChild(option);
 		// at this point, select.length == 1 is guaranteed
-		document.getElementById('dataAttrTest').appendChild(select);
+		document.getElementById('selectContainer3').appendChild(select);
+		</script>
+
+		<li id='selectContainer4'>
+			<span class='result'><em>Loading...</em></span>
+			Before onload, <code>select</code> element dynamically created; <code>data</code> content attribute set with <code>setAttribute(...)</code>:
+		</li>
+		<script type="text/javascript">
+		var select = document.createElement('select'); //document.createElementNS('http://www.w3.org/1999/xhtml', 'select');
+		select.setAttribute('data', 'data:application/xml,%3Cselect%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxhtml%22%20type%3D%22incremental%22%3E%3Coption%3Eb%3C%2Foption%3E%3C%2Fselect%3E');
+		// at this point, select.length == 0 is guaranteed
+		var option = document.createElement('option'); //document.createElementNS('http://www.w3.org/1999/xhtml', 'option');
+		option.appendChild(document.createTextNode('a'));
+		select.appendChild(option);
+		// at this point, select.length == 1 is guaranteed
+		document.getElementById('selectContainer4').appendChild(select);
+		</script>
+
+		<li id='selectContainer5'>
+			<span class='result'><em>Loading...</em></span>
+			After onload, <code>data</code> DOM attribute set on statically created element: <select></select>
+		</li>
+		<script type="text/javascript">
+		var func = function(){
+			window.setTimeout(
+				function(){
+					var select = document.getElementById('selectContainer5').getElementsByTagName('select')[0];
+					select.data = 'data:application/xml,%3Cselect%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxhtml%22%20type%3D%22incremental%22%3E%3Coption%3Eb%3C%2Foption%3E%3C%2Fselect%3E';
+					var option = document.createElement('option'); //document.createElementNS('http://www.w3.org/1999/xhtml', 'option');
+					option.appendChild(document.createTextNode('a'));
+					select.appendChild(option);
+					// at this point, select.length == 1 is guaranteed
+					window.filledContainers++;
+				}, 100
+			);
+		}
+		if(window.addEventListener)
+			window.addEventListener("load", func, false);
+		else if(window.attachEvent)
+			window.attachEvent("load", func);
+		</script>
+
+		<li id='selectContainer6'>
+			<span class='result'><em>Loading...</em></span>
+			After onload, <code>data</code> content attribute set on statically created element: <select></select>
+		</li>
+		<script type="text/javascript">
+		var func = function(){
+			window.setTimeout(
+				function(){
+					var select = document.getElementById('selectContainer6').getElementsByTagName('select')[0];
+					select.setAttribute('data', 'data:application/xml,%3Cselect%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxhtml%22%20type%3D%22incremental%22%3E%3Coption%3Eb%3C%2Foption%3E%3C%2Fselect%3E');
+					var option = document.createElement('option'); //document.createElementNS('http://www.w3.org/1999/xhtml', 'option');
+					option.appendChild(document.createTextNode('a'));
+					select.appendChild(option);
+					// at this point, select.length == 1 is guaranteed
+					window.filledContainers++;
+				}, 100
+			);
+		}
+		if(window.addEventListener)
+			window.addEventListener("load", func, false);
+		else if(window.attachEvent)
+			window.attachEvent("load", func);
+		</script>
+
+		<li id='selectContainer7'>
+			<span class='result'><em>Loading...</em></span>
+			After onload, <code>select</code> element dynamically created; <code>data</code> DOM attribute set:
+		</li>
+		<script type="text/javascript">
+		var func = function(){
+			window.setTimeout(
+				function(){
+					var select = document.createElement('select'); //document.createElementNS('http://www.w3.org/1999/xhtml', 'select');
+					select.data = 'data:application/xml,%3Cselect%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxhtml%22%20type%3D%22incremental%22%3E%3Coption%3Eb%3C%2Foption%3E%3C%2Fselect%3E';
+					// at this point, select.length == 0 is guaranteed
+					var option = document.createElement('option'); //document.createElementNS('http://www.w3.org/1999/xhtml', 'option');
+					option.appendChild(document.createTextNode('a'));
+					select.appendChild(option);
+					// at this point, select.length == 1 is guaranteed
+					document.getElementById('selectContainer7').appendChild(select);
+					window.filledContainers++;
+				}, 100
+			);
+		}
+		if(window.addEventListener)
+			window.addEventListener("load", func, false);
+		else if(window.attachEvent)
+			window.attachEvent("load", func);
+		</script>
+
+		<li id='selectContainer8'>
+			<span class='result'><em>Loading...</em></span>
+			After onload, <code>select</code> element dynamically created; <code>data</code> content attribute set with <code>setAttribute(...)</code>:
+		</li>
+		<script type="text/javascript">
+		var func = function(){
+			window.setTimeout(
+				function(){
+					var select = document.createElement('select'); //document.createElementNS('http://www.w3.org/1999/xhtml', 'select');
+					select.setAttribute('data', 'data:application/xml,%3Cselect%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxhtml%22%20type%3D%22incremental%22%3E%3Coption%3Eb%3C%2Foption%3E%3C%2Fselect%3E');
+					// at this point, select.length == 0 is guaranteed
+					var option = document.createElement('option'); //document.createElementNS('http://www.w3.org/1999/xhtml', 'option');
+					option.appendChild(document.createTextNode('a'));
+					select.appendChild(option);
+					// at this point, select.length == 1 is guaranteed
+					document.getElementById('selectContainer8').appendChild(select);
+					window.filledContainers++;
+				}, 100
+			);
+		}
+		if(window.addEventListener)
+			window.addEventListener("load", func, false);
+		else if(window.attachEvent)
+			window.attachEvent("load", func);
+		</script>
+
+	</ol>
+
+
+
+
+
+	<!--<form id='dataAttrTest1'>
+	</form>
+
+	<p style="color:red">Also add two more tests: set existing elements onload with setAttribute('data') and el.data = ....</p>
+
+	<form id='dataAttrTest2'>
+		<script type="text/javascript">
+		var doDataAttrTest2 = function(){
+			window.setTimeout(
+				function(){
+					var select = document.createElement('select'); //document.createElementNS('http://www.w3.org/1999/xhtml', 'select');
+					select.setAttribute('data', 'data:application/xml,%3Cselect%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxhtml%22%20type%3D%22incremental%22%3E%3Coption%3Eb%3C%2Foption%3E%3C%2Fselect%3E');
+					//select.name = "dynamic";
+					// at this point, select.length == 0 is guaranteed
+					var option = document.createElement('option'); //document.createElementNS('http://www.w3.org/1999/xhtml', 'option');
+					option.appendChild(document.createTextNode('a'));
+					select.appendChild(option);
+					// at this point, select.length == 1 is guaranteed
+					document.getElementById('dataAttrTest2').appendChild(select);
+					window.doneDataAttrTest2 = true;
+				}, 100
+			);
+		}
+		if(window.addEventListener)
+			window.addEventListener("load", doDataAttrTest2, false);
+		else if(window.attachEvent)
+			window.attachEvent("load", doDataAttrTest2);
 		</script>
 	</form>
+
+	<form id='dataAttrTest3'>
+		<script type="text/javascript">
+		var doDataAttrTest3 = function(){
+			window.setTimeout(
+				function(){
+					var select = document.createElement('select'); //document.createElementNS('http://www.w3.org/1999/xhtml', 'select');
+					select.data = 'data:application/xml,%3Cselect%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxhtml%22%20type%3D%22incremental%22%3E%3Coption%3Eb%3C%2Foption%3E%3C%2Fselect%3E';
+					//select.name = "dynamic";
+					// at this point, select.length == 0 is guaranteed
+					var option = document.createElement('option'); //document.createElementNS('http://www.w3.org/1999/xhtml', 'option');
+					option.appendChild(document.createTextNode('a'));
+					select.appendChild(option);
+					// at this point, select.length == 1 is guaranteed
+					document.getElementById('dataAttrTest3').appendChild(select);
+					window.doneDataAttrTest3 = true;
+				}, 100
+			);
+		}
+		if(window.addEventListener)
+			window.addEventListener("load", doDataAttrTest3, false);
+		else if(window.attachEvent)
+			window.attachEvent("load", doDataAttrTest3);
+		</script>
+	</form>-->
+
+	<script type="text/javascript">
+		window.attempts = 0;
+		function getTestResults(){
+			window.intervalID = window.setInterval(
+				function(){
+					if(window.filledContainers == 4 || window.attempts > 10){
+						var lis = document.getElementById('dynamicDataOnSelectTests').getElementsByTagName('li');
+						for(var i = 0; i < lis.length; i++){
+							var select = lis[i].getElementsByTagName('select')[0];
+							var results = lis[i].getElementsByTagName('span')[0]; //getElementsByClassName('results')
+							
+							if(select && select.length == 2){
+								if(select.options[0].text == 'a' && select.options[1].text == 'b'){
+									results.className = 'success';
+									results.innerHTML = "Success";
+								}
+								else {
+									results.className = 'failure';
+									results.innerHTML = "Failed: the prefilling code was executed too soon";
+								}
+							}
+							else {
+								results.className = 'failure';
+								results.innerHTML = "Failed: " + (select ? 'only ' + select.length + ' option(s) when 2 required.': 'no select element when one with 2 options required.');
+							}
+						}
+						window.clearInterval(window.intervalID);
+					}
+					window.attempts++;
+				}, 100
+			);
+		}
+		if(window.addEventListener)
+			window.addEventListener("load", getTestResults, false);
+		else if(window.attachEvent)
+			window.attachEvent("onload", getTestResults);	
+	</script>
 
 
 		<hr>
 		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br>
-		Version: 0.5 (2007-08-12) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
+		Version: 0.5.1 (2007-09-22) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
 		<address>
 		<a href="http://weston.ruter.net/">Weston Ruter</a>
 		</address>

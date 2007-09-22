@@ -5,7 +5,7 @@
 		<meta name="description" content="" />
 		<meta name="keywords" content="form-validation" />
 		<script type="text/javascript" src="../../webforms2_src.js"></script>
-		<script type="text/javascript" src="firebug/firebug.js"></script>
+		<!--<script type="text/javascript" src="firebug/firebug.js"></script>-->
 
 		<!-- BEGIN HEAD -->
 		<script type="text/javascript">
@@ -356,8 +356,8 @@
 							var select = lis[i].getElementsByTagName('select')[0];
 							var results = lis[i].getElementsByTagName('span')[0]; //getElementsByClassName('results')
 							
-							if(select.length == 2){
-								if(select.options[0].value == 'a' && select.options[1].value == 'b'){
+							if(select && select.length == 2){
+								if(select.options[0].text == 'a' && select.options[1].text == 'b'){
 									results.className = 'success';
 									results.innerHTML = "Success";
 								}
@@ -368,7 +368,7 @@
 							}
 							else {
 								results.className = 'failure';
-								results.innerHTML = "Failed: only " + select.length + " option(s) when 2 required.";
+								results.innerHTML = "Failed: " + (select ? 'only ' + select.length + ' option(s) when 2 required.': 'no select element when one with 2 options required.');
 							}
 						}
 						window.clearInterval(window.intervalID);
@@ -380,7 +380,7 @@
 		if(window.addEventListener)
 			window.addEventListener("load", getTestResults, false);
 		else if(window.attachEvent)
-			window.attachEvent("load", getTestResults);	
+			window.attachEvent("onload", getTestResults);	
 	</script>
 <!-- END TEST CASE -->  
   

@@ -105,10 +105,10 @@ createValidityState
 loadDataURI
 numberRegExp
 onsubmitValidityHandler
-repetitionBlock_constructor
-repetitionButton_click
-repetitionButton_constructor
-repetitionTemplate_constructor
+constructRepetitionBlock
+clickRepetitionButton
+constructRepetitionButton
+constructRepetitionTemplate
 sortNodes
 updateValidityState
 urlRegExp
@@ -125,7 +125,10 @@ visitedParents
 rePattern
 patternAttr
 hasInvalidIndicator
+prefillSelectElements
+prefillFormElements
 );
+#onDOMContentLoaded
 
 push @commonVarNames, '(?<=2\.|\s\s)cloneNode'; #\$wf2\.|\s
 push @commonVarNames, '(?<=2\.|\s\s)createElement';
@@ -164,6 +167,8 @@ close NOCOM;
 
 open NOWHITE, ">webforms2-nocomments-nowhitespace.js";
 $nowhite = $nocoms;
+$nowhite =~ s{ +}{ }g;
+$nowhite =~ s{ +,}{,}g;
 $nowhite =~ s{^\s+}{}gm; #remove all non-newline whitespace
 $thisHeader = $header;
 $thisHeader =~ s{\bwebforms.+?js\b}{webforms2-nocomments-nowhitespace.js};
@@ -189,13 +194,41 @@ foreach(@commonVarNames){
 foreach(keys %replacements){
 	$short =~ s{\b$_\b}{$replacements{$_}}eg;
 }
-$nowhite =~ s{^\s+}{}gm; #remove all non-newline whitespace
+
+$short =~ s{ +}{ }g;
+$short =~ s{ +,}{,}g;
+$short =~ s{^\s+}{}gm; #remove all non-newline whitespace
+
+my @shortLines = split /\n/, $short;
+my $newShort = '';
+my $lineSize = 0;
+#for(my $i = 0; $i < @shortLines; $i++){
+foreach(@shortLines){
+	$lineSize += length($_);
+	if($lineSize > 1024){
+		$lineSize = 0;
+		$newShort .= $_ . "\n";
+	}
+	else {
+		$newShort .= $_;
+	}
+	
+}
+
 $thisHeader = $header;
 $thisHeader =~ s{\bwebforms.+?js\b}{webforms2-nocomments-nowhitespace-shortnames.js};
-print SHORT $thisHeader . "\n" . $short;
+print SHORT $thisHeader . "\n\n" . $newShort;
 close SHORT;
 
-#exit;
+
+#open MAINS, ">webforms2-p.js";
+#$thisHeader = $header;
+#$thisHeader =~ s{\bwebforms.+?js\b}{webforms2-p.js};
+#print MAINS $thisHeader . "\n\n" . $newShort;
+#close MAINS;
+
+
+
 
 #use Dean Edward's packer to condense the code
 open PACKED, ">webforms2-p.js";
@@ -210,7 +243,7 @@ sub jsPack {
 	close TEMP;
 	
 	chdir('./packer.perl/');
-	my $packed = `perl jsPacker.pl -q -f -e62 -i ../~topack.js`; #-e62 -f 
+	my $packed = `perl jsPacker.pl -q -f -e0 -i ../~topack.js`; #-e62 -f  #-e62 
 	chdir('..');
 	
 	unlink "~topack.js";

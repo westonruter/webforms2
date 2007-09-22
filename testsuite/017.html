@@ -5,7 +5,7 @@
 		<title>Test Case 17: Form validation &laquo; Web Forms 2.0 Test Suite</title>
 		<meta name="author" content="Weston Ruter">
 		<meta name="description" content="">
-		<script type="text/javascript" src="../webforms2-p.js"></script>
+		<script type="text/javascript" src="../webforms2_src.js"></script>
 		<link rel="stylesheet" type="text/css" href="testcase.css"><!-- ISSUE: When this stylesheet is placed here after the script tag, MSIE sometimes cannot initialize Repetition Model before onload -->
 		<!-- prev --><link rel="prev" href="016.html"><!-- /prev -->
 		<!-- next --><link rel="next" href="018.html"><!-- /next -->
@@ -106,7 +106,7 @@
 				dom2EventModel.checked = false;
 				dom2EventModel.disabled = true;
 				dom2EventModel.parentNode.className = 'disabled';
-				oldEventModel.checked = true;	
+				oldEventModel.checked = true;
 			}
 			toggleTraditionalEvents(oldEventModel.checked);
 			
@@ -186,6 +186,16 @@
 				content:'*';
 				color:red;
 			}
+			.error {
+				color:red;
+				display:none;
+			}
+			div.disabled label {
+				text-decoration:line-through;
+			}
+			div.disabled .error {
+				display:inline;
+			}
 		</style>
 		
 	</head>
@@ -212,9 +222,9 @@
 <!--<div class="wf2_errorMsg wf2_firstErrorMsg" id="favFoods_wf2_errorMsg" style="top: 858px; left: 121px;"><ol class="single"><li>A value must be supplied or selected.</li></ol></div>-->
 		<fieldset style="display:inline;">
 			<legend><strong><code>invalid</code> Event model options</strong></legend>
-			<div><input type="checkbox" id="dom2EventModel" onclick="toggleDOM2Events(this.checked)" checked="checked" />
+			<div id='dom2EventModelOption'><input type="checkbox" id="dom2EventModel" onclick="toggleDOM2Events(this.checked)" checked="checked" />
 			<label for="dom2EventModel">Use DOM Level 2 event model</label>
-			<span class="error">Unsupported by this browser</span>
+			<span class='error'>Unsupported by this browser</span>
 			</div>
 			<div><input type="checkbox" id="oldEventModel" onclick="toggleTraditionalEvents(this.checked)" />
 			<label for="oldEventModel">Use traditional event model</label></div>
@@ -261,7 +271,7 @@
 								<label><input type="radio" name="favColor" value="red" required checked /> red</label>
 								<label><input type="radio" name="favColor" value="green" required /> green</label>
 								<label><input type="radio" name="favColor" value="blue" required /> blue</label></p>
-								<p>Favorite color:
+								<p>Favorite food:
 								<label><input type="checkbox" name="favFoods" value="baba ganouj" required checked /> baba ganouj</label>
 								<label><input type="checkbox" name="favFoods" value="massaman curry" required /> massaman curry</label>
 								<label><input type="checkbox" name="favFoods" value="pho" required /> pho</label></p>
@@ -306,7 +316,7 @@
 
 		<hr>
 		<a href="http://code.google.com/p/webforms2/">Web Forms 2.0 implementation</a><br>
-		Version: 0.5 (2007-08-12) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
+		Version: 0.5.1 (2007-09-22) <a href="http://code.google.com/p/webforms2/wiki/Changelog">changelog</a>
 		<address>
 		<a href="http://weston.ruter.net/">Weston Ruter</a>
 		</address>
