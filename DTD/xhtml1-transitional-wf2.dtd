@@ -1,7 +1,7 @@
 <!--
-   Extensible HTML version 1.0 Strict + Web Forms 2.0 DTD
+   Extensible HTML version 1.0 Transitional + Web Forms 2.0 DTD
 
-   This is the same as HTML 4 Strict except for
+   This is the same as HTML 4 Transitional except for
    changes due to the differences between XML and SGML
    and modifications to incorporate Web Forms 2.0.
 
@@ -99,6 +99,24 @@
 <!ENTITY % Coords "CDATA">
     <!-- comma separated list of lengths -->
 
+<!-- used for object, applet, img, input and iframe -->
+<!ENTITY % ImgAlign "(top|middle|bottom|left|right)">
+
+<!-- a color using sRGB: #RRGGBB as Hex values -->
+<!ENTITY % Color "CDATA">
+
+<!-- There are also 16 widely known color names with their sRGB values:
+
+    Black  = #000000    Green  = #008000
+    Silver = #C0C0C0    Lime   = #00FF00
+    Gray   = #808080    Olive  = #808000
+    White  = #FFFFFF    Yellow = #FFFF00
+    Maroon = #800000    Navy   = #000080
+    Red    = #FF0000    Blue   = #0000FF
+    Purple = #800080    Teal   = #008080
+    Fuchsia= #FF00FF    Aqua   = #00FFFF
+-->
+
 <!-- The repeat attribute must either have the value "template" or be an integer (an optional '-' 
      character followed by one or more decimal digits).-->
 <!ENTITY % RepetitionTemplate "CDATA">
@@ -174,21 +192,36 @@
   repeat-template IDREF                 #IMPLIED"
   ><!-- WF2 -->
 
-<!ENTITY % attrs "%coreattrs; %i18n; %events; %repetitionmodel;">
+<!ENTITY % attrs "%coreattrs; %i18n; %events;">
+
+<!-- text alignment for p, div, h1-h6. The default is
+     align="left" for ltr headings, "right" for rtl -->
+
+<!ENTITY % TextAlign "align (left|center|right|justify) #IMPLIED">
 
 <!--=================== Text Elements ====================================-->
 
-<!ENTITY % special.pre
-   "br | span | bdo | map">
-
+<!ENTITY % special.extra
+   "object | applet | img | map | iframe">
+	
+<!ENTITY % special.basic
+	"br | span | bdo">
 
 <!ENTITY % special
-   "%special.pre; | object | img ">
+   "%special.basic; | %special.extra;">
 
-<!ENTITY % fontstyle "tt | i | b | big | small ">
+<!ENTITY % fontstyle.extra "big | small | font | basefont">
 
-<!ENTITY % phrase "em | strong | dfn | code | q |
-                   samp | kbd | var | cite | abbr | acronym | sub | sup ">
+<!ENTITY % fontstyle.basic "tt | i | b | u
+                      | s | strike ">
+
+<!ENTITY % fontstyle "%fontstyle.basic; | %fontstyle.extra;">
+
+<!ENTITY % phrase.extra "sub | sup">
+<!ENTITY % phrase.basic "em | strong | dfn | code | q |
+                   samp | kbd | var | cite | abbr | acronym">
+
+<!ENTITY % phrase "%phrase.basic; | %phrase.extra;">
 
 <!ENTITY % inline.forms "input | select | textarea | label | button">
 
@@ -207,13 +240,11 @@
 <!--================== Block level elements ==============================-->
 
 <!ENTITY % heading "h1|h2|h3|h4|h5|h6">
-<!ENTITY % lists "ul | ol | dl">
-<!ENTITY % blocktext "pre | hr | blockquote | address">
+<!ENTITY % lists "ul | ol | dl | menu | dir">
+<!ENTITY % blocktext "pre | hr | blockquote | address | center | noframes">
 
 <!ENTITY % block
-     "p | %heading; | div | %lists; | %blocktext; | fieldset | table">
-
-<!ENTITY % Block "(%block; | form | %misc;)*">
+    "p | %heading; | div | %lists; | %blocktext; | isindex |fieldset | table">
 
 <!-- %Flow; mixes block and inline and is used for list items etc. -->
 <!ENTITY % Flow "(#PCDATA | %block; | form | %inline; | %misc;)*">
@@ -225,21 +256,23 @@
 <!ENTITY % a.content
    "(#PCDATA | %special; | %fontstyle; | %phrase; | %inline.forms; | %misc.inline;)*">
 
-<!-- pre uses %Inline excluding big, small, sup or sup -->
+<!-- pre uses %Inline excluding img, object, applet, big, small,
+     font, or basefont -->
 
 <!ENTITY % pre.content
-   "(#PCDATA | a | %fontstyle; | %phrase; | %special.pre; | %misc.inline;
-      | %inline.forms;)*">
+   "(#PCDATA | a | %special.basic; | %fontstyle.basic; | %phrase.basic; |
+	   %inline.forms; | %misc.inline;)*">
 
-<!-- form uses %Block; excluding form -->
+<!-- form uses %Flow; excluding form -->
 
-<!ENTITY % form.content "(%block; | %misc; | form | fieldset | datalist)*"> <!-- WF2 adds the Form content set to the Block content set -->
+<!ENTITY % form.content "(#PCDATA | %block; | %inline; | %misc;)*">
 
-<!-- button uses %Flow; but excludes a, form and form controls -->
+<!-- button uses %Flow; but excludes a, form, form controls, iframe -->
 
 <!ENTITY % button.content
    "(#PCDATA | p | %heading; | div | %lists; | %blocktext; |
-    table | %special; | %fontstyle; | %phrase; | %misc;)*">
+      table | br | span | bdo | object | applet | img | map |
+      %fontstyle; | %phrase; | %misc;)*">
 
 <!--================ Web Forms 2.0 Specific ==================================-->
 
@@ -262,7 +295,7 @@
 
 <!--================ Document Head =======================================-->
 
-<!ENTITY % head.misc "(script|style|meta|link|object)*">
+<!ENTITY % head.misc "(script|style|meta|link|object|isindex)*">
 
 <!-- content model is %head.misc; combined with a single
      title and an optional base element in any order -->
@@ -291,8 +324,9 @@
 
 <!ELEMENT base EMPTY>
 <!ATTLIST base
-  href        %URI;          #REQUIRED
   id          ID             #IMPLIED
+  href        %URI;          #IMPLIED
+  target      %FrameTarget;  #IMPLIED
   >
 
 <!-- generic metainformation -->
@@ -330,6 +364,7 @@
   rel         %LinkTypes;    #IMPLIED
   rev         %LinkTypes;    #IMPLIED
   media       %MediaDesc;    #IMPLIED
+  target      %FrameTarget;  #IMPLIED
   >
 
 <!-- style info, which may include CDATA sections -->
@@ -349,6 +384,7 @@
   id          ID             #IMPLIED
   charset     %Charset;      #IMPLIED
   type        %ContentType;  #REQUIRED
+  language    CDATA          #IMPLIED
   src         %URI;          #IMPLIED
   defer       (defer)        #IMPLIED
   xml:space   (preserve)     #FIXED 'preserve'
@@ -356,23 +392,56 @@
 
 <!-- alternate content container for non script-based rendering -->
 
-<!ELEMENT noscript %Block;>
+<!ELEMENT noscript %Flow;>
 <!ATTLIST noscript
+  %attrs;
+  >
+
+<!--======================= Frames =======================================-->
+
+<!-- inline subwindow -->
+
+<!ELEMENT iframe %Flow;>
+<!ATTLIST iframe
+  %coreattrs;
+  longdesc    %URI;          #IMPLIED
+  name        NMTOKEN        #IMPLIED
+  src         %URI;          #IMPLIED
+  frameborder (1|0)          "1"
+  marginwidth %Pixels;       #IMPLIED
+  marginheight %Pixels;      #IMPLIED
+  scrolling   (yes|no|auto)  "auto"
+  align       %ImgAlign;     #IMPLIED
+  height      %Length;       #IMPLIED
+  width       %Length;       #IMPLIED
+  >
+
+<!-- alternate content container for non frame-based rendering -->
+
+<!ELEMENT noframes %Flow;>
+<!ATTLIST noframes
   %attrs;
   >
 
 <!--=================== Document Body ====================================-->
 
-<!ELEMENT body %Block;>
+<!ELEMENT body %Flow;>
 <!ATTLIST body
   %attrs;
-  onload          %Script;   #IMPLIED
-  onunload        %Script;   #IMPLIED
+  onload      %Script;       #IMPLIED
+  onunload    %Script;       #IMPLIED
+  background  %URI;          #IMPLIED
+  bgcolor     %Color;        #IMPLIED
+  text        %Color;        #IMPLIED
+  link        %Color;        #IMPLIED
+  vlink       %Color;        #IMPLIED
+  alink       %Color;        #IMPLIED
   >
 
 <!ELEMENT div %Flow;>  <!-- generic language/style container -->
 <!ATTLIST div
   %attrs;
+  %TextAlign;
   >
 
 <!--=================== Paragraphs =======================================-->
@@ -380,6 +449,7 @@
 <!ELEMENT p %Inline;>
 <!ATTLIST p
   %attrs;
+  %TextAlign;
   >
 
 <!--=================== Headings =========================================-->
@@ -391,55 +461,102 @@
 
 <!ELEMENT h1  %Inline;>
 <!ATTLIST h1
-   %attrs;
-   >
+  %attrs;
+  %TextAlign;
+  >
 
 <!ELEMENT h2 %Inline;>
 <!ATTLIST h2
-   %attrs;
-   >
+  %attrs;
+  %TextAlign;
+  >
 
 <!ELEMENT h3 %Inline;>
 <!ATTLIST h3
-   %attrs;
-   >
+  %attrs;
+  %TextAlign;
+  >
 
 <!ELEMENT h4 %Inline;>
 <!ATTLIST h4
-   %attrs;
-   >
+  %attrs;
+  %TextAlign;
+  >
 
 <!ELEMENT h5 %Inline;>
 <!ATTLIST h5
-   %attrs;
-   >
+  %attrs;
+  %TextAlign;
+  >
 
 <!ELEMENT h6 %Inline;>
 <!ATTLIST h6
-   %attrs;
-   >
+  %attrs;
+  %TextAlign;
+  >
 
 <!--=================== Lists ============================================-->
+
+<!-- Unordered list bullet styles -->
+
+<!ENTITY % ULStyle "(disc|square|circle)">
 
 <!-- Unordered list -->
 
 <!ELEMENT ul (li)+>
 <!ATTLIST ul
   %attrs;
+  type        %ULStyle;     #IMPLIED
+  compact     (compact)     #IMPLIED
   >
+
+<!-- Ordered list numbering style
+
+    1   arabic numbers      1, 2, 3, ...
+    a   lower alpha         a, b, c, ...
+    A   upper alpha         A, B, C, ...
+    i   lower roman         i, ii, iii, ...
+    I   upper roman         I, II, III, ...
+
+    The style is applied to the sequence number which by default
+    is reset to 1 for the first list item in an ordered list.
+-->
+<!ENTITY % OLStyle "CDATA">
 
 <!-- Ordered (numbered) list -->
 
 <!ELEMENT ol (li)+>
 <!ATTLIST ol
   %attrs;
+  type        %OLStyle;      #IMPLIED
+  compact     (compact)      #IMPLIED
+  start       %Number;       #IMPLIED
   >
+
+<!-- single column list (DEPRECATED) --> 
+<!ELEMENT menu (li)+>
+<!ATTLIST menu
+  %attrs;
+  compact     (compact)     #IMPLIED
+  >
+
+<!-- multiple column list (DEPRECATED) --> 
+<!ELEMENT dir (li)+>
+<!ATTLIST dir
+  %attrs;
+  compact     (compact)     #IMPLIED
+  >
+
+<!-- LIStyle is constrained to: "(%ULStyle;|%OLStyle;)" -->
+<!ENTITY % LIStyle "CDATA">
 
 <!-- list item -->
 
 <!ELEMENT li %Flow;>
 <!ATTLIST li
   %attrs;
+  type        %LIStyle;      #IMPLIED
+  value       %Number;       #IMPLIED
   >
 
 <!-- definition lists - dt for term, dd for its definition -->
@@ -447,6 +564,7 @@
 <!ELEMENT dl (dt|dd)+>
 <!ATTLIST dl
   %attrs;
+  compact     (compact)      #IMPLIED
   >
 
 <!ELEMENT dt %Inline;>
@@ -463,7 +581,7 @@
 
 <!-- information on author -->
 
-<!ELEMENT address %Inline;>
+<!ELEMENT address (#PCDATA | %inline; | %misc.inline; | p)*>
 <!ATTLIST address
   %attrs;
   >
@@ -473,24 +591,38 @@
 <!ELEMENT hr EMPTY>
 <!ATTLIST hr
   %attrs;
+  align       (left|center|right) #IMPLIED
+  noshade     (noshade)      #IMPLIED
+  size        %Pixels;       #IMPLIED
+  width       %Length;       #IMPLIED
   >
 
 <!--=================== Preformatted Text ================================-->
 
-<!-- content is %Inline; excluding "img|object|big|small|sub|sup" -->
+<!-- content is %Inline; excluding 
+        "img|object|applet|big|small|sub|sup|font|basefont" -->
 
 <!ELEMENT pre %pre.content;>
 <!ATTLIST pre
   %attrs;
-  xml:space (preserve) #FIXED 'preserve'
+  width       %Number;      #IMPLIED
+  xml:space   (preserve)    #FIXED 'preserve'
   >
 
 <!--=================== Block-like Quotes ================================-->
 
-<!ELEMENT blockquote %Block;>
+<!ELEMENT blockquote %Flow;>
 <!ATTLIST blockquote
   %attrs;
   cite        %URI;          #IMPLIED
+  >
+
+<!--=================== Text alignment ===================================-->
+
+<!-- center content -->
+<!ELEMENT center %Flow;>
+<!ATTLIST center
+  %attrs;
   >
 
 <!--=================== Inserted/Deleted Text ============================-->
@@ -531,6 +663,7 @@
   rev         %LinkTypes;    #IMPLIED
   shape       %Shape;        "rect"
   coords      %Coords;       #IMPLIED
+  target      %FrameTarget;  #IMPLIED
   >
 
 <!--===================== Inline Elements ================================-->
@@ -552,6 +685,7 @@
 <!ELEMENT br EMPTY>   <!-- forced line break -->
 <!ATTLIST br
   %coreattrs;
+  clear       (left|all|right|none) "none"
   >
 
 <!ELEMENT em %Inline;>   <!-- emphasis -->
@@ -611,6 +745,32 @@
 <!ELEMENT small %Inline;>   <!-- smaller font -->
 <!ATTLIST small %attrs;>
 
+<!ELEMENT u %Inline;>   <!-- underline -->
+<!ATTLIST u %attrs;>
+
+<!ELEMENT s %Inline;>   <!-- strike-through -->
+<!ATTLIST s %attrs;>
+
+<!ELEMENT strike %Inline;>   <!-- strike-through -->
+<!ATTLIST strike %attrs;>
+
+<!ELEMENT basefont EMPTY>  <!-- base font size -->
+<!ATTLIST basefont
+  id          ID             #IMPLIED
+  size        CDATA          #REQUIRED
+  color       %Color;        #IMPLIED
+  face        CDATA          #IMPLIED
+  >
+
+<!ELEMENT font %Inline;> <!-- local change to font -->
+<!ATTLIST font
+  %coreattrs;
+  %i18n;
+  size        CDATA          #IMPLIED
+  color       %Color;        #IMPLIED
+  face        CDATA          #IMPLIED
+  >
+
 <!--==================== Object ======================================-->
 <!--
   object is used to embed objects as part of HTML pages.
@@ -635,6 +795,10 @@
   usemap      %URI;          #IMPLIED
   name        NMTOKEN        #IMPLIED
   tabindex    %Number;       #IMPLIED
+  align       %ImgAlign;     #IMPLIED
+  border      %Pixels;       #IMPLIED
+  hspace      %Pixels;       #IMPLIED
+  vspace      %Pixels;       #IMPLIED
   >
 
 <!--
@@ -646,10 +810,31 @@
 <!ELEMENT param EMPTY>
 <!ATTLIST param
   id          ID             #IMPLIED
-  name        CDATA          #IMPLIED
+  name        CDATA          #REQUIRED
   value       CDATA          #IMPLIED
   valuetype   (data|ref|object) "data"
   type        %ContentType;  #IMPLIED
+  >
+
+<!--=================== Java applet ==================================-->
+<!--
+  One of code or object attributes must be present.
+  Place param elements before other content.
+-->
+<!ELEMENT applet (#PCDATA | param | %block; | form | %inline; | %misc;)*>
+<!ATTLIST applet
+  %coreattrs;
+  codebase    %URI;          #IMPLIED
+  archive     CDATA          #IMPLIED
+  code        CDATA          #IMPLIED
+  object      CDATA          #IMPLIED
+  alt         %Text;         #IMPLIED
+  name        NMTOKEN        #IMPLIED
+  width       %Length;       #REQUIRED
+  height      %Length;       #REQUIRED
+  align       %ImgAlign;     #IMPLIED
+  hspace      %Pixels;       #IMPLIED
+  vspace      %Pixels;       #IMPLIED
   >
 
 <!--=================== Images ===========================================-->
@@ -659,8 +844,6 @@
    able to see the image, you should provide a text
    description using the alt and longdesc attributes.
    In addition, avoid the use of server-side image maps.
-   Note that in this DTD there is no name attribute. That
-   is only available in the transitional and frameset DTD.
 -->
 
 <!ELEMENT img EMPTY>
@@ -668,11 +851,16 @@
   %attrs;
   src         %URI;          #REQUIRED
   alt         %Text;         #REQUIRED
+  name        NMTOKEN        #IMPLIED
   longdesc    %URI;          #IMPLIED
   height      %Length;       #IMPLIED
   width       %Length;       #IMPLIED
   usemap      %URI;          #IMPLIED
   ismap       (ismap)        #IMPLIED
+  align       %ImgAlign;     #IMPLIED
+  border      %Length;       #IMPLIED
+  hspace      %Pixels;       #IMPLIED
+  vspace      %Pixels;       #IMPLIED
   >
 
 <!-- usemap points to a map element which may be in this document
@@ -691,7 +879,7 @@
   class       CDATA          #IMPLIED
   style       %StyleSheet;   #IMPLIED
   title       %Text;         #IMPLIED
-  name        NMTOKEN        #IMPLIED
+  name        CDATA          #IMPLIED
   >
 
 <!ELEMENT area EMPTY>
@@ -703,25 +891,28 @@
   href        %URI;          #IMPLIED
   nohref      (nohref)       #IMPLIED
   alt         %Text;         #REQUIRED
+  target      %FrameTarget;  #IMPLIED
   >
 
 <!--================ Forms ===============================================-->
-<!ELEMENT form %Flow;>   <!-- WF2: forms can now be nested -->
+
+<!ELEMENT form %form.content;>   <!-- forms shouldn't be nested -->
 
 <!ATTLIST form
   %attrs;
   action      %URI;          #REQUIRED
   method      (get|post|put|delete)     "get"
+  name        NMTOKEN        #IMPLIED
   enctype     %ContentType;  "application/x-www-form-urlencoded"
   onsubmit    %Script;       #IMPLIED
   onreset     %Script;       #IMPLIED
   accept      %ContentTypes; #IMPLIED
   accept-charset %Charsets;  #IMPLIED
+  target      %FrameTarget;  #IMPLIED
 
   replace      (document|values) #IMPLIED
   onformchange %Script;          #IMPLIED
   onforminput  %Script;          #IMPLIED
-  target       %FrameTarget;     #IMPLIED
   ><!-- WF2 -->
 
 <!--
@@ -766,6 +957,7 @@
   onselect    %Script;       #IMPLIED
   onchange    %Script;       #IMPLIED
   accept      %ContentTypes; #IMPLIED
+  align       %ImgAlign;     #IMPLIED
   
   autocomplete (on|off)      "on"
   autofocus    (autofocus)   #IMPLIED
@@ -871,21 +1063,24 @@
   Only one legend element should occur in the content
   and if present should only be preceded by whitespace.
 -->
-<!ELEMENT fieldset (#PCDATA | %block; | form | %inline; | %misc; | legend)*> <!-- %Flow; -->
+<!ELEMENT fieldset (#PCDATA | legend | %block; | form | %inline; | %misc;)*>
 <!ATTLIST fieldset
   %attrs;
   disabled    (disabled)     #IMPLIED
   form        IDREF          #IMPLIED
   ><!-- WF2 -->
 
+<!ENTITY % LAlign "(top|bottom|left|right)">
+
 <!ELEMENT legend %Inline;>     <!-- fieldset label -->
 <!ATTLIST legend
   %attrs;
   accesskey   %Character;    #IMPLIED
+  align       %LAlign;       #IMPLIED
   >
 
 <!--
- Content is %Flow; excluding a, form and form controls
+ Content is %Flow; excluding a, form, form controls, iframe
 --> 
 <!ELEMENT button (#PCDATA | %heading; | %lists; | %BlockMinusForm; | %InlineMinusFormctrl; )*>  <!-- push button --> <!--%button.content;--><!-- WF2 -->
 <!ATTLIST button
@@ -908,6 +1103,14 @@
   target       %FrameTarget; #IMPLIED
   template     IDREF         #IMPLIED
   ><!-- WF2 -->
+
+<!-- single-line text input control (DEPRECATED) -->
+<!ELEMENT isindex EMPTY>
+<!ATTLIST isindex
+  %coreattrs;
+  %i18n;
+  prompt      %Text;         #IMPLIED
+  >
 
 <!--======================= Tables =======================================-->
 
@@ -932,6 +1135,9 @@
 
 <!ENTITY % TRules "(none | groups | rows | cols | all)">
   
+<!-- horizontal placement of table relative to document -->
+<!ENTITY % TAlign "(left|center|right)">
+
 <!-- horizontal alignment attributes for cell contents
 
   char        alignment char, e.g. char=':'
@@ -969,10 +1175,15 @@
   rules       %TRules;       #IMPLIED
   cellspacing %Length;       #IMPLIED
   cellpadding %Length;       #IMPLIED
+  align       %TAlign;       #IMPLIED
+  bgcolor     %Color;        #IMPLIED
   >
+
+<!ENTITY % CAlign "(top|bottom|left|right)">
 
 <!ATTLIST caption
   %attrs;
+  align       %CAlign;       #IMPLIED
   >
 
 <!--
@@ -1041,8 +1252,8 @@ several semantically related columns together.
   %attrs;
   %cellhalign;
   %cellvalign;
+  bgcolor     %Color;        #IMPLIED
   >
-
 
 <!-- Scope is simpler than headers attribute for common tables -->
 <!ENTITY % Scope "(row|col|rowgroup|colgroup)">
@@ -1059,6 +1270,10 @@ several semantically related columns together.
   colspan     %Number;       "1"
   %cellhalign;
   %cellvalign;
+  nowrap      (nowrap)       #IMPLIED
+  bgcolor     %Color;        #IMPLIED
+  width       %Length;       #IMPLIED
+  height      %Length;       #IMPLIED
   >
 
 <!ATTLIST td
@@ -1071,5 +1286,9 @@ several semantically related columns together.
   colspan     %Number;       "1"
   %cellhalign;
   %cellvalign;
+  nowrap      (nowrap)       #IMPLIED
+  bgcolor     %Color;        #IMPLIED
+  width       %Length;       #IMPLIED
+  height      %Length;       #IMPLIED
   >
 
