@@ -127,6 +127,8 @@ patternAttr
 hasInvalidIndicator
 prefillSelectElements
 prefillFormElements
+hasElementExtensions
+hasGettersAndSetters
 );
 #onDOMContentLoaded
 

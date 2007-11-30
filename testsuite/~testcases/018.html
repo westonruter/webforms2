@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 5//EN">
 <html debug="true" xmlns="http://www.w3.org/1999/xhtml"><!-- debug -->
 	<head>
-		<title>Radio Buttons in Nested Repetition Blocks</title>
+		<title>Input Controls in Nested Repetition Blocks</title>
 		<meta name="description" content="" />
 		<meta name="keywords" content="repetition, validation" />
 		<script type="text/javascript" src="../../webforms2_src.js"></script>
@@ -18,7 +18,7 @@
 	</head>
 	<body>
 		<div id="testcaseDesc">
-			<p>Testing radio buttons in nested repetition blocks.</p>
+			<p>Testing various types of input controls in nested repetition blocks.</p>
 		</div>
 		
 		<!-- BEGIN TEST CASE -->
@@ -27,24 +27,60 @@
    <p> <label> System Name: <input name="name"/> </label> </p>
    <h2> Planets </h2>
    <ol>
-    <li repeat="template" repeat-start="0" id="planets">
-     <label> Name: <input name="planet[planets].name" required="required"/> </label><br>
+    <li repeat="template" repeat-start="1" id="planets">
+     <label for="planet[planets].name">Planet name: </label>
+	 <select name="planet[planets].name" id="planet[planets].name">
+		<option value="1">Mercury</option>
+		<option value="2">Venus</option>
+		<option value="3" selected>Earth</option>
+		<option value="4">Mars</option>
+		<option value="5">Jupiter</option>
+		<option value="6">Saturn</option>
+		<option value="7">Neptune</option>
+		<option value="8">Uranus</option>
+		<optgroup label="Dwarf Planets">
+			<option>Ceres</option>
+			<option>Pluto</option>
+			<option>Eris</option>
+		</optgroup>
+	 </select>
+	 
+	 <label>Nickname: <input name="planet[planets].nickname" required="required"/> </label><br>
 	   Class:
-           <label><input name="planet[planets].class" type="radio" value="M"  /> N </label>
-           <label><input name="planet[planets].class" type="radio" value="N" checked/> M </label>
-     <h3> Moons</h3>
-     <ul>
-      <li repeat="template" repeat-start="0" id="planet[planets].moons">
-       <input name="planet[planets].moon[planet[planets].moons]"/>
-	   Class:
-           <label><input name="planet[planets].moon[planet[planets].moons].class" type="radio" value="M" checked /> N </label>
-           <label><input name="planet[planets].moon[planet[planets].moons].class" type="radio" value="N" /> M </label>
-		   <label><input name="planet[planets].inhabited" type="checkbox" checked/> inhabited </label>
-       <button type="remove">Delete Moon</button>
-      </li>
-     </ul>
-     <p><button type="add" template="planet[planets].moons">Add Moon</button></p>
-     <p><button type="remove">Delete Planet</button></p>
+			<label><input name="planet[planets].class" type="radio" value="M"> N </label>
+			<label><input name="planet[planets].class" type="radio" value="N" checked> M </label><br>
+		
+			<label><input name="planet[planets].isPopulated" type="checkbox" checked> Is populated?</label><br>
+			<label for="planet[planets].starships">Spaceship home:</label><br>
+			<select name="planet[planets].starships" id="planet[planets].starships" multiple size="6">
+			   <option value="1" selected>Space Shuttle</option>
+			   <option value="2">Apollo</option>
+			   <option value="3" selected>Sputnik</option>
+			   <option value="4">Mercury</option>
+			   <optgroup label="Lost or nearly lost">
+				  <option>Apollo 1</option>
+			      <option selected>Apollo 13</option>
+			   </optgroup>
+			   <option value="5">Space Ship One</option>
+			   <option value="6" selected>Virgin Galactic</option>
+			   <option value="7">Boeing 797 Spaceliner</option>
+			</select><br>
+	
+		<fieldset>
+		   <legend>Moons</legend>
+		   <ul>
+			<li repeat="template" repeat-start="0" id="planet[planets].moons">
+			 <input name="planet[planets].moon[planet[planets].moons]"/>
+			 Class:
+				 <label><input name="planet[planets].moon[planet[planets].moons].class" type="radio" value="M" checked> N </label>
+				 <label><input name="planet[planets].moon[planet[planets].moons].class" type="radio" value="N"> M </label>
+				 <label><input name="planet[planets].inhabited" type="checkbox" checked> inhabited </label>
+			 <button type="remove">Delete Moon</button>
+			</li>
+		   </ul>
+		   <p><button type="add" template="planet[planets].moons">Add Moon</button></p>
+		</fieldset>
+		<p><button type="remove">Delete Planet</button></p>
     </li>
    </ol>
    <p><button type="add" template="planets">Add Planet</button></p>

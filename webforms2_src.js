@@ -1,6 +1,6 @@
 /*
  * Web Forms 2.0 Cross-browser Implementation <http://code.google.com/p/webforms2/>
- * Version: 0.5.1 (2007-09-22)
+ * Version: 0.5.2 (2007-11-29)
  * Copyright: 2007, Weston Ruter <http://weston.ruter.net/>
  * License: GNU General Public License, Free Software Foundation
  *          <http://creativecommons.org/licenses/GPL/2.0/>
@@ -18,9 +18,12 @@ if(document.implementation && document.implementation.hasFeature &&
   !document.implementation.hasFeature('WebForms', '2.0')){
 
 $wf2 = {
-	version : '0.5.1',
+	version : '0.5.2',
 	isInitialized : false,
 	libpath : '',
+	
+	hasElementExtensions : (window.HTMLElement && HTMLElement.prototype),
+	hasGettersAndSetters : ($wf2.__defineGetter__ && $wf2.__defineSetter__),
 	
 	onDOMContentLoaded : function(){
 		if($wf2.isInitialized)
@@ -1610,9 +1613,9 @@ $wf2 = {
 		var minAttrNode, maxAttrNode, valueAttrNode;
 		minAttrNode = node.getAttributeNode('min');
 		maxAttrNode = node.getAttributeNode('max');
-		node.wf2Min = undefined;
-		node.wf2Max = undefined;
-		node.wf2Step = undefined;
+		node.min = undefined; //wf2Min
+		node.max = undefined; //wf2Max
+		node.step = undefined; //wf2Step
 		valueAttrNode = node.getAttributeNode('value');
 		
 		node.validity = $wf2.createValidityState();
@@ -1649,10 +1652,10 @@ $wf2 = {
 		
 		if(type == 'range'){
 			//For this type...min defaults to 0...and value defaults to the min value.
-			node.wf2Min = (minAttrNode && $wf2.numberRegExp.test(minAttrNode.value)) ? Number(minAttrNode.value) : 0;
+			node.min = (minAttrNode && $wf2.numberRegExp.test(minAttrNode.value)) ? Number(minAttrNode.value) : 0;
 			if((!valueAttrNode || !valueAttrNode.specified) && node.value === '' && !node.wf2ValueProvided){ //(!valueAttrNode || !valueAttrNode.specified) && 
-				node.setAttribute('value', node.wf2Min);
-				node.value = node.wf2Min;
+				node.setAttribute('value', node.min);
+				node.value = node.min;
 				node.wf2ValueProvided = true;
 			}
 		}
@@ -1728,10 +1731,10 @@ $wf2 = {
 					case 'range':
 						node.validity.typeMismatch = !$wf2.numberRegExp.test(node.value);
 	//						if(!node.validity.typeMismatch && node.getAttribute("step") != 'any'){
-	//							if(node.wf2Step == undefined)
-	//								node.wf2Step = 1;
+	//							if(node.step == undefined)
+	//								node.step = 1;
 	//							var val = Number(node.value);
-	//							node.validity.stepMismatch = (val == parseInt(val) && node.wf2Step != parseInt(node.wf2Step));
+	//							node.validity.stepMismatch = (val == parseInt(val) && node.step != parseInt(node.step));
 	//						}
 						break;
 					case 'email':
@@ -1769,46 +1772,46 @@ $wf2 = {
 						//For numeric types (number  and range) the value must exactly match the number type (numberRegExp)
 						if(type == 'range'){
 							//For this type...max defaults to 100
-							node.wf2Max = (maxAttrNode && $wf2.numberRegExp.test(maxAttrNode.value)) ? Number(maxAttrNode.value) : 100;
-							//node.wf2Min is set at the beginning of this function so that the min value can be set as the default value
+							node.max = (maxAttrNode && $wf2.numberRegExp.test(maxAttrNode.value)) ? Number(maxAttrNode.value) : 100;
+							//node.min is set at the beginning of this function so that the min value can be set as the default value
 						}
 						else {
 							if(minAttrNode && $wf2.numberRegExp.test(minAttrNode.value))
-								node.wf2Min = Number(minAttrNode.value);
+								node.min = Number(minAttrNode.value);
 							if(maxAttrNode && $wf2.numberRegExp.test(maxAttrNode.value))
-								node.wf2Max = Number(maxAttrNode.value);
+								node.max = Number(maxAttrNode.value);
 						}
-						node.validity.rangeUnderflow = (node.wf2Min != undefined && Number(node.value) < node.wf2Min);
-						node.validity.rangeOverflow  = (node.wf2Max != undefined && Number(node.value) > node.wf2Max);
+						node.validity.rangeUnderflow = (node.min != undefined && Number(node.value) < node.min);
+						node.validity.rangeOverflow  = (node.max != undefined && Number(node.value) > node.max);
 					}
 					//For file types it must be a sequence of digits 0-9, treated as a base ten integer.
 					else if(type == 'file'){
 						if(minAttrNode && /^\d+$/.test(minAttrNode.value))
-							node.wf2Min = Number(minAttrNode.value);
+							node.min = Number(minAttrNode.value);
 						//If absent, or if the minimum value is not in exactly the expected format, there
 						//   is no minimum restriction, except for the ... file types, where the default is zero.
-						else node.wf2Min = 0;
+						else node.min = 0;
 						if(maxAttrNode && /^\d+$/.test(maxAttrNode.value))
-							node.wf2Max = Number(maxAttrNode.value);
+							node.max = Number(maxAttrNode.value);
 						//If absent, or if the maximum value is not in exactly the expected format, there is no
 						//  maximum restriction (beyond those intrinsic to the type), except for ... the file
 						//  type, where the default is 1.
-						else node.wf2Max = 1;
+						else node.max = 1;
 						
-						//node.validity.rangeUnderflow = (node.wf2Min != undefined && Number(node.value) < node.wf2Min);
-						//node.validity.rangeOverflow  = (node.wf2Max != undefined && Number(node.value) > node.wf2Max);
+						//node.validity.rangeUnderflow = (node.min != undefined && Number(node.value) < node.min);
+						//node.validity.rangeOverflow  = (node.max != undefined && Number(node.value) > node.max);
 					}
 					//Date related
 					else {
 						//For date and time types it must match the relevant format mentioned for that type, all fields
 						//   having the right number of digits, with the right separating punctuation.
 						if(minAttrNode){
-							node.wf2Min = $wf2.parseISO8601(minAttrNode.value, type);
-							node.validity.rangeUnderflow = (node.wf2Min && node.wf2Value < node.wf2Min);
+							node.min = $wf2.parseISO8601(minAttrNode.value, type);
+							node.validity.rangeUnderflow = (node.min && node.wf2Value < node.min);
 						}
 						if(maxAttrNode){
-							node.wf2Max = $wf2.parseISO8601(maxAttrNode.value, type);
-							node.validity.rangeOverflow = (node.wf2Max && node.wf2Value > node.wf2Max);
+							node.max = $wf2.parseISO8601(maxAttrNode.value, type);
+							node.validity.rangeOverflow = (node.max && node.wf2Value > node.max);
 						}
 					}
 				}
@@ -1832,25 +1835,25 @@ $wf2 = {
 						//   0-9 interpreted as base ten. If the step is zero, it is interpreted as the default. The default
 						//   for the step  attribute for these control types is 1.
 						//The step [for types number and range] attribute specifies the precision, defaulting to 1.
-						node.wf2Step = isTimeRelated ? 60 : 1;
+						node.step = isTimeRelated ? 60 : 1;
 					}
 					//The literal value 'any' may be used as the value of the step attribute. This keyword indicates that
 					//   any value may be used (within the bounds of other restrictions placed on the control).
 					else if(stepAttrNode.value == 'any')
-						node.wf2Step = 'any'; //isStepAny = true;
+						node.step = 'any'; //isStepAny = true;
 					//The format of the step attribute is the number format described above, except that
 					//   the value must be greater than zero.
 					else if($wf2.numberRegExp.test(stepAttrNode.value) && stepAttrNode.value > 0)
-						node.wf2Step = Number(stepAttrNode.value);
+						node.step = Number(stepAttrNode.value);
 					else
-						node.wf2Step = isTimeRelated ? 60 : 1;
+						node.step = isTimeRelated ? 60 : 1;
 					
-					if(node.wf2Step != 'any'){
+					if(node.step != 'any'){
 						node.wf2StepDatum = null;
 						if(minAttrNode)
-							node.wf2StepDatum = node.wf2Min;
+							node.wf2StepDatum = node.min;
 						else if(maxAttrNode)
-							node.wf2StepDatum = node.wf2Max;
+							node.wf2StepDatum = node.max;
 						else
 							node.wf2StepDatum = $wf2.zeroPoint[type] ? $wf2.zeroPoint[type] : 0;
 						
@@ -1858,7 +1861,7 @@ $wf2 = {
 						//   1970-01-01T00:00:00.0, for date controls is 1970-01-01, for month controls is 1970-01,
 						//   for week controls is 1970-W01 (the week starting 1969-12-29 and containing 1970-01-01),
 						//   and for time controls is 00:00.
-						var _step = node.wf2Step;
+						var _step = node.step;
 						if(type == 'month'){
 							var month1 = node.wf2StepDatum.getUTCFullYear()*12 + node.wf2StepDatum.getUTCMonth();
 							var month2 = node.wf2Value.getUTCFullYear()*12 + node.wf2Value.getUTCMonth();
@@ -1892,7 +1895,7 @@ $wf2 = {
 			//   and the value of the control doesn't exactly match the control's default value. 
 			//[The maxlength] attribute must not affect the initial value (the DOM defaultValue attribute). It must only
 			//   affect what the user may enter and whether a validity error is flagged during validation.
-			if(node.maxLength >= 0 && node.value != node.defaultValue && doMaxLengthCheck){
+			if(doMaxLengthCheck && node.maxLength >= 0 && node.value != node.defaultValue){
 				//A newline in a textarea's value must count as two code points for maxlength processing (because
 				//   newlines in textareas are submitted as U+000D U+000A). [[NOT IMPLEMENTED: This includes the
 				//   implied newlines that are added for submission when the wrap attribute has the value hard.]]
@@ -2095,11 +2098,11 @@ $wf2 = {
 		if(target.validity.typeMismatch)
 			ol.appendChild($wf2.createLI($wf2.invalidMessages.typeMismatch.replace(/%s/, type)));
 		if(target.validity.rangeUnderflow)
-			ol.appendChild($wf2.createLI($wf2.invalidMessages.rangeUnderflow.replace(/%s/, $wf2.valueToWF2Type(target.wf2Min, type))));
+			ol.appendChild($wf2.createLI($wf2.invalidMessages.rangeUnderflow.replace(/%s/, $wf2.valueToWF2Type(target.min, type))));
 		if(target.validity.rangeOverflow)
-			ol.appendChild($wf2.createLI($wf2.invalidMessages.rangeOverflow.replace(/%s/, $wf2.valueToWF2Type(target.wf2Max, type))));
+			ol.appendChild($wf2.createLI($wf2.invalidMessages.rangeOverflow.replace(/%s/, $wf2.valueToWF2Type(target.max, type))));
 		if(target.validity.stepMismatch)
-			ol.appendChild($wf2.createLI($wf2.invalidMessages.stepMismatch.replace(/%s/, target.wf2Step + ($wf2.stepUnits[type] ? ' ' + $wf2.stepUnits[type] + '(s)' : '')).replace(/%s/, $wf2.valueToWF2Type(target.wf2StepDatum, type))));
+			ol.appendChild($wf2.createLI($wf2.invalidMessages.stepMismatch.replace(/%s/, target.step + ($wf2.stepUnits[type] ? ' ' + $wf2.stepUnits[type] + '(s)' : '')).replace(/%s/, $wf2.valueToWF2Type(target.wf2StepDatum, type))));
 		if(target.validity.tooLong)
 			ol.appendChild($wf2.createLI($wf2.invalidMessages.tooLong.replace(/%s/, target.maxLength).replace(/%s/, target.wf2ValueLength ? target.wf2ValueLength : target.value.length)));
 		if(target.validity.patternMismatch)
@@ -2221,7 +2224,7 @@ $wf2 = {
 		addRepetitionBlock:1,addRepetitionBlockByIndex:1,moveRepetitionBlock:1,
 		removeRepetitionBlock:1, repetitionBlocks:1,
 		setCustomValidity:1,checkValidity:1,validity:1,validationMessage:1,willValidate:1,
-		wf2Min:1,wf2Max:1,wf2Step:1,wf2StepDatum:1,wf2Value:1,wf2Initialized:1
+		wf2StepDatum:1,wf2Value:1,wf2Initialized:1,wf2ValueLength:1
 	},
 	cloneNode_rtEventHandlerAttrs : {
 		onmoved:1,onadded:1,onremoved:1, //don't copy Repetition old model event attributes not methods
@@ -2316,8 +2319,15 @@ $wf2 = {
 				if(node.nodeName && node.nodeName.toLowerCase() == 'label' && node.htmlFor)
 					clone.htmlFor = (processAttr ? processAttr(node.htmlFor) : node.htmlFor);
 				
-				for(i = 0; i < node.childNodes.length; i++)
+
+				if(clone.nodeName.toLowerCase() == 'option'){ //MSIE clone element bug requires this
+					clone.selected = node.selected;
+					clone.defaultSelected = node.defaultSelected;
+				}
+				
+				for(i = 0; i < node.childNodes.length; i++){
 					clone.appendChild($wf2.cloneNode(node.childNodes[i], processAttr, rtNestedDepth));
+				}
 				break;
 			//MSIE BUG: The following three cases are for MSIE because when cloning nodes from XML
 			//          files loaded via SELECT@data attribute, MSIE fails when performing appendChild.
