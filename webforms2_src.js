@@ -1,6 +1,6 @@
 /*
  * Web Forms 2.0 Cross-browser Implementation <http://code.google.com/p/webforms2/>
- * Version: 0.5.2 (2007-11-29)
+ * Version: 0.5.3 (2008-07-28)
  * Copyright: 2007, Weston Ruter <http://weston.ruter.net/>
  * License: GNU General Public License, Free Software Foundation
  *          <http://creativecommons.org/licenses/GPL/2.0/>
@@ -1486,8 +1486,10 @@ $wf2 = {
 		//for(i = 0; i < formElements.length; i++)
 		//	_elements.push(formElements[i]);
 		for(i = 0; el = formElements[i]; i++){
+			var type = (el.getAttribute('type') ? el.getAttribute('type').toLowerCase() : el.type);
+			el.willValidate = !(/(hidden|button|reset|add|remove|move-up|move-down)/.test(type) || !el.name || el.disabled);
 			//Then, each element in this list whose willValidate DOM attribute is true is checked for validity
-			if(el.checkValidity && el.willValidate == true){
+			if(el.checkValidity && el.willValidate){
 				if(!el.checkValidity())
 					valid = false;
 			}
@@ -1666,6 +1668,8 @@ $wf2 = {
 		//The required attribute applies to all form controls except controls with the type hidden,
 		//   image inputs, buttons (submit, move-up, etc), and select and output elements. For
 		//   disabled or readonly controls, the attribute has no effect.
+		var type = (node.getAttribute('type') ? node.getAttribute('type').toLowerCase() : node.type);
+		node.willValidate = !(/(hidden|button|reset|add|remove|move-up|move-down)/.test(type) || !node.name || node.disabled);
 		if(doRequiredCheck && node.willValidate){
 			//For checkboxes, the required  attribute shall only be satisfied when one or more of
 			//  the checkboxes with that name in that form are checked.

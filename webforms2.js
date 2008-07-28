@@ -1,6 +1,6 @@
 /*
  * Web Forms 2.0 Cross-browser Implementation <http://code.google.com/p/webforms2/>
- * Version: 0.5.2 (2007-11-29)
+ * Version: 0.5.3 (2008-07-28)
  * Copyright: 2007, Weston Ruter <http://weston.ruter.net/>
  * License: GNU General Public License, Free Software Foundation
  *          <http://creativecommons.org/licenses/GPL/2.0/>
@@ -830,7 +830,9 @@ formCheckValidity : function(){
 var i, el, valid = true;
 var formElements = $wf2.getFormElements.apply(this);
 for(i = 0; el = formElements[i]; i++){
-if(el.checkValidity && el.willValidate == true){
+var type = (el.getAttribute('type') ? el.getAttribute('type').toLowerCase() : el.type);
+el.willValidate = !(/(hidden|button|reset|add|remove|move-up|move-down)/.test(type) || !el.name || el.disabled);
+if(el.checkValidity && el.willValidate){
 if(!el.checkValidity())
 valid = false;
 }
@@ -948,6 +950,8 @@ node.wf2ValueProvided = true;
 }
 }
 node.wf2Value = node.value;
+var type = (node.getAttribute('type') ? node.getAttribute('type').toLowerCase() : node.type);
+node.willValidate = !(/(hidden|button|reset|add|remove|move-up|move-down)/.test(type) || !node.name || node.disabled);
 if(doRequiredCheck && node.willValidate){
 if(isRadioOrCheckbox){
 if(node.form && node.form[node.name]){
