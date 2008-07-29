@@ -1,6 +1,6 @@
 /*
  * Web Forms 2.0 Cross-browser Implementation <http://code.google.com/p/webforms2/>
- * Version: 0.5.3 (2008-07-28)
+ * Version: 0.5.4 (2008-07-29)
  * Copyright: 2007, Weston Ruter <http://weston.ruter.net/>
  * License: GNU General Public License, Free Software Foundation
  *          <http://creativecommons.org/licenses/GPL/2.0/>
@@ -18,7 +18,7 @@ if(document.implementation && document.implementation.hasFeature &&
   !document.implementation.hasFeature('WebForms', '2.0')){
 
 $wf2 = {
-	version : '0.5.2',
+	version : '0.5.4',
 	isInitialized : false,
 	libpath : '',
 	
@@ -1621,6 +1621,7 @@ $wf2 = {
 		valueAttrNode = node.getAttributeNode('value');
 		
 		node.validity = $wf2.createValidityState();
+		node.validity.customError = !!node.validationMessage;
 		
 		//var type = node.type ? node.type.toLowerCase() : 'text';
 		//var type = (node.type ? node.getAttribute('type').toLowerCase() :
