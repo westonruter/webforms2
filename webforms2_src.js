@@ -1,7 +1,8 @@
 /*
  * Web Forms 2.0 Cross-browser Implementation <http://code.google.com/p/webforms2/>
- * Version: 0.5.4 (2008-07-29)
- * Copyright: 2007, Weston Ruter <http://weston.ruter.net/>
+ * Version: 0.7 (2011-03-01)
+ * Copyright: 2007, Weston Ruter <http://weston.ruter.net/> 
+ *    with additions by Zoltan Hawryluk <http://www.useragentman.com>
  * License: GNU General Public License, Free Software Foundation
  *          <http://creativecommons.org/licenses/GPL/2.0/>
  * 
@@ -9,6 +10,12 @@
  * WebForms 2.0 specification: <http://whatwg.org/specs/web-forms/current-work/>
  *
  * Usage: <script type="text/javascript" src="webforms2_src.js"></script>
+ * 
+ * Changelog:
+ * version 0.5.4  - initial release by Weston Ruter
+ * version 0.6    - refactored for use with HTML5Widgets by Zoltan Hawryluk (July 27th, 2010)
+ * version 0.6.1  - updated to deal with WebKit's half-implemented WebForms 2 Implementation (Sept 10, 2010)
+ * version 0.7    - bug fixes with nested repetition models by Zoltan Hawryluk.
  */
 
 if(!window.$wf2){
@@ -21,9 +28,17 @@ $wf2 = {
 	version : '0.5.4',
 	isInitialized : false,
 	libpath : '',
+	globalEvent: null,
 	
 	hasElementExtensions : (window.HTMLElement && HTMLElement.prototype),
 	hasGettersAndSetters : ($wf2.__defineGetter__ && $wf2.__defineSetter__),
+	
+	hasBadImplementation: navigator.userAgent.indexOf('WebKit'),
+	
+	callBeforeValidation : new Array(),
+	callAfterValidation : new Array(),
+	callAfterDOMContentLoaded: new Array(),
+	
 	
 	onDOMContentLoaded : function(){
 		if($wf2.isInitialized)
@@ -31,6 +46,14 @@ $wf2 = {
 		$wf2.isInitialized = true;  //Safari needs this here for some reason
 		
 		var i,j,k,node;
+		
+		//set global event for fireEvent method
+		if (document.createEventObject){
+	        // dispatch for IE
+	        $wf2.globalEvent = document.createEventObject();
+	    } else 	if (document.createEvent) {
+			$wf2.globalEvent = document.createEvent("HTMLEvents");
+		} 
 		
 		//Include stylesheet
 		var style = document.createElement('link');
@@ -98,6 +121,10 @@ $wf2 = {
 		}
 		
 		$wf2.initNonRepetitionFunctionality();
+		
+		for (var i=0; i<$wf2.callAfterDOMContentLoaded.length; i++) {
+			$wf2.callAfterDOMContentLoaded[i]();
+		}
 	},
 
 
@@ -501,7 +528,9 @@ $wf2 = {
 		//   (Invoking the template's replication behaviour means calling its addRepetitionBlock() method).
 		//for(var i = 0; i < Math.max(this.repeatStart, this.repeatMin); i++)
 		for(var i = 0; (i < this.repeatStart || this.repetitionBlocks.length < this.repeatMin); i++)
-			this.addRepetitionBlock();
+			if (!this.addRepetitionBlock()) {
+				break;
+			}
 		
 		$wf2.repetitionTemplates.push(this);
 		this.wf2Initialized = true;
@@ -1406,16 +1435,17 @@ $wf2 = {
 		parent = (parent || document.documentElement);
 		var i,j, frm, frms = parent.getElementsByTagName('form');
 		for(i = 0; frm = frms[i]; i++){
-			if(frm.checkValidity)
+			if(frm.checkValidity && !$wf2.hasBadImplementation)
 				continue;
 			frm.checkValidity = $wf2.formCheckValidity;
+			
 			if(frm.addEventListener)
 				frm.addEventListener('submit', $wf2.onsubmitValidityHandler, false);
 			else
 				frm.attachEvent('onsubmit', $wf2.onsubmitValidityHandler);
 		}
 		
-		var ctrl, ctrls = $wf2.getElementsByTagNames.apply(parent, ['input','select','textarea']);//parent.getElementsByTagName([i]);
+		var ctrl, ctrls = $wf2.getElementsByTagNames.apply(parent, ['input','select','textarea', 'button']);//parent.getElementsByTagName([i]);
 		for(i = 0; ctrl = ctrls[i]; i++){
 			$wf2.applyValidityInterface(ctrl);
 			$wf2.updateValidityState(ctrl); //ctrl._updateValidityState();
@@ -1465,6 +1495,8 @@ $wf2 = {
 		//  UAs with a viewport should also scroll the document enough to make the control visible,
 		//  [[even if it is not of a type normally focusable.]] //WHAT DOES THIS MEAN?
 		el.focus(); //BUG: in Gecko this does not work within DOMNodeInserted event handler, but the following does; setTimeout(function(){el.focus();}, 0);
+		
+		
 	},
 
 	/*#############################################################################################
@@ -1487,15 +1519,23 @@ $wf2 = {
 		//	_elements.push(formElements[i]);
 		for(i = 0; el = formElements[i]; i++){
 			var type = (el.getAttribute('type') ? el.getAttribute('type').toLowerCase() : el.type);
-			el.willValidate = !(/(hidden|button|reset|add|remove|move-up|move-down)/.test(type) || !el.name || el.disabled);
+			el.willValidate = !(/(hidden|button|reset|add|remove|move-up|move-down)/.test(type) || !el.name || el.disabled)
 			//Then, each element in this list whose willValidate DOM attribute is true is checked for validity
 			if(el.checkValidity && el.willValidate){
-				if(!el.checkValidity())
+				if(!el.checkValidity() && el.checkValidity() != undefined)
 					valid = false;
 			}
 		}
 		
-		if(!valid && $wf2.invalidIndicators.length){ //second condition needed because modal in oninvalid handler may cause indicators to disappear before this is reached
+		if (!valid) {
+			$wf2.hiliteFirstError();
+		}
+		return valid;
+	},
+	
+	hiliteFirstError: function () {
+		
+		if($wf2.invalidIndicators.length){ //second condition needed because modal in oninvalid handler may cause indicators to disappear before this is reached
 			$wf2.invalidIndicators[0].errorMsg.className += " wf2_firstErrorMsg";
 			
 			//scroll to near the location where invalid control is
@@ -1514,18 +1554,36 @@ $wf2 = {
 			}
 			//focus on the first invalid control and make sure error message is visible
 			else {
-				el.focus();
+				
+				setTimeout(
+					function() {
+						el.focus();
+						$wf2.fireEvent(el, 'focus');
+					}
+				, 10)
+				
 				//NOTE: We should only do this if the control's style.bottom == 0
 				scrollBy(0, $wf2.invalidIndicators[0].errorMsg.offsetHeight);
 			}
 		}
-		return valid;
+		
 	},
 	
 	controlCheckValidity : function(){
-		$wf2.updateValidityState(this);
-		if(this.validity.valid)
+		$wf2.controlCheckValidityOfElement(this);
+		
+	},
+	
+	controlCheckValidityOfElement: function (el) {
+		
+	
+		
+		$wf2.updateValidityState(el);
+		
+		if (el.validity.valid) {
+			
 			return true;
+		}
 		
 		var canceled = false;
 		
@@ -1536,12 +1594,12 @@ $wf2 = {
 			else if(document.createEventObject)
 				evt = document.createEventObject();
 			evt.initEvent('invalid', true /*canBubble*/, true /*cancelable*/);
-			evt.srcElement = this;
-			if(this.dispatchEvent)
-				canceled = !this.dispatchEvent(evt);
-			else if(this.fireEvent){
+			evt.srcElement = el;
+			if(el.dispatchEvent)
+				canceled = !el.dispatchEvent(evt);
+			else if(el.fireEvent){
 				//console.warn("fireEvent('oninvalid') for MSIE is not yet working");
-				//this.fireEvent('oninvalid', invalidEvt);
+				//el.fireEvent('oninvalid', invalidEvt);
 			}
 		}
 		catch(err){
@@ -1552,18 +1610,18 @@ $wf2 = {
 				evt.type = 'invalid';
 				evt.cancelBubble = false;
 			}
-			evt.target = evt.srcElement = this;
+			evt.target = evt.srcElement = el;
 		}
 		
-		var oninvalidAttr = this.getAttribute('oninvalid');
-		if(oninvalidAttr && (!this.oninvalid || typeof this.oninvalid != 'function')) //in MSIE, attribute == property
-			this.oninvalid = new Function('event', oninvalidAttr);
+		var oninvalidAttr = el.getAttribute('oninvalid');
+		if(oninvalidAttr && (!el.oninvalid || typeof el.oninvalid != 'function')) //in MSIE, attribute == property
+			el.oninvalid = new Function('event', oninvalidAttr);
 
 		try {
 			//Dispatch events for the old event model
-			if(this.oninvalid){
-				//canceled = this.oninvalid(evt) === false || canceled; 
-				canceled = this.oninvalid.apply(this, [evt]) === false || canceled; //for some reason, exceptions cannot be caught if using the method above in MSIE
+			if(el.oninvalid){
+				//canceled = el.oninvalid(evt) === false || canceled; 
+				canceled = el.oninvalid.apply(el, [evt]) === false || canceled; //for some reason, exceptions cannot be caught if using the method above in MSIE
 			}
 		}
 		catch(err){
@@ -1575,9 +1633,9 @@ $wf2 = {
 
 		//Determine if this radio/checkbox already has an invalid indicator
 		var hasInvalidIndicator = false;
-		if(this.type == 'radio' || this.type == 'checkbox'){
+		if(el.type == 'radio' || el.type == 'checkbox'){
 			for(var i = 0; i < $wf2.invalidIndicators.length; i++){
-				if(this.form[this.name][0] == $wf2.invalidIndicators[i].target){
+				if(el.form[el.name][0] == $wf2.invalidIndicators[i].target){
 					hasInvalidIndicator = true;
 					break;
 				}
@@ -1585,8 +1643,8 @@ $wf2 = {
 		}
 
 		//Do default action
-		if(!canceled && !hasInvalidIndicator) //(!(this.form && this.form[this.name]) || !this.form[this.name].wf2HasInvalidIndicator)
-			$wf2.addInvalidIndicator(this);
+		if(!canceled && !hasInvalidIndicator) //(!(el.form && el.form[el.name]) || !el.form[el.name].wf2HasInvalidIndicator)
+			$wf2.addInvalidIndicator(el);
 		return false;
 	},
 
@@ -1607,18 +1665,60 @@ $wf2 = {
 //	zeroPointWeek          : null,
 //	zeroPointTime          : null,
 	
+	copyOf: function(obj) {
+		if (obj !== null && obj !== undefined) {
+			var r = new Object();
+			for (i in obj) {
+				
+				try {
+					r[i] = obj[i];
+				} 
+				catch (ex) {
+				// do nothing;
+				}
+			}
+			
+		} else {
+			r = null;
+		}
+		
+		return r;
+	},
+	
+	getOriginalAttrNode: function (node, attrName) {
+		var r;
+		
+		var dataSetItemName = attrName + 'AttrNode';
+		
+		if ($wf2.getDatasetItem(node, dataSetItemName) == null) {
+			r = $wf2.copyOf(node.getAttributeNode(attrName));
+			$wf2.setDatasetItem(node, dataSetItemName, r);
+		} else {
+			r = $wf2.getDatasetItem(node, dataSetItemName);
+			if (r == 'null') {
+				r = null;
+			}
+		}
+		
+		return r;
+	},
+	
 	//This function is called "live" 
 	updateValidityState : function(node){
 		//if(node.form && node.form[node.name] && node.form[node.name].wf2HasInvalidIndicator)
 		//	return;
 		
 		var minAttrNode, maxAttrNode, valueAttrNode;
-		minAttrNode = node.getAttributeNode('min');
-		maxAttrNode = node.getAttributeNode('max');
+		
+		minAttrNode = $wf2.getOriginalAttrNode(node, 'min');
+		maxAttrNode = $wf2.getOriginalAttrNode(node, 'max');
+		valueAttrNode = $wf2.getOriginalAttrNode(node, 'value');
+
 		node.min = undefined; //wf2Min
 		node.max = undefined; //wf2Max
 		node.step = undefined; //wf2Step
-		valueAttrNode = node.getAttributeNode('value');
+		
+		
 		
 		node.validity = $wf2.createValidityState();
 		node.validity.customError = !!node.validationMessage;
@@ -1641,6 +1741,7 @@ $wf2 = {
 							   type == 'url'     ||
 							   type == 'text'    ||
 							   type == 'password'||
+							   type == 'tel' ||
 							   isRadioOrCheckbox);
 		
 		//If a control has its type attribute changed to another type, then the user agent must reinterpret the min and
@@ -1680,11 +1781,25 @@ $wf2 = {
 				if(node.form && node.form[node.name]){
 					var isRequired = false;
 					var hasChecked = false;
-					for(var i = 0; i < node.form[node.name].length; i++){
-						if(node.form[node.name][i].getAttributeNode('required'))
+					
+					var inputs =  node.form[node.name];
+					
+					/* 
+					 * remember: the above expression may return an array
+					 * or a single value.  Must check for this.
+					 */
+					if (inputs.length == undefined) {
+						if (inputs.getAttributeNode('required')) 
 							isRequired = true;
-						if(node.form[node.name][i].checked)
+						if (inputs.checked) 
 							hasChecked = true;
+					} else {
+						for (var i = 0; i < inputs.length; i++) {
+							if (inputs[i].getAttributeNode('required')) 
+								isRequired = true;
+							if (inputs[i].checked) 
+								hasChecked = true;
+						}
 					}
 					node.validity.valueMissing = (isRequired && !hasChecked);
 				}
@@ -1826,7 +1941,7 @@ $wf2 = {
 					//   not be rounding the value for submission. Empty values and values that caused the typeMismatch 
 					//   flag to be set must not cause this flag to be set.
 					
-					var stepAttrNode = node.getAttributeNode('step');
+					var stepAttrNode = $wf2.getOriginalAttrNode(node, 'step'); //node.getAttributeNode('step');
 					if(!stepAttrNode){
 						//The step attribute [for types datetime, datetime-local, and time] ... defaulting to 60 (one minute).
 						//For time controls, the value of the step attribute is in seconds, although it may be a fractional
@@ -1867,7 +1982,7 @@ $wf2 = {
 						//   for week controls is 1970-W01 (the week starting 1969-12-29 and containing 1970-01-01),
 						//   and for time controls is 00:00.
 						var _step = node.step;
-						if(type == 'month'){
+						if(type == 'month' && node.wf2StepDatum && node.wf2StepDatum.getUTCFullYear){
 							var month1 = node.wf2StepDatum.getUTCFullYear()*12 + node.wf2StepDatum.getUTCMonth();
 							var month2 = node.wf2Value.getUTCFullYear()*12 + node.wf2Value.getUTCMonth();
 							node.validity.stepMismatch = (month2 - month1)%_step != 0;
@@ -1937,9 +2052,23 @@ $wf2 = {
 	},
 
 	applyValidityInterface : function(node){
-		if(node.validity && node.validity.typeMismatch !== undefined) //MSIE needs the second test for some reason
-			return node;
 		
+		/* Webkit browsers need this */
+		if ($wf2.hasBadImplementation) {
+			
+			if (node.type == 'submit' || node.type == 'button') {
+				
+				node.formNoValidate=true;
+				
+			}
+		}
+	
+		/* ZOLTAN made a change here to ensure Google's unfinished native implementation is not used. */
+		else if((node.validity && node.validity.typeMismatch !== undefined)) {//MSIE needs the second test for some reason
+			//	console.log('bad implementation!! ' + node.id);
+			
+			return node;
+		}
 		node.validationMessage = "";
 		
 		//ValidityState interface
@@ -1957,8 +2086,14 @@ $wf2 = {
 			return node;
 		}
 		//node._updateValidityState = $wf2._updateValidityState;
-		node.setCustomValidity = $wf2.controlSetCustomValidity;
+		
+		if (!node.setCustomValidity) {
+			node.setCustomValidity = $wf2.controlSetCustomValidity;
+		}
+		
+		
 		node.checkValidity = $wf2.controlCheckValidity;
+		
 		
 		//var type = (node.type ? node.type.toLowerCase() : (nodeName == 'input' ? 'text' : ''));
 		var type = (node.getAttribute('type') ? node.getAttribute('type').toLowerCase() : node.type);
@@ -1999,14 +2134,34 @@ $wf2 = {
 
 	onsubmitValidityHandler : function(event){
 		var frm = event.currentTarget || event.srcElement;
+		var r;
+		
+		// call routines other libraries have set to be run before
+		// validation.
+		for (var i=0; i<$wf2.callBeforeValidation.length; i++) {
+			$wf2.callBeforeValidation[i](event);
+		}
+		
+		/* ZOLTAN */
 		if(!frm.checkValidity()){
 			if(event.preventDefault)
 				event.preventDefault();
 			event.returnValue = false;
-			return false;
+			r = false;
+		} else {
+			event.returnValue = true;
+			r = true;
 		}
-		event.returnValue = true;
-		return true;
+		
+		// call routines other libraries have set to be run before
+		// validation.
+		for (var i=0; i<$wf2.callAfterValidation.length; i++) {
+			$wf2.callAfterValidation[i](event, r);
+		}
+		
+		
+		
+		return r;
 	},
 
 	controlSetCustomValidity : function(error){
@@ -2066,7 +2221,7 @@ $wf2 = {
 		rangeOverflow  : 'The value must be equal to or less than %s.',
 		stepMismatch   : 'The value has a step mismatch; it must be a certain number multiples of %s from %s.',
 		tooLong        : 'The value is too long. The field may have a maximum of %s characters but you supplied %s. Note that each line-break counts as two characters.',
-		patternMismatch: 'The value does not match the required pattern: %s'
+		patternMismatch: 'The value is not in the format required.'
 	},
 	
 	valueToWF2Type : function(value, type){
@@ -2182,9 +2337,18 @@ $wf2 = {
 						invalidIndicator.target.className = invalidIndicator.target.className.replace(/\s?wf2_invalid/, "");
 					}
 				}
+				
 			}, 500);
+			// call routines other libraries have set to be run before
+			// validation.
+			setTimeout(function() {
+				for (var i=0; i<$wf2.callAfterValidation.length; i++) {
+					$wf2.callAfterValidation[i](null, false);
+				}
+			}, 1);
 			$wf2.indicatorTimeoutId = setTimeout($wf2.clearInvalidIndicators, 4000);
 		}
+		
 	},
 
 	clearInvalidIndicators : function(){
@@ -2204,6 +2368,7 @@ $wf2 = {
 			target.className = target.className.replace(/\s?wf2_invalid/, ""); //([^\b]\s)?
 			$wf2.invalidIndicators.shift();
 		}
+		
 	},
 
 	/*##############################################################################################
@@ -2265,6 +2430,7 @@ $wf2 = {
 				//	  : document.createElement(node.nodeName);
 						
 				for(i = 0; attr = node.attributes[i]; i++){
+					
 					//MSIE ISSUE: Custom attributes specified do not have .specified property set to true?
 					//ISSUE: VALUE IS REPEATED IN MSIE WHEN VALUE ATTRIBUTE SET?
 					//if(attr.specified || node.getAttribute(attr.nodeName)) //$wf2.cloneNode_customAttrs[attr.nodeName] || 
@@ -2278,6 +2444,7 @@ $wf2 = {
 								(!isTemplate || (rtNestedDepth > 1 || !$wf2.cloneNode_rtEventHandlerAttrs[attr.name])) // && 
 							))
 					{
+						
 						//MSIE BUG: when button[type=add|remove|move-up|move-down], then (attr.nodeValue and attr.value == 'button') but node.getAttribute(attr.nodeName) == 'add|remove|move-up|move-down' (as desired)
 						
 						//clone and process an event handler property (attribute);
@@ -2293,6 +2460,7 @@ $wf2 = {
 							attrValue = (processAttr ? processAttr(attrValue) : attrValue);
 							clone.setAttribute(attr.name, attrValue);
 						}
+						//console.log(StringHelpers.sprintf("AFTER attr: %s val: %s (%s)", attr.name, attr.value, processAttr(attrValue)))
 					}
 				}
 				//MSIE BUG: setAttribute('class') creates duplicate value attribute in MSIE; 
@@ -2392,6 +2560,64 @@ $wf2 = {
 		}
 		return doc;
 	},
+	
+	getAttributeByName: function (obj, attrName) {
+		var i;
+		
+		var attributes = obj.attributes;
+		for (i=0; i<attributes.length; i++) {
+			var attr = attributes[i]
+			if (attr.nodeName == attrName && attr.specified) {
+			  	return attr;
+			}
+		}
+		return null;
+	},
+	
+	getAttributeValue: function (obj, attrName) {
+		var attr = $wf2.getAttributeByName(obj, attrName);
+		
+		if (attr != null) {
+			return attr.nodeValue;
+		} else {
+			return null;
+		}
+	},	
+	
+	setAttributeValue: function (obj, attrName, attrValue) {
+		var attr = $wf2.getAttributeByName(obj, attrName);
+		
+		if (attr != null) {
+			attr.nodeValue = attrValue;
+		} else {
+			return;
+		}
+	},
+	
+	
+	getDatasetItem: function (obj, name) {
+		var r = $wf2.getAttributeValue(obj, 'data-' + name);
+		
+		if (!r) {
+			r = $wf2.getAttributeValue(obj, 'data-' + name.toLowerCase())
+		} 
+		
+		if (!r) {
+			r = obj['data-' + name.toLowerCase()]
+		}
+		return r;
+	},
+	
+	setDatasetItem: function (obj, name, value) {
+		var attrName = 'data-' + name.toLowerCase();
+		
+		var val = $wf2.setAttributeValue(obj, attrName, value);
+		
+		if ($wf2.getAttributeValue(obj, attrName) == null) {
+			obj[attrName] = value;
+			
+		}
+	},
 
 	getElementsByTagNames : function(/* ... */){
 		var els,i,results = [];
@@ -2479,7 +2705,7 @@ $wf2 = {
 			var el = document.createElement('<div name="foo">'); //MSIE memory leak according to Drip
 			if(el.tagName.toLowerCase() != 'div' || el.name != 'foo')
 				throw 'create element error';
-			
+				
 			return function(tag, attrs){
 				var html = '<' + tag;
 				for(var name in attrs)
@@ -2635,6 +2861,30 @@ $wf2 = {
 				return date.getUTCFullYear() + '-' + $wf2.zeroPad(date.getUTCMonth()+1) + '-' + $wf2.zeroPad(date.getUTCDate()) + 
 				       'T' + $wf2.zeroPad(date.getUTCHours()) + ':' + $wf2.zeroPad(date.getUTCMinutes()) + ':' + $wf2.zeroPad(date.getUTCMinutes()) + ms + 'Z';
 		}
+	},
+	
+	/* 
+	 * Fires an event manually.
+	 * @author Scott Andrew - http://www.scottandrew.com/weblog/articles/cbs-events
+	 * @author John Resig - http://ejohn.org/projects/flexible-javascript-events/
+	 * @param {Object} obj - a javascript object.
+	 * @param {String} evType - an event attached to the object.
+	 * @param {Function} fn - the function that is called when the event fires.
+	 * 
+	 */
+	fireEvent: function (element, event, options){
+		
+		if(!element) {
+			return;
+		}
+		
+	    if (document.createEventObject){
+			return element.fireEvent('on' + event, $wf2.globalEvent);
+	    } else{
+	        // dispatch for firefox + others
+	        $wf2.globalEvent.initEvent(event, true, true); // event type,bubbling,cancelable
+	        return !element.dispatchEvent($wf2.globalEvent);
+	    }
 	},
 	
 	//Emulation of DOMException
