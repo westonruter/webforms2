@@ -3,8 +3,9 @@
  * Version: 0.7 (2011-03-01)
  * Copyright: 2007, Weston Ruter <http://weston.ruter.net/> 
  *    with additions by Zoltan Hawryluk <http://www.useragentman.com>
- * License: GNU General Public License, Free Software Foundation
- *          <http://creativecommons.org/licenses/GPL/2.0/>
+ * Licenses (as of Feb 6, 2011)
+ * - MIT License (http://www.opensource.org/licenses/mit-license.php)
+ * - GPL (http://creativecommons.org/licenses/GPL/2.0/)
  * 
  * The comments contained in this code are largely quotations from the 
  * WebForms 2.0 specification: <http://whatwg.org/specs/web-forms/current-work/>
@@ -16,6 +17,7 @@
  * version 0.6    - refactored for use with HTML5Widgets by Zoltan Hawryluk (July 27th, 2010)
  * version 0.6.1  - updated to deal with WebKit's half-implemented WebForms 2 Implementation (Sept 10, 2010)
  * version 0.7    - bug fixes with nested repetition models by Zoltan Hawryluk.
+ * version 0.7.1  - updated to dual MIT/GPL 2.0 license.
  */
 
 if(!window.$wf2){
